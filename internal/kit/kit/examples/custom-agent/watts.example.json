@@ -1,0 +1,53 @@
+{
+  "agents": {
+    "security-review": {
+      "path": ".watts.agents/security-review",
+      "thinking": "high",
+      "skills_dirs": [
+        ".watts.agents/security-review/skills"
+      ],
+      "pi_settings": {}
+    }
+  },
+  "workflow": {
+    "steps": [
+      {
+        "name": "preflight",
+        "check": "preflight"
+      },
+      {
+        "name": "build",
+        "agent": "build",
+        "prompt": "/ralph --path ./{task}",
+        "provider": "ollama",
+        "model": "devstral-small-2:24b"
+      },
+      {
+        "name": "security-review",
+        "agent": "security-review",
+        "prompt": "Review the changes since this task's baseline snapshot for security problems. Write findings to {task}/SECURITY.md.",
+        "identity": "watts-security",
+        "provider": "ollama",
+        "model": "devstral-small-2:24b"
+      },
+      {
+        "name": "gates",
+        "command": "make test"
+      },
+      {
+        "name": "review",
+        "agent": "review",
+        "prompt": "/ralph --path ./{task}/review",
+        "provider": "ollama",
+        "model": "devstral-small-2:24b"
+      },
+      {
+        "name": "verdict",
+        "check": "check-verdict",
+        "args": [
+          "--require-pass"
+        ]
+      }
+    ]
+  }
+}

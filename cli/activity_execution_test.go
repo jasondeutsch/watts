@@ -1,0 +1,75 @@
+package cli
+
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/testsuite"
+
+	"github.com/jasondeutsch/watts/internal/application"
+	"github.com/jasondeutsch/watts/internal/kit"
+	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/storage"
+)
+
+func executeAgentActivity(t *testing.T, project *testApp, task, agent string, offline bool) (int, string, string) {
+	prompt := "/ralph --path ./" + task
+	if agent == "review" {
+		prompt += "/review"
+	}
+	cfg := loadCfg(t, project)
+	resolved, _ := cfg.Agent(agent)
+	step := orchestration.Step{Name: agent, Agent: agent, Provider: resolved.Provider, Model: resolved.Model, Prompt: prompt}
+	if agent == "review" {
+		if code, out, errs := executeCheckActivity(t, project, task, "pre-review"); code != 0 {
+			return code, out, errs
+		}
+		step.Outputs = []string{"review/VERDICT.md"}
+		step.Checks = []orchestration.Check{{Script: "check-verdict", Args: []string{"--require-pass"}}}
+	}
+	return executeActivity(t, project, task, step, offline)
+}
+
+func executeCheckActivity(t *testing.T, project *testApp, task, check string) (int, string, string) {
+	return executeActivity(t, project, task, orchestration.Step{Name: check, Check: check}, false)
+}
+
+func executeActivity(t *testing.T, project *testApp, task string, step orchestration.Step, offline bool) (int, string, string) {
+	t.Helper()
+	cfg := loadCfg(t, project)
+	cfg.Workflow, cfg.DefaultWorkflow = &orchestration.Definition{Steps: []orchestration.Step{step}}, ""
+
+	require.NoError(t, storage.WriteJSONAtomically(project.WorkflowConfigPath(task), cfg))
+
+	data, err := os.ReadFile(project.WorkflowConfigPath(task))
+	require.NoError(t, err)
+
+	input := orchestration.Input{Task: task, Definition: *cfg.Workflow, ConfigSHA256: kit.Digest(data), Offline: offline}
+
+	require.NoError(t, storage.WriteJSONAtomically(project.WorkflowBindingPath(task), application.WorkflowBinding{WorkflowID: "sdk-test", Settings: project.ResolvedTemporalSettings(cfg), Input: input}))
+
+	// These lifecycle fixtures already recorded a human approval before invoking activities.
+	if record, err := os.ReadFile(filepath.Join(project.Root, task, "APPROVAL")); err == nil {
+		receipt := filepath.Join(project.StateDir(task), "approvals", "plan-review.txt")
+		require.NoError(t, os.MkdirAll(filepath.Dir(receipt), 0700))
+		require.NoError(t, os.WriteFile(receipt, record, 0600))
+	}
+	var stdout, stderr bytes.Buffer
+	service := *project.Service
+	service.Output, service.ErrorOutput = &stdout, &stderr
+	service.Report = nil
+	// Report rendering belongs to the CLI; adapt it for assertions about activity evidence.
+	renderer := newApp(service.Root, service.Input, &stdout, &stderr)
+	service.Report = renderer.Report
+	var suite testsuite.WorkflowTestSuite
+	environment := suite.NewTestActivityEnvironment()
+	environment.RegisterActivity(service.ExecuteWorkflowStage)
+	_, err = environment.ExecuteActivity(service.ExecuteWorkflowStage, orchestration.ActivityInput{Input: input, Step: step, Attempt: 1})
+	if err != nil {
+		return 1, stdout.String(), stderr.String() + err.Error()
+	}
+	return 0, stdout.String(), stderr.String()
+}

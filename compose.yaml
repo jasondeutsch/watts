@@ -1,0 +1,38 @@
+# Local development infrastructure. Run the Watts worker on the host.
+services:
+  temporal:
+    image: temporalio/temporal:1.9.1
+    command:
+      - server
+      - start-dev
+      - --ip
+      - 0.0.0.0
+      - --db-filename
+      - /home/temporal/temporal.db
+    ports:
+      - "127.0.0.1:7233:7233"
+      - "127.0.0.1:8233:8233"
+    volumes:
+      # The image's home directory is writable by its non-root temporal user.
+      - temporal-data:/home/temporal
+    healthcheck:
+      test:
+        - CMD
+        - temporal
+        - operator
+        - cluster
+        - health
+        - --address
+        - 127.0.0.1:7233
+        - --command-timeout
+        - 3s
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+volumes:
+  temporal-data:
+    name: watts-temporal-data

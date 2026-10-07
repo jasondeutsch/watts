@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Watts · task monitor</title><link rel="stylesheet" href="/style.css"><script defer src="/app.js"></script></head>
+<body><header><div><strong>watts<span> / monitor</span></strong><p id="project"></p></div><div id="connection" role="status">Connecting…</div></header>
+<div class="layout"><aside><h2>Tasks <span id="count"></span></h2><nav id="tasks" aria-label="Tasks"></nav></aside>
+<main><div class="task-heading"><div><small>WORKFLOW EXECUTION</small><h1 id="title">Select a task</h1><p id="metadata"></p></div><div id="status" class="badge">—</div></div>
+<p id="error" role="alert" hidden></p><p id="empty" hidden>No tasks yet. Create a task with watts task new.</p>
+<div id="retry-controls" hidden><p>Retry reruns the failed stage with its submitted configuration and authorizes another attempt.</p><button id="retry">Retry failed stage</button><p id="retry-message" role="status"></p></div>
+<section><div class="section-heading"><h2>Workflow</h2><span id="updated"></span></div><div id="workflow"><svg id="connections" aria-hidden="true"></svg><div id="stages"></div></div></section>
+<div class="details"><section><h2>Stage details</h2><div id="details">Select a stage to inspect its configuration.</div></section><section><h2>Attempt history</h2><div id="history">No attempts recorded.</div></section></div>
+<section><div class="section-heading"><h2>Live output</h2><label>Attempt <select id="log-select" aria-label="Log attempt"></select></label></div><p class="hint">Refreshes every two seconds. Output appears when the worker writes it; quiet model inference may produce no output.</p><pre id="log">No stage logs yet.</pre></section>
+</main></div></body></html>
