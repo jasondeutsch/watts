@@ -1,6 +1,6 @@
 # Sandbox (tentative)
 
-Status: tentative and untested. Watts is not a sandbox: the `watts` CLI clears the environment and gives Pi a private home and config directory (see [configuration.md](configuration.md)), which stops ambient credentials and default credential locations leaking in. It does not stop a misbehaving agent from reading a file by absolute path or from touching anything else you can. Pi's own documentation says the same: tools and extensions [run with the permissions of the Pi process](https://pi.dev/docs/latest/security), and project trust is not a sandbox.
+Status: tentative and untested. Watts is not a sandbox: the `watts` CLI clears the environment and gives Pi a private home and config directory (see [runbook configuration](runbook.md#configure-the-project)), which stops ambient credentials and default credential locations leaking in. It does not stop a misbehaving agent from reading a file by absolute path or from touching anything else you can. Pi's own documentation says the same: tools and extensions [run with the permissions of the Pi process](https://pi.dev/docs/latest/security), and project trust is not a sandbox.
 
 Use a real boundary for Tier 1 and Tier 2 work, for unattended runs, or whenever the repository holds anything sensitive.
 

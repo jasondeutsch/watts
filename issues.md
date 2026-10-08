@@ -83,6 +83,10 @@ Consider whether a generated JSON or TOML task manifest should record readiness 
 
 A manual override may be useful, but its scope remains undefined. Specify which stages may be overridden and how the override is recorded before adding it.
 
+### wiss-014: watts worker
+
+Consider central watts worker or a stateless watts worker with persistence abstracted (sqllite for local, pg in remote)
+
 ### wiss-013: Ralph artifact location
 
 Determine where `.ralph-runner` belongs. It currently contains task-specific status, events, iteration records, and transcripts under the task directory.

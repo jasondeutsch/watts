@@ -127,7 +127,7 @@ watts task run [task] --ignore-attempt-limit
 watts task cancel <task>
 ```
 
-Activities have automatic retries disabled. Workflow rework transitions can run a stage again, preserving all attempts. `resume` retries the current failed stage; an approval wait needs `decide`, an event wait needs `signal`, and an active workflow needs its worker. `retry --ignore-attempt-limit` explicitly authorizes an additional attempt after its budget is exhausted. All task execution uses this engine.
+Activities have automatic retries disabled. Workflow rework transitions can run a stage again, preserving all attempts. `watts task run` retries the current stage in `waiting_retry`; an approval wait needs `task decide`, an event wait needs delivery through Temporal, and an active workflow needs its worker. `watts task run --ignore-attempt-limit` explicitly authorizes an additional attempt after its budget is exhausted. See the [runbook](runbook.md#inspect-failures-and-retry) for the recovery procedure. All task execution uses this engine.
 
 
 Cancellation reaches worker activities through heartbeats and stops subprocess groups. A project workspace lock prevents concurrent Temporal activities from editing the same project. A process journal detects surviving subprocesses after worker loss and refuses overlapping execution; inspect and stop a reported process group before retrying. Interactive drafting, artifact checks and external editors do not participate in this lock. File edits are not rolled back automatically.
