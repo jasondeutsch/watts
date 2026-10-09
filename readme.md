@@ -1,5 +1,9 @@
 # Watts
 
+![Watts proposed architecture](resources/diagrams/watts-architecture.svg)
+
+*Forward-looking design: compilation, portable stage packages, and distributed isolation are proposed. See [stage communication](stage-communication.md).*
+
 Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. Temporal manages workflow state; project workers execute the stages. The current implementation uses Pi and Ralph for agent execution.
 
 This is an MVP and proof of concept. The application version remains **0.1.0** while the design evolves. Watts does not require Git.
