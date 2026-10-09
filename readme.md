@@ -83,6 +83,7 @@ A project can contain multiple tasks. Each task receives its own workflow defini
 | [Go workflow eval](evals/go-workflow/README.md) | Repeatable task cases, human scoring, and comparison records |
 | [CLI organization](cli/readme.md) | Command-layer structure |
 | [Workflow design](workflow-design.md) | Architecture and design rationale |
+| [Stage communication](stage-communication.md) | Proposed stage interfaces and build/review feedback |
 | [Sandboxing](sandbox.md) | Isolation considerations |
 | [Issues](issues.md) | Known problems, proposed improvements, and design questions |
 

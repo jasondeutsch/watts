@@ -22,6 +22,7 @@ type Check struct {
 }
 
 type Step struct {
+	MCPs           []string          `json:"mcps,omitempty"`
 	Name           string            `json:"name"`
 	Capability     string            `json:"capability,omitempty"`
 	Parameters     map[string]any    `json:"parameters,omitempty"`
@@ -140,6 +141,16 @@ func (step Step) validateExecution() error {
 	}
 	if executorCount != 1 {
 		return fmt.Errorf("step %s must set exactly one of agent, command, check, capability, human or event", step.Name)
+	}
+	if len(step.MCPs) > 0 && step.Agent == "" {
+		return fmt.Errorf("step %s: mcps require an agent executor", step.Name)
+	}
+	seenMCPs := map[string]bool{}
+	for _, name := range step.MCPs {
+		if !ValidName(name) || seenMCPs[name] {
+			return fmt.Errorf("step %s has invalid or duplicate mcp %q", step.Name, name)
+		}
+		seenMCPs[name] = true
 	}
 	if step.Identity != "" && (step.Agent == "" || strings.ContainsAny(step.Identity, "\x00\r\n")) {
 		return fmt.Errorf("step %s has an invalid agent identity", step.Name)

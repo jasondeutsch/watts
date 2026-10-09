@@ -26,6 +26,11 @@ func (c Config) ValidateWorkflow(definition orchestration.Definition) error {
 		return err
 	}
 	for _, step := range definition.Steps {
+		for _, name := range step.MCPs {
+			if _, ok := c.MCPs[name]; !ok {
+				return fmt.Errorf("workflow step %q uses undefined mcp %q", step.Name, name)
+			}
+		}
 		if step.Agent != "" {
 			if _, ok := c.Agent(step.Agent); !ok {
 				return fmt.Errorf("workflow step %q uses agent %q, which is not defined under agents", step.Name, step.Agent)

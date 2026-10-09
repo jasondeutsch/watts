@@ -39,6 +39,7 @@ type Config struct {
 	ForbiddenPaths  []string                  `json:"forbidden_paths,omitempty"`
 	Agents          map[string]AgentConfig    `json:"agents,omitempty"`
 	DefaultWorkflow string                    `json:"default_workflow,omitempty"`
+	MCPs            map[string]MCPServer      `json:"mcps,omitempty"`
 	Capabilities    map[string]Capability     `json:"capabilities,omitempty"`
 	Workflow        *orchestration.Definition `json:"workflow,omitempty"`
 	Temporal        *TemporalSettings         `json:"temporal,omitempty"`
@@ -88,6 +89,18 @@ type AgentConfig struct {
 // Capability names a project-configured executable plugin. It reads JSON on stdin and returns JSON on stdout.
 type Capability struct {
 	Command []string `json:"command"`
+}
+
+// MCPServer defines a Pi-compatible server connection; stages opt in by name.
+type MCPServer struct {
+	Command     string            `json:"command,omitempty"`
+	Args        []string          `json:"args,omitempty"`
+	URL         string            `json:"url,omitempty"`
+	Env         map[string]string `json:"env,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	Cwd         string            `json:"cwd,omitempty"`
+	Exposure    string            `json:"exposure,omitempty"`
+	Description string            `json:"description,omitempty"`
 }
 
 type TemporalSettings struct {
@@ -366,6 +379,27 @@ func (c Config) Validate() error {
 	}
 	if c.DefaultWorkflow != "" && c.Workflow != nil {
 		add("choose default_workflow or an inline workflow, not both")
+	}
+	for name, server := range c.MCPs {
+		if !orchestration.ValidName(name) || (server.Command == "") == (server.URL == "") {
+			add("mcp %q requires a valid name and exactly one of command or url", name)
+		}
+		if server.URL != "" && (!ReURL.MatchString(server.URL) || server.Cwd != "" || len(server.Args) > 0 || len(server.Env) > 0) {
+			add("mcp %q has invalid HTTP connection settings", name)
+		}
+		if server.Command != "" && len(server.Headers) > 0 {
+			add("mcp %q: headers require an HTTP connection", name)
+		}
+		if server.Cwd != "" && server.Cwd != "." {
+			if err := ValidRelPath("mcp cwd", server.Cwd); err != nil {
+				add("%v", err)
+			}
+		}
+		switch server.Exposure {
+		case "", "direct", "codemode", "deferred", "hidden":
+		default:
+			add("mcp %q has invalid exposure", name)
+		}
 	}
 	for name, capability := range c.Capabilities {
 		if !orchestration.ValidName(name) || len(capability.Command) == 0 || strings.TrimSpace(capability.Command[0]) == "" {

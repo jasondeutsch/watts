@@ -1,0 +1,12 @@
+{
+  "mcps": {
+    "gopls": {
+      "command": "gopls",
+      "args": [
+        "mcp"
+      ],
+      "cwd": ".",
+      "exposure": "direct"
+    }
+  }
+}

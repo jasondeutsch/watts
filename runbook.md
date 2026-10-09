@@ -53,6 +53,7 @@ Edit nested settings directly in `watts.json`, then apply them. `config apply` m
 | `limits.max_minutes`, `limits.max_attempts` | Default activity timeout and stage attempt budget |
 | `snapshot_exclude` | Additional project-relative paths excluded from snapshots |
 | `temporal` | Connection overrides: address, namespace, and task queue |
+| `mcps` | Named MCP connections selected by agent workflow stages |
 | `capabilities` | Executable plugins used by workflow stages |
 
 An inline `workflow` can replace `default_workflow`; do not set both. Prefer a separate template for readability. See [workflows.md](workflows.md) for customization.

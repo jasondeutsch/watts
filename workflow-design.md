@@ -19,3 +19,5 @@ Execution is sequential. Parallel stages, expression conditions and authenticate
 Project workflow files are reusable templates. Task creation copies a definition into the visible task directory as workflow.json. Users may customize that file before first submission; the Temporal binding freezes the execution contract when the task is submitted.
 
 The MVP uses file-based configuration: bundled templates are visible in workflow-templates/, watts.json selects the project default, and each task scaffolds its own workflow.json. Agent identities belong to stages. Stage order is list order; workflow management commands are deferred.
+
+See [stage communication](stage-communication.md) for the proposed executor-independent interface and build/review feedback contract.

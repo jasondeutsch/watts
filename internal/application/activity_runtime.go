@@ -84,6 +84,11 @@ func (runtime *activityRuntime) runAgent() (err error) {
 	if err := project.configureAgents(runtime.config, []string{request.Step.Agent}, false); err != nil {
 		return err
 	}
+	restoreMCPs, err := project.configureStageMCPs(runtime.config, request.Step)
+	if err != nil {
+		return err
+	}
+	defer func() { err = errors.Join(err, restoreMCPs()) }()
 	if err := project.RequireCredentials(runtime.config, request.Step.Agent, request.Input.Pass); err != nil {
 		return err
 	}

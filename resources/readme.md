@@ -1,4 +1,4 @@
-# Watts toolbox
+# Resources 
 
 Resources for people and agents working with Watts. Start here for guidance on coordinating tasks, drafting task documents, and using the workflow. Teams can adapt these resources to their own practices.
 

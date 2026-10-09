@@ -135,3 +135,17 @@ Watts delivers this through a validated Temporal Workflow Update so the sender r
 ## Implementation location
 
 The project root is the directory containing `watts.json`. Application source, tests, dependencies and build files live there or in its normal source directories. A task directory holds `SPEC.md`, `PLAN.md`, `workflow.json`, review documents, logs and execution evidence. Default planning and build instructions use this separation, and quality gates run from the project root.
+
+## MCP servers for agent stages
+
+Declare named MCP connections under `mcps` in watts.json:
+
+```json
+{"mcps": {"gopls": {"command": "gopls", "args": ["mcp"], "cwd": "."}}}
+```
+
+Select them on agent stages with `"mcps": ["gopls"]`. Other executor types cannot select MCPs; undefined or duplicate names are rejected. Omitting the list gives that stage no configured MCP servers. Connections and selections are pinned at submission.
+
+Connections support stdio `command`, `args`, `env`, `cwd`, or HTTP `url`, `headers`, plus `exposure` and `description`. Default exposure is `direct`. Relative working directories resolve from the project root. Use `${NAME}` credential references and `env_passthrough`; values must exist in the worker environment. MCP definitions belong in watts.json, not `pi_settings`.
+
+Watts replaces the role's Pi MCP configuration for the activity and restores its interactive configuration afterward. Ralph children inherit the same agent directory; Pi's built-in MCP support must be enabled. See the [Go example](resources/examples/go_generalist/mcp/README.md).
