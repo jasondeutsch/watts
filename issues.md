@@ -92,3 +92,11 @@ Consider central watts worker or a stateless watts worker with persistence abstr
 Determine where `.ralph-runner` belongs. It currently contains task-specific status, events, iteration records, and transcripts under the task directory.
 
 Task-scoped execution evidence should remain easy to associate with its task. Consider placing executor artifacts under the task's `.watts-state/` directory rather than exposing a separate runtime directory. A project-level `.watts/` location would need to preserve task and attempt isolation.
+
+### wiss-015: TOML for configuration and workflow authoring
+
+Use TOML as the preferred direction for replacing JSON in human-authored project configuration and workflow definitions. Prioritize readable stage declarations, comments, multiline instructions, clear validation errors, and tooling support. Validate the representation against the Go generalist workflow, including nested checks, transitions, and MCP connections.
+
+Distinguish TOML authoring files from generated stage manifests and executor request/result protocols. Those machine-facing formats may remain JSON. Define how TOML inputs are resolved into deterministic compiled plans with stable content hashes. See [stage communication](stage-communication.md) for the proposed compilation boundary.
+
+Define filenames, schema, and the scope of the change before implementation. Prefer one authoring format rather than adding YAML or Pkl support without a concrete need.
