@@ -28,7 +28,7 @@ Under Watts there is no single record, so read all of these before writing. Ever
 - `review/VERDICT.md` for the latest verdict, and `review/history/` for earlier ones. The number of verdicts is the number of review rounds.
 - `RALPH_PROGRESS.md` and `OPEN_QUESTIONS.md` for the builder's learnings and any questions it raised.
 - `bash <kit>/scripts/evidence.sh <task> snapshots` for the recorded snapshots and their labels. BASE names the baseline snapshot; use the same script with `diff` to inspect changes.
-- The loop's own summary: `watts task status <name>` prints a deterministic run summary, and `.ralph-runner/final-summary.md` holds the same record.
+- `watts task status <name> --json` for workflow state and attempt history, plus `.watts-state/logs/` and `.watts-state/steps/` for executor output and results. Loop-specific summaries, when present, supplement this evidence.
 
 Write the entry to `<tasks dir>/<name>/retrospective.md` and keep it with the rest of the folder. Run this manually after the review passes, or when a task is rejected and abandoned. Nothing triggers it automatically.
 

@@ -1,0 +1,43 @@
+agents:
+  builder:
+    config_ref: agent-defaults
+    identity: watts-builder
+    prompt: Read {task}/SPEC.md and implement the requested change in the project root.
+config_maps:
+  agent-defaults:
+    data:
+      api: openai-completions
+      auth:
+        env: OPENROUTER_API_KEY
+        secret:
+          key: api-key
+          name: model-credentials
+      base_url: https://openrouter.ai/api/v1
+      model: deepseek/deepseek-v4-flash
+      provider: openrouter
+      runtime: pi
+      sandbox:
+        mode: local
+      thinking: medium
+procedures:
+  lint:
+    execution:
+      command: go vet ./...
+      type: command
+secrets:
+  model-credentials:
+    env:
+      api-key: OPENROUTER_API_KEY
+workflow:
+  name: example
+  spec:
+    steps:
+      - name: build
+        use:
+          kind: Agent
+          name: builder
+      - name: lint
+        use:
+          kind: Procedure
+          name: lint
+    version: 1

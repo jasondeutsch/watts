@@ -12,6 +12,7 @@ import (
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/render"
 	"gopkg.in/yaml.v3"
 )
@@ -62,6 +63,9 @@ func Template(a *terminal.Context, args []string) error {
 	}
 	result, err := render.Render(packageRoot.FS(), sources...)
 	if err != nil {
+		return err
+	}
+	if err := validateResources(result.Files); err != nil {
 		return err
 	}
 	if output != "" {
@@ -133,4 +137,38 @@ func writeFiles(directory string, files []render.File) (err error) {
 		}
 	}
 	return nil
+}
+
+// Generic YAML remains supported. When a package declares resource kinds,
+// validate the complete bundle and its references before emitting any output.
+func validateResources(files []render.File) error {
+	var sources [][]byte
+	resources := false
+	for _, file := range files {
+		sources = append(sources, file.Data)
+		decoder := yaml.NewDecoder(bytes.NewReader(file.Data))
+		for {
+			var header struct {
+				Kind string `yaml:"kind"`
+			}
+			if err := decoder.Decode(&header); err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+			resources = resources || header.Kind != ""
+		}
+	}
+	if !resources {
+		return nil
+	}
+	data, err := manifest.JoinDocuments(sources...)
+	if err != nil {
+		return err
+	}
+	bundle, err := manifest.ParseResources(data)
+	if err != nil {
+		return err
+	}
+	return bundle.Validate()
 }

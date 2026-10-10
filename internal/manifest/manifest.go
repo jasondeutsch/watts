@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jasondeutsch/watts/internal/orchestration"
 	"gopkg.in/yaml.v3"
 )
 
@@ -25,6 +26,16 @@ type Document[T any] struct {
 }
 
 func Decode[T any](data []byte, kind string, defaults T) (Document[T], error) {
+	if kind == Workflow {
+		if _, ok := any(defaults).(orchestration.Definition); ok {
+			document, err := LoadWorkflow(data)
+			return Document[T]{Kind: document.Kind, SchemaVersion: document.SchemaVersion, Name: document.Name, Spec: any(document.Spec).(T)}, err
+		}
+	}
+	return decodeDocument(data, kind, defaults)
+}
+
+func decodeDocument[T any](data []byte, kind string, defaults T) (Document[T], error) {
 	document := Document[T]{Spec: defaults}
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	decoder.KnownFields(true)
@@ -51,11 +62,14 @@ func Decode[T any](data []byte, kind string, defaults T) (Document[T], error) {
 }
 
 func Encode[T any](kind, name string, spec T) ([]byte, error) {
-	if kind != Project && kind != Workflow {
+	if kind != Project && kind != Workflow && kind != Procedure && kind != Agent && kind != ConfigMap && kind != Secret {
 		return nil, fmt.Errorf("unsupported manifest kind %q", kind)
 	}
 	if strings.TrimSpace(name) == "" {
 		return nil, fmt.Errorf("manifest name must not be empty")
+	}
+	if definition, ok := any(spec).(orchestration.Definition); kind == Workflow && ok {
+		return EncodeWorkflow(name, definition)
 	}
 	var output bytes.Buffer
 	encoder := yaml.NewEncoder(&output)

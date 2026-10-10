@@ -24,8 +24,9 @@ When reading this skill from a Watts source checkout, these paths are relative t
 | --- | --- |
 | Toolbox index | [../../readme.md](../../readme.md) |
 | Spec drafting skill | [../../../internal/kit/kit/skills/spec-template/SKILL.md](../../../internal/kit/kit/skills/spec-template/SKILL.md) |
-| Task runbook | [../../../runbook.md](../../../runbook.md) |
-| Workflow documentation | [../../../workflows.md](../../../workflows.md) |
+| Task runbook | [../../../docs/runbook.md](../../../docs/runbook.md) |
+| Workflow documentation | [../../../docs/workflows.md](../../../docs/workflows.md) |
+| Resource Kinds | [../../../docs/kinds.md](../../../docs/kinds.md) |
 
 There is no `resources/docs/README.md`. The toolbox index is `resources/readme.md` in the Watts checkout. Reading that index is optional, not a prerequisite for creating a task.
 
@@ -38,7 +39,7 @@ If this skill was installed separately, checkout-relative links may be unavailab
 - If the execution tool cannot set a working directory, use `cd '/absolute/project/path' && watts ...` in the same command invocation. Do not run `cd ..` to locate documentation; read documentation by its absolute path instead.
 - Before creating a task, confirm `pwd` matches the intended project and read that directory's `watts.yaml`. Watts searches ancestors for a project, so running from the wrong directory can select a different project. Do not rely on that search to select the target.
 - Keep the exact task path returned by task creation throughout the session. Pass it explicitly to every task command.
-- Read the task's `workflow.yaml`; do not assume the default stages or artifact names when a workflow is customized.
+- Read the task's entire `workflow.yaml` bundle. Follow Workflow step `use` references to Agent or Procedure definitions; execution fields and artifacts live on those resources, while routing lives on the placements. Do not assume the default stages or artifact names.
 - Use the public CLI. Do not edit `.watts-state` or send ad hoc Temporal updates to advance stages.
 - Never claim execution, approval, or completion from an agent's narrative alone. Confirm with task status and evidence.
 

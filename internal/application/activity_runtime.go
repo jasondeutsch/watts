@@ -93,8 +93,11 @@ func (runtime *activityRuntime) runAgent() (err error) {
 		return err
 	}
 	defer func() { err = errors.Join(err, restoreMCPs()) }()
-	if err := project.RequireCredentials(runtime.config, request.Step.Agent, request.Input.Pass); err != nil {
-		return err
+	provider := runtime.config.Providers[request.Step.Provider]
+	if _, bound := request.Step.SecretEnvironment[provider.APIKeyEnv]; !bound {
+		if err := project.RequireCredentials(runtime.config, request.Step.Agent, request.Input.Pass); err != nil {
+			return err
+		}
 	}
 	prompt := project.stagePrompt(strings.ReplaceAll(request.Step.Prompt, "{task}", request.Input.Task), request)
 	agent, _ := runtime.config.Agent(request.Step.Agent)
@@ -152,6 +155,16 @@ func (runtime *activityRuntime) prepareInput() (StepInput, error) {
 		return input, err
 	}
 	runtime.environment = []string{"WATTS_STEP_INPUT=" + inputPath, "WATTS_STEP_RESULT=" + resultPath, "WATTS_REPO=" + app.Root, "WATTS_TASK=" + request.Input.Task, "WATTS_AGENT_NAME=" + request.Input.Definition.AgentIdentity("build"), "WATTS_REVIEWER_NAME=" + request.Input.Definition.AgentIdentity("review")}
+	for name, value := range request.Step.Environment {
+		runtime.environment = append(runtime.environment, name+"="+value)
+	}
+	for target, source := range request.Step.SecretEnvironment {
+		value, exists := os.LookupEnv(source)
+		if !exists || strings.TrimSpace(value) == "" {
+			return input, fmt.Errorf("step %s: required secret source environment variable %s is missing", request.Step.Name, source)
+		}
+		runtime.environment = append(runtime.environment, target+"="+value)
+	}
 	return input, nil
 }
 

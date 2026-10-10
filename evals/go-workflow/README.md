@@ -25,7 +25,7 @@ The eval version is independent of the Watts application version. Change the eva
 ## Procedure
 
 1. Select representative cases and freeze each request, starting project, acceptance criteria, and permitted scope. Record the revision or content digest of the case suite.
-2. Save the workflow and relevant configuration being evaluated. Record Watts, executor, model, Go, and toolchain versions. Record credential variable names, never credential values.
+2. Save the source values/overrides, rendered Kind bundle, task workflow, and relevant Project configuration being evaluated. Record Watts, executor, model, Go, and toolchain versions. Record credential variable names, never credential values.
 3. Create a fresh isolated project from each case's starting files. Run the case through the configured workflow using the same entry point and approval rules as normal team tasks. Task documents live in the task directory; application work belongs in the project root containing `watts.yaml`.
 4. Record clarification, approval, rejection, retry, and manual-edit interventions. Apply the case's intervention policy consistently. Do not silently repair outputs or discard failed runs.
 5. Retain the resulting project, workflow history, checks, and available executor output. Independently check acceptance criteria and regressions; the agent's completion report is not verification.

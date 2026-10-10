@@ -1,15 +1,25 @@
 kind: Workflow
-name: research
 schema_version: 1
+name: research
 spec:
   version: 1
   steps:
-  - agent: build
-    identity: watts-researcher
-    model: deepseek/deepseek-v4-flash
-    name: research
-    outputs:
+    - name: research
+      use:
+        kind: Agent
+        name: research
+---
+kind: Agent
+schema_version: 1
+name: research
+spec:
+  runtime_agent: build
+  outputs:
     - REPORT.md
-    prompt: Investigate the question described in this task's files. Inspect the project and write your
-      findings, supporting evidence and unresolved questions to {task}/REPORT.md.
-    provider: openrouter
+  runtime: pi
+  identity: watts-researcher
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: Investigate the question described in this task's files. Inspect the project and write your findings, supporting evidence and unresolved questions to {task}/REPORT.md.
+  sandbox:
+    mode: local

@@ -95,29 +95,19 @@ Task-scoped execution evidence should remain easy to associate with its task. Co
 
 ### wiss-016: Typed workflow resources and compiled execution packages
 
-Define reusable resource kinds that separate orchestration, units of work, agent configuration, shared configuration, and credentials:
+The authoring model uses **Workflow, Procedure, Agent, ConfigMap, and Secret**. A Workflow places reusable Agent or Procedure resources and owns routing. An Agent specializes the common work contract with model, runtime, identity, instructions, skills, and tools. Model and prompt are fields, not separate Kinds. See the [Kinds reference](docs/kinds.md) for implemented fields and the [Go generalist example](resources/examples/go_generalist/README.md) for usage.
 
-- `Workflow`: stage references, input bindings, outcome routing, approval/event waits, and overall limits.
-- `Stage`: inputs, outputs, checks, allowed outcomes, executor requirements, workspace access, and attempt limits.
-- `Agent`: reusable runtime, model, instructions, skills, and tool configuration selected by an agent executor.
-- `ConfigMap`: reusable, non-secret configuration values or configuration file contents referenced by Workflow, Stage, or Agent resources.
-- `Secret`: named references to sensitive values, such as API keys, gateway credentials, and authentication tokens, supplied by the user or organization.
-- `Model`: ?
-- `Prompt`: ?
+Implemented authoring support includes bundle-local references, typed decoding, values-driven templates, ConfigMap specification defaults, environment-backed Secret references, and resolution into pinned local execution definitions. This does not complete portable execution packaging.
 
-Define explicit bindings for ConfigMap entries, such as named parameters, environment variables, or mounted configuration files. Resolve and snapshot referenced entries during compilation so runs retain the configuration they were compiled with; editing a ConfigMap must not silently change an active run. Validate missing entries, incompatible values, and conflicting bindings. Credentials remain separate scoped secret references and must not be stored in ConfigMaps.
+Remaining work:
 
-Allow teams to bring their own model providers, gateways, and API keys. Keep provider endpoints and other non-sensitive settings in Agent configuration or ConfigMaps, and bind authentication through explicit Secret references. Define how local environment variables, protected files, and managed secret stores can supply values without committing credentials to authoring manifests.
+- Compile immutable orchestration manifests and self-contained execution packages containing instructions, skills, scripts, and configuration, with integrity identities and pinned runtime dependencies.
+- Define explicit upstream evidence bindings, workspace revisions, artifact transfer, and publication of accepted changes for isolated executors on distinct nodes.
+- Extend shared configuration bindings when concrete needs justify parameter or file-mount support; preserve snapshots so edits cannot silently change active runs.
+- Extend credential sources beyond environment variables, with scoped delivery, rotation/revocation semantics, and protected-file or managed-store support. Keep values out of packages and history.
+- Define package schemas, compile/apply interfaces, and runtime requirements. Workers should execute resolved packages without depending on mutable authoring assets.
 
-Compiled packages should contain only Secret references and declared access requirements. Resolve values at launch and expose only the required entries to the authorized stage or runtime through environment variables or protected files. Do not include secret values in Temporal history, logs, reports, published artifacts, or the web UI. Report missing or inaccessible credentials clearly without revealing their values. Define rotation and revocation behavior, retry semantics when credentials change, and cleanup after an attempt; record source/version identifiers where available without recording credential contents.
-
-A stage abstracts execution generally: scripts, human gates, and event waits do not require an Agent. Specify how reusable stage definitions differ from their placement in a workflow, so routing and upstream bindings remain workflow-owned. Keep definitions distinct from runtime records such as WorkflowRun and StageAttempt; an Agent definition is not a running process.
-
-Compile resource references and project settings into an immutable orchestration manifest and self-contained stage packages. Package required instructions, skills, scripts, and configuration, and pin runtime dependencies. Workers execute the compiled plan without rereading authoring files. Bind workspace revisions, upstream evidence, attempt identities, and scoped credentials at launch; do not embed secrets or future execution values during compilation.
-
-The contract must support container or sandbox execution on distinct nodes, isolated workspaces, durable artifact transfer, and explicit publication of accepted changes. Preserve the build/review loop with attempt-specific findings and exact workspace revision bindings. See [stage communication](stage-communication.md); coordinate with wiss-007's executor abstraction and wiss-014's worker design.
-
-Before implementation, define resource identity and reference resolution, validation rules, package integrity, and the compile/apply boundary. Demonstrate the model with the Go generalist workflow and a shared Agent used by multiple stages. Add further resource kinds only when independent reuse or management justifies them; Kubernetes-style continuous reconciliation is not implied.
+Keep resource definitions distinct from execution records and preserve the build/review loop with attempt-specific findings and exact workspace revision bindings. Coordinate with wiss-007 and wiss-014. The [stage communication proposal](docs/stage-communication.md) owns the distributed contract; Kubernetes-style continuous reconciliation is not implied.
 
 ## Long-term features
 
@@ -127,9 +117,9 @@ These items describe future capabilities beyond the MVP. Implementation choices 
 
 Let developers run workflow stages against a local project while viewing code changes, diffs, stage output, and generated artifacts in real time through their editor and the Watts UI. Support the same experience for build, review, QA, and other stages, with workspace permissions appropriate to each stage.
 
-Evaluate local containers, microVMs, and operating-system sandboxes. Compare a constrained project mount with an isolated project copy that the editor can inspect and Watts can apply back to the project. A mounted directory alone does not provide a security boundary. Define access to project files, dependencies, network services, MCP tools, and credentials explicitly; keep unrelated host files, host credentials, and privileged runtime sockets inaccessible by default. Watts' current agent guardrails are not a sandbox. See [sandbox research](sandbox.md).
+Evaluate local containers, microVMs, and operating-system sandboxes. Compare a constrained project mount with an isolated project copy that the editor can inspect and Watts can apply back to the project. A mounted directory alone does not provide a security boundary. Define access to project files, dependencies, network services, MCP tools, and credentials explicitly; keep unrelated host files, host credentials, and privileged runtime sockets inaccessible by default. Watts' current agent guardrails are not a sandbox. See [sandbox research](docs/sandbox.md).
 
-Preserve the [stage communication contract](stage-communication.md): live changes are a candidate revision, and downstream stages consume explicitly published revisions. Builder stages may write application code; review and QA stages should normally inspect that code read-only and write their own reports separately. Seeing a change in the editor must not count as accepting it or approving the task.
+Preserve the [stage communication contract](docs/stage-communication.md): live changes are a candidate revision, and downstream stages consume explicitly published revisions. Builder stages may write application code; review and QA stages should normally inspect that code read-only and write their own reports separately. Seeing a change in the editor must not count as accepting it or approving the task.
 
 Define how concurrent developer edits, cancellation, failed attempts, and partial changes are handled. Pin the revision under review, detect conflicts before applying accepted changes, and invalidate approval when the reviewed content changes. Demonstrate that a developer can follow an attempt live, stop it, inspect its changes, and choose whether to apply them without exposing the rest of their machine. Coordinate with wiss-007 and wiss-016.
 

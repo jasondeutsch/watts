@@ -1,103 +1,9 @@
 kind: Workflow
-name: sdlc
 schema_version: 1
+name: sdlc
 spec:
-  capture_baseline: true
   version: 1
-  steps:
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    model: deepseek/deepseek-v4-flash
-    name: specification
-    outputs:
-    - SPEC.md
-    prompt: Read the human's request in {task}/SPEC.md; it may be rough notes rather than a complete draft.
-      Use the spec-template skill to investigate the project and draft or refine {task}/SPEC.md. Preserve
-      existing human intent, constraints, and substantive content; never overwrite it with a blank template.
-      Record unresolved questions rather than inventing requirements. Incorporate previous review feedback.
-      Write the updated SPEC.md to disk. Do not implement code or approve documents. The project root
-      is the current working directory containing watts.yaml. Implement application source, tests, modules,
-      and other project files in the project root and its normal source directories. The task directory
-      holds workflow documents, story logs, review artifacts, and execution evidence only; do not create
-      application code or a separate application module inside it. Quality gates run from the project
-      root, not with a task-directory working directory.
-    provider: openrouter
-    checks:
-    - script: check-spec
-  - human: true
-    inputs:
-    - SPEC.md
-    name: spec-review
-    transitions:
-      approved: planning
-      rejected: specification
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    model: deepseek/deepseek-v4-flash
-    name: planning
-    outputs:
-    - PLAN.md
-    prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template
-      skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous
-      review feedback. Do not implement code or approve documents. The project root is the current working
-      directory containing watts.yaml. Implement application source, tests, modules, and other project
-      files in the project root and its normal source directories. The task directory holds workflow documents,
-      story logs, review artifacts, and execution evidence only; do not create application code or a separate
-      application module inside it. Quality gates run from the project root, not with a task-directory
-      working directory.
-    provider: openrouter
-    checks:
-    - script: check-plan
-  - human: true
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    name: plan-review
-    transitions:
-      approved: build
-      rejected: planning
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    model: deepseek/deepseek-v4-flash
-    name: build
-    outputs:
-    - STORY_LOG.md
-    prompt: /ralph --path ./{task}
-    provider: openrouter
-    checks:
-    - args:
-      - --strict
-      script: check-stories
-    - script: gates
-    - script: check-rework
-    pre_checks:
-    - script: preflight
-  - agent: review
-    identity: watts-reviewer
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    - STORY_LOG.md
-    model: deepseek/deepseek-v4-flash
-    name: review
-    on_failure: build
-    outputs:
-    - review/VERDICT.md
-    prompt: /ralph --path ./{task}/review
-    provider: openrouter
-    checks:
-    - args:
-      - --require-pass
-      script: check-verdict
-    pre_checks:
-    - script: pre-review
+  capture_baseline: true
   templates:
     .gitignore: |
       .watts-state/
@@ -497,3 +403,143 @@ spec:
       ## Completion
 
       Stop with <promise>REVIEWED</promise> only when `__TASKS__/__NAME__/review/VERDICT.md` exists, ends with one valid verdict line, and the verdict file check above reports a valid verdict.
+  steps:
+    - name: specification
+      use:
+        kind: Agent
+        name: specification
+    - name: spec-review
+      use:
+        kind: Procedure
+        name: spec-review
+      transitions:
+        approved: planning
+        rejected: specification
+    - name: planning
+      use:
+        kind: Agent
+        name: planning
+    - name: plan-review
+      use:
+        kind: Procedure
+        name: plan-review
+      transitions:
+        approved: build
+        rejected: planning
+    - name: build
+      use:
+        kind: Agent
+        name: build
+    - name: review
+      use:
+        kind: Agent
+        name: review
+      on_failure: build
+---
+kind: Agent
+schema_version: 1
+name: specification
+spec:
+  runtime_agent: build
+  inputs:
+    - SPEC.md
+  outputs:
+    - SPEC.md
+  checks:
+    - script: check-spec
+  runtime: pi
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: Read the human's request in {task}/SPEC.md; it may be rough notes rather than a complete draft. Use the spec-template skill to investigate the project and draft or refine {task}/SPEC.md. Preserve existing human intent, constraints, and substantive content; never overwrite it with a blank template. Record unresolved questions rather than inventing requirements. Incorporate previous review feedback. Write the updated SPEC.md to disk. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+  sandbox:
+    mode: local
+---
+kind: Procedure
+schema_version: 1
+name: spec-review
+spec:
+  inputs:
+    - SPEC.md
+  execution:
+    type: approval
+---
+kind: Agent
+schema_version: 1
+name: planning
+spec:
+  runtime_agent: build
+  inputs:
+    - SPEC.md
+  outputs:
+    - PLAN.md
+  checks:
+    - script: check-plan
+  runtime: pi
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+  sandbox:
+    mode: local
+---
+kind: Procedure
+schema_version: 1
+name: plan-review
+spec:
+  inputs:
+    - SPEC.md
+    - PLAN.md
+  execution:
+    type: approval
+---
+kind: Agent
+schema_version: 1
+name: build
+spec:
+  runtime_agent: build
+  inputs:
+    - SPEC.md
+    - PLAN.md
+  outputs:
+    - STORY_LOG.md
+  pre_checks:
+    - script: preflight
+  checks:
+    - script: check-stories
+      args:
+        - --strict
+    - script: gates
+    - script: check-rework
+  runtime: pi
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: /ralph --path ./{task}
+  sandbox:
+    mode: local
+---
+kind: Agent
+schema_version: 1
+name: review
+spec:
+  runtime_agent: review
+  inputs:
+    - SPEC.md
+    - PLAN.md
+    - STORY_LOG.md
+  outputs:
+    - review/VERDICT.md
+  pre_checks:
+    - script: pre-review
+  checks:
+    - script: check-verdict
+      args:
+        - --require-pass
+  runtime: pi
+  identity: watts-reviewer
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: /ralph --path ./{task}/review
+  sandbox:
+    mode: local

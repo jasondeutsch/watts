@@ -1,0 +1,543 @@
+agents:
+  build:
+    checks:
+      - args:
+          - --strict
+        script: check-stories
+      - script: gates
+      - script: check-rework
+    config_ref: agent-defaults
+    identity: watts-agent
+    inputs:
+      - SPEC.md
+      - PLAN.md
+    mcps:
+      - gopls
+    outputs:
+      - STORY_LOG.md
+    pre_checks:
+      - script: preflight
+    prompt: /ralph --path ./{task}
+    runtime_agent: build
+    skills_dirs:
+      - resources/examples/go_generalist/skills
+  planning:
+    checks:
+      - script: check-plan
+    config_ref: agent-defaults
+    identity: watts-agent
+    inputs:
+      - SPEC.md
+    outputs:
+      - PLAN.md
+    prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Include `bash resources/examples/go_generalist/scripts/lint.sh` in PLAN.md quality gates. Lint findings must be fixed without weakening the lint configuration.
+    runtime_agent: build
+  review:
+    checks:
+      - args:
+          - --require-pass
+        script: check-verdict
+    config_ref: agent-defaults
+    identity: watts-reviewer
+    inputs:
+      - SPEC.md
+      - PLAN.md
+      - STORY_LOG.md
+    outputs:
+      - review/VERDICT.md
+    pre_checks:
+      - script: pre-review
+    prompt: /ralph --path ./{task}/review
+    runtime_agent: review
+  specification:
+    checks:
+      - script: check-spec
+    config_ref: agent-defaults
+    identity: watts-agent
+    inputs:
+      - SPEC.md
+    outputs:
+      - SPEC.md
+    prompt: Read the human's request in {task}/SPEC.md; it may be rough notes rather than a complete draft. Use the spec-template skill to investigate the project and draft or refine {task}/SPEC.md. Preserve existing human intent, constraints, and substantive content; never overwrite it with a blank template. Record unresolved questions rather than inventing requirements. Incorporate previous review feedback. Write the updated SPEC.md to disk. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+    runtime_agent: build
+config_maps:
+  agent-defaults:
+    data:
+      api: openai-completions
+      auth:
+        env: OPENROUTER_API_KEY
+        secret:
+          key: api-key
+          name: model-credentials
+      base_url: https://openrouter.ai/api/v1
+      model: deepseek/deepseek-v4-flash
+      provider: openrouter
+      runtime: pi
+      sandbox:
+        mode: local
+      thinking: medium
+procedures:
+  lint:
+    execution:
+      command: bash resources/examples/go_generalist/scripts/lint.sh
+      type: command
+    timeout_seconds: 360
+  plan-review:
+    execution:
+      type: approval
+    inputs:
+      - SPEC.md
+      - PLAN.md
+  spec-review:
+    execution:
+      type: approval
+    inputs:
+      - SPEC.md
+secrets:
+  model-credentials:
+    env:
+      api-key: OPENROUTER_API_KEY
+workflow:
+  name: go-generalist
+  spec:
+    capture_baseline: true
+    steps:
+      - name: specification
+        use:
+          kind: Agent
+          name: specification
+      - name: spec-review
+        transitions:
+          approved: planning
+          rejected: specification
+        use:
+          kind: Procedure
+          name: spec-review
+      - name: planning
+        use:
+          kind: Agent
+          name: planning
+      - name: plan-review
+        transitions:
+          approved: build
+          rejected: planning
+        use:
+          kind: Procedure
+          name: plan-review
+      - name: build
+        use:
+          kind: Agent
+          name: build
+      - name: lint
+        use:
+          kind: Procedure
+          name: lint
+      - name: review
+        on_failure: build
+        use:
+          kind: Agent
+          name: review
+    templates:
+      .gitignore: |
+        .watts-state/
+        .ralph-runner/
+        .ralph-runner-archive/
+        review/.ralph-runner/
+        review/.ralph-runner-archive/
+      PLAN.md: |
+        # PLAN: <name>
+
+        Task documents: tasks/<date>-<slug>/
+        Implementation root: the project directory containing watts.yaml
+
+        Application source, tests, dependencies, and build files belong in the project root and its normal source directories. The task directory stores workflow documents and evidence only. Do not create a separate application or module under the task directory.
+        Spec ref: SPEC.md v<N>
+        Risk tier at Planning: <0 / 1 / 2, from SPEC.md>
+
+        *The planning agent drafts this file. The plan-review workflow gate records human approval before implementation starts.*
+
+        ## Architecture and approach
+
+        What's the actual technical approach. Which existing components this extends versus touches versus leaves alone. Specific enough that two engineers reading this would build the same thing.
+
+        -
+
+        ## Data model and interface changes
+
+        Concrete types, schemas, API contracts, or interfaces that change. Write "none" explicitly if purely internal, don't leave it blank.
+
+        -
+
+        ## Systems touched
+
+        Cross-checked against the risk-tiering skill, not from memory.
+
+        - Touches:
+        - Does not touch:
+
+        ## Technical decisions and alternatives considered
+
+        What got chosen, what got rejected, and why. Not allowed to collapse silently for anything above Tier 0.
+
+        -
+
+        ## Testing strategy
+
+        What gets covered by unit tests, what by integration tests, what's explicitly left untested and why that's acceptable here.
+
+        -
+
+        ## Observability
+
+        What gets logged, measured, or alerted once this ships. How will anyone know it's working, how will anyone know it broke.
+
+        -
+
+        ## Security and privacy considerations
+
+        Data handled, auth or access implications, anything that needs review beyond what the risk tier alone captures.
+
+        -
+
+        ## Performance considerations
+
+        Expected load, any latency or memory budget, what happens under failure or at the edge of that budget.
+
+        -
+
+        ## Risk tier recheck
+
+        Run the risk-tiering skill again against what this plan actually describes, not what SPEC.md assumed before the technical approach was known.
+
+        Risk tier after planning: <0 / 1 / 2>
+        Changed from Planning and Requirements: <yes, no>
+        If yes, why:
+
+        ## Rollback and migration
+
+        How this gets undone if it's wrong. Required above Tier 0.
+
+        -
+
+        ## Dependencies and sequencing
+
+        What this blocks on, what blocks on this, whether the order conflicts with other work already in flight.
+
+        -
+
+        ## Quality gates
+
+        Commands every story must pass before it counts as done, one backticked command per bullet. Real commands for this repository, run from the repository root, not placeholders. The builder runs them, and the reviewer and the Watts checks run them again independently.
+
+        - `go build ./...`
+        - `bash resources/examples/go_generalist/scripts/lint.sh`
+        - `go test ./...`
+
+        ## User stories
+
+        *The build loop works through these in order. Keep the heading format exactly (`### US-001: Title`). Each story must be small enough for one agent iteration, with checkable acceptance criteria, a `Covers:` line naming SPEC criteria, and a `Depends on:` line. Every SPEC criterion must be covered by some story. Put the riskiest or approach-proving story first.*
+
+        ### US-001: <short title>
+
+        Covers: AC-1
+        Depends on: none
+
+        **As a** <user type>
+        **I want** <capability>
+        **So that** <benefit>
+
+        #### Acceptance Criteria
+        - [ ] <checkable criterion>
+        - [ ] <checkable criterion>
+
+        ### US-002: <short title>
+
+        Covers: AC-2
+        Depends on: US-001
+
+        **As a** <user type>
+        **I want** <capability>
+        **So that** <benefit>
+
+        #### Acceptance Criteria
+        - [ ] <checkable criterion>
+
+        ## Open questions for the author agent
+
+        Anything ambiguous enough to come back as a question rather than get resolved by the agent's own judgment. Answer these here, before Development starts, don't let them surface for the first time as a rejection.
+
+        -
+
+        ## Review
+
+        An agent drafts this document. The human approves or rejects it at the plan-review workflow gate with `watts task decide <task> plan-review`, optionally using `--reject --feedback 'changes needed'`.
+      RALPH.md: |
+        ---
+        commands:
+          - name: approval
+            run: bash __KIT__/scripts/check-approval.sh __TASKS__/__NAME__
+            timeout: 60
+          - name: progress
+            run: bash __KIT__/scripts/check-stories.sh __TASKS__/__NAME__
+            timeout: 60
+          - name: stories
+            run: bash __KIT__/scripts/check-stories.sh __TASKS__/__NAME__ --strict
+            timeout: 60
+            acceptance: true
+          - name: gates
+            run: bash __KIT__/scripts/gates.sh __TASKS__/__NAME__
+            timeout: 900
+            acceptance: true
+          - name: feedback
+            run: bash __KIT__/scripts/evidence.sh __TASKS__/__NAME__ feedback
+            timeout: 30
+          - name: rework
+            run: bash __KIT__/scripts/check-rework.sh __TASKS__/__NAME__
+            timeout: 60
+            acceptance: true
+        max_iterations: 30
+        timeout: 900
+        items_per_iteration: 1
+        completion_promise: DONE
+        completion_gate: required
+        required_outputs:
+          - STORY_LOG.md
+        stop_on_error: true
+        guardrails:
+          block_commands:
+            - '(?:^|[\s;&|/])git(?:\s|$)'
+            - 'rm\s+-rf\s+/'
+          protected_files:
+            - '.git'
+            - '.git/**'
+            - '**/.git'
+            - '**/.git/**'
+            - '.env*'
+            - '*.pem'
+            - '*.key'
+            - 'policy:secret-bearing-paths'
+            - '**/SPEC.md'
+            - '**/PLAN.md'
+            - '**/BASE'
+            - '**/review/**'
+            - '__KIT__/**'
+            - '.watts/**'
+          # Tier 1 and 2: uncomment to allow only the commands this project needs. Adapt to your toolchain.
+          # Each pattern must match the WHOLE command (the extension anchors it), and this list also governs the
+          # loop's own `commands` above, so every script they call must be allowed. The character class keeps
+          # shell operators (; & | < > ` $) out of allowed commands.
+          # shell_policy:
+          #   mode: allowlist
+          #   allow:
+          #     - 'go (build|vet|test|fmt|mod)( [^;&|<>`$]*)?'
+          #     - '(ls|cat|head|tail|grep|rg|find|wc|mkdir|echo|printf)( [^;&|<>`$]*)?'
+          #     - 'bash __KIT__/scripts/(gates|evidence|snapshot|check-[a-z]+)\.sh [^;&|<>`$]*'
+        ---
+        You are an autonomous coding agent running in a loop, building one task of the Watts workflow.
+        Each iteration starts with a fresh context. Your progress lives in the code, in the snapshots Watts records, and in STORY_LOG.md. Watts records progress without version control. Do not run Git commands or change version-control metadata.
+
+        The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+
+        Your task folder is `__TASKS__/__NAME__`. Read `__TASKS__/__NAME__/SPEC.md` and `__TASKS__/__NAME__/PLAN.md` first. Ignore every other folder under `__TASKS__/`. Do not edit SPEC.md, PLAN.md, BASE, anything under `review/`, or anything under `__KIT__/`.
+
+        ## Evidence
+
+        Approval check:
+        {{ commands.approval }}
+
+        Story progress:
+        {{ commands.progress }}
+
+        Quality gates:
+        {{ commands.gates }}
+
+        Reviewer feedback (latest verdict):
+        {{ commands.feedback }}
+
+        Rework check:
+        {{ commands.rework }}
+
+        ## This iteration
+
+        1. If the approval check does not say `APPROVAL: OK`, write a line starting `P0:` to OPEN_QUESTIONS.md explaining what is missing, make no code changes, and do not emit the completion promise.
+        2. If the latest verdict is a rejection (`VERDICT: REJECT`), fix exactly what it names before anything else. Then take a snapshot as in step 5.
+        3. Otherwise pick the lowest-numbered story in PLAN.md that is not logged DONE in STORY_LOG.md and whose `Depends on:` stories are all done. Implement only that story, covering the acceptance criteria listed under it.
+        4. Run the quality gates. Fix every failure before taking the snapshot.
+        5. Take a snapshot: run `bash __KIT__/scripts/snapshot.sh __TASKS__/__NAME__`. It prints a snapshot id on its last line.
+        6. Append one line to STORY_LOG.md in exactly this form, using the snapshot id from step 5:
+           `DONE US-00N <snapshot-id>`
+           Never log a story as done without a real snapshot.
+        7. Add one or two lines of learnings to RALPH_PROGRESS.md.
+        8. Save STORY_LOG.md, RALPH_PROGRESS.md and OPEN_QUESTIONS.md. There is nothing to commit.
+
+        ## Rules
+
+        - One story per iteration. No placeholder code. No work outside the story's scope or the SPEC's non-goals.
+        - Do not claim a check passed unless you ran it and saw it pass.
+        - If SPEC.md or PLAN.md is wrong or unclear, add a `P0:` line to OPEN_QUESTIONS.md and stop. Do not work around it.
+        - OPEN_QUESTIONS.md holds one unresolved question per line, prefixed `P0:`, `P1:` or `P2:`. Delete a line once it is resolved. If nothing is open, the file should say `None.`
+
+        ## Completion
+
+        Stop with <promise>DONE</promise> only when every story in PLAN.md is logged DONE with a real snapshot, the quality gates pass, any rejection in the latest verdict has been fixed, and OPEN_QUESTIONS.md has no unresolved P0 or P1 lines.
+
+        ## Team Go guidance
+
+        Read the go-builder skill from your available skills before implementing a story, and apply its implementation and testing guidance.
+      SPEC.md: |
+        # SPEC: <name>
+
+        ## Status
+        Draft / In Review / Approved / Superseded
+        Version: v1
+        Supersedes: <none, or tasks/<name>/SPEC.md vN>
+        Owner: <human name>
+        Last updated: <date>
+
+        ## Intent
+        Why this exists, what problem it solves, for whom. One or two paragraphs, not a restatement of the acceptance criteria.
+
+        ## Background and context
+        Relevant prior art, related systems, why this is being done now rather than earlier or later.
+
+        ## Acceptance criteria
+        Write each criterion using the EARS pattern that fits: an invariant, event, state, unwanted condition, or optional feature followed by the system response. Combine a state and event only when both matter. Not "handles errors gracefully," that's not testable. Number each one (AC-1, AC-2, ...) so PLAN.md's user stories can name which criteria they cover. Example:
+
+        - AC-1: While the queue is non-empty, when a worker polls, the dispatcher shall return exactly one unclaimed task.
+        - AC-2: While no tasks are available, when a worker polls, the dispatcher shall return an empty result within 200ms, not block.
+
+        - AC-3:
+
+        ## Explicit non-goals
+        What this deliberately does not do. Required, not optional, this is what the admission rubric checks a diff against for invented scope.
+
+        -
+
+        ## Assumptions
+        What's being taken as given. Worth stating explicitly, because if one of these is wrong, the spec is wrong, not the implementation.
+
+        -
+
+        ## Constraints
+        Technical, regulatory, timeline, or resourcing limits that shape the acceptance criteria above.
+
+        -
+
+        ## Open questions
+        Ambiguity that has to be resolved by a human before PLAN.md gets written, not silently assumed by whoever implements this. If this section is empty, that's worth a second look, not a sign everything's clear.
+
+        -
+
+        ## Risk-relevant context
+        - Touches:
+        - Does not touch:
+
+        ## Risk tier
+        <0 / 1 / 2, from the risk-tiering skill>
+
+        ## Review
+
+        An agent drafts this document. The human approves or rejects it at the spec-review workflow gate with `watts task decide <task> spec-review`, optionally using `--reject --feedback 'changes needed'`.
+      review/RALPH.md: |
+        ---
+        commands:
+          - name: approval
+            run: bash __KIT__/scripts/check-approval.sh __TASKS__/__NAME__
+            timeout: 60
+          - name: stories
+            run: bash __KIT__/scripts/check-stories.sh __TASKS__/__NAME__ --strict
+            timeout: 60
+          - name: snapshots
+            run: bash __KIT__/scripts/evidence.sh __TASKS__/__NAME__ snapshots
+            timeout: 60
+          - name: diffstat
+            run: bash __KIT__/scripts/evidence.sh __TASKS__/__NAME__ diffstat
+            timeout: 60
+          - name: gates
+            run: bash __KIT__/scripts/gates.sh __TASKS__/__NAME__
+            timeout: 900
+          - name: verdict
+            run: bash __KIT__/scripts/check-verdict.sh __TASKS__/__NAME__
+            timeout: 300
+            acceptance: true
+        max_iterations: 10
+        timeout: 900
+        completion_promise: REVIEWED
+        completion_gate: required
+        required_outputs:
+          - VERDICT.md
+        stop_on_error: true
+        guardrails:
+          block_commands:
+            - '(?:^|[\s;&|/])git(?:\s|$)'
+            - 'rm\s+-rf'
+          protected_files:
+            - '.git'
+            - '.git/**'
+            - '**/.git'
+            - '**/.git/**'
+            - '.env*'
+            - '*.pem'
+            - '*.key'
+            - 'policy:secret-bearing-paths'
+            - '**/SPEC.md'
+            - '**/PLAN.md'
+            - '**/BASE'
+            - '**/STORY_LOG.md'
+            - '**/RALPH.md'
+            - '__KIT__/**'
+            - '.watts/**'
+            # Add your source patterns here so the reviewer cannot edit code, for example:
+            # - '**/*.go'
+            # - 'go.mod'
+            # - 'go.sum'
+          # Each pattern must match the WHOLE command (the extension anchors it with ^(?:...)$), and the allowlist
+          # also governs the loop's own `commands` above. The character class keeps shell operators
+          # (; & | < > ` $) out of allowed commands.
+          shell_policy:
+            mode: allowlist
+            allow:
+              - 'bash __KIT__/scripts/(gates|evidence|check-[a-z]+)\.sh [^;&|<>`$]*'
+              - '(ls|cat|head|tail|grep|rg|find|wc|echo|printf)( [^;&|<>`$]*)?'
+              # Add your test commands so the reviewer can run them, for example:
+              # - 'go (build|vet|test)( [^;&|<>`$]*)?'
+        ---
+        You are an independent reviewer in the Watts workflow. You did not write this code, and you must not change it. Use Watts snapshots for evidence; do not run Git commands or change version-control metadata.
+
+        Your task folder is `__TASKS__/__NAME__` (the work is in the repository, and your own folder is `__TASKS__/__NAME__/review`). The author's task folder holds SPEC.md, PLAN.md and STORY_LOG.md. Read them. Ignore every other folder under `__TASKS__/`.
+
+        You may write only `__TASKS__/__NAME__/review/VERDICT.md`, OPEN_QUESTIONS.md, and RALPH_PROGRESS.md in this folder. Do not edit source files, SPEC.md, PLAN.md, STORY_LOG.md, or change anything outside the review folder.
+
+        ## Evidence
+
+        Approval check:
+        {{ commands.approval }}
+
+        Story check:
+        {{ commands.stories }}
+
+        Snapshots taken for this task:
+        {{ commands.snapshots }}
+
+        Diff summary:
+        {{ commands.diffstat }}
+
+        Quality gates (run just now):
+        {{ commands.gates }}
+
+        Verdict file check:
+        {{ commands.verdict }}
+
+        ## What to do
+
+        1. Find the admission-rubric skill among your available skills, read its SKILL.md, and apply it in the order it defines: spec fidelity, required approvals, the test suite, then the three failure modes. Review the whole task diff, which `bash __KIT__/scripts/evidence.sh __TASKS__/__NAME__ diff` prints (everything that changed since the baseline snapshot named in `__TASKS__/__NAME__/BASE`), against SPEC.md's acceptance criteria and non-goals and against PLAN.md's stories.
+        2. Write `__TASKS__/__NAME__/review/VERDICT.md`. Put your reasoning first, covering each story. The last line of the file must be exactly one of:
+           - `VERDICT: PASS`
+           - `VERDICT: REJECT: <rubric step>: <specific reason>`
+        3. Be strict. Reject on doubt. A false pass is worse than a false rejection. Do not pass if the approval check, the story check, or the quality gates above are not clean, because the verdict file check refuses such a pass.
+        4. If anything is unclear, add a `P0:` line to OPEN_QUESTIONS.md. Otherwise write `None.` in it.
+
+        ## Completion
+
+        Stop with <promise>REVIEWED</promise> only when `__TASKS__/__NAME__/review/VERDICT.md` exists, ends with one valid verdict line, and the verdict file check above reports a valid verdict.
+    version: 1

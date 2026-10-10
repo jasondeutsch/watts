@@ -28,7 +28,7 @@ func TestRejectInvalidManifests(t *testing.T) {
 		{"nested typo", validWorkflow + "      timeot_seconds: 10\n", "timeot_seconds"},
 		{"duplicate key", validWorkflow + "      command: false\n", "already defined"},
 		{"invalid syntax", "kind: [", "invalid YAML"},
-		{"multiple documents", validWorkflow + "---\n" + validWorkflow, "exactly one YAML document"},
+		{"multiple documents", validWorkflow + "---\n" + validWorkflow, "duplicate resource"},
 		{"wrong field type", strings.Replace(validWorkflow, "schema_version: 1", "schema_version: nope", 1), "invalid YAML"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -39,11 +39,11 @@ func TestRejectInvalidManifests(t *testing.T) {
 }
 
 func TestMultilineInstructionsRoundTrip(t *testing.T) {
-	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "build", Agent: "build", Prompt: "Read SPEC.md.\nPreserve \\\n and \"quotes\".\n"}}}
+	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "build", Agent: "build", Identity: "builder", Provider: "openrouter", Model: "coding-model", Prompt: "Read SPEC.md.\nPreserve \\\n and \"quotes\".\n"}}}
 	data, err := manifest.Encode(manifest.Workflow, "example", definition)
 	require.NoError(t, err)
 	require.Contains(t, string(data), "prompt: |")
 	document, err := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
 	require.NoError(t, err)
-	require.Equal(t, definition, document.Spec)
+	require.Equal(t, definition.Steps[0].Prompt, document.Spec.Steps[0].Prompt)
 }

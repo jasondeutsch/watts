@@ -1,45 +1,21 @@
-# Example custom agent
+# Custom local agent directory
 
-This directory is a complete, working definition of a custom Watts agent. Copy it with
-`watts agent new <name>`, which also registers the agent in `watts.yaml`, or copy it by hand.
+This asset demonstrates local Pi runtime customization. `watts agent new <name>` creates a runtime role and registers its directory in Project `spec.agents`. A runtime directory is distinct from an [Agent resource](../../../../../docs/kinds.md#agent), which describes workflow work, including instructions, model, identity, and tools.
 
-An agent is a Pi agent directory (Pi's `PI_CODING_AGENT_DIR`) plus an entry under `agents` in
-`watts.yaml`. Watts runs it with a private HOME and an otherwise empty environment, the same as
-the built-in `build` and `review` agents.
+## Files
 
-## What is in this directory
-
-| File | Who owns it | Purpose |
-| --- | --- | --- |
-| `README.md` | you | Notes for people. Watts never reads it. |
-| `skills/` | you | One folder per skill, each with a `SKILL.md`. Watts copies these into the agent directory every time you run `watts config apply`. |
-| `watts.example.yaml` | you | The `watts.yaml` entries that point at this directory. It is a reference and is not read by Watts. |
-
-## What Watts writes into the agent directory
-
-These are generated and rebuilt from `watts.yaml`. Do not edit them by hand; change the
-configuration instead.
-
-| File | Source |
+| File | Purpose |
 | --- | --- |
-| `settings.json` | Provider and model selected by the workflow stage, plus thinking level and `pi_settings` from `watts.yaml`. Anything Pi added, such as installed packages, is kept. |
-| `models.json` | Generated from `providers` in `watts.yaml`, with the Ollama endpoint in `providers.ollama.base_url`. A `models.json` you wrote yourself is never replaced unless you pass `--force`. |
-| `.gitignore` | Keeps Pi's local state (logins, sessions, packages) out of git. |
+| `skills/` | Skills copied into the private Pi directory by configuration setup |
+| `watts.example.yaml` | Project/runtime configuration fragment; Watts does not read it automatically |
+| `README.md` | Human guidance |
 
-## The three ways to add to an agent
+The YAML fragment illustrates Project settings and an inline execution definition. For reusable Kind-based authoring, use the [resource templates](../../../../../resource-templates/README.md) or [Go team example](../../../../../resources/examples/go_generalist/README.md).
 
-1. Skills. Put a folder with a `SKILL.md` in `skills/` here, or list a directory in `skills_dirs`
-   (project wide at the top level of `watts.yaml`, or for this agent only under its entry).
-2. Tool servers (MCP) and other Pi settings. Put them under `pi_settings`, at the top level for
-   every agent or under this agent's entry. They are merged into `settings.json`; the keys are the
-   ones Pi documents for its settings file.
-3. Credentials. Never put a key in any file. Declare the provider under `providers` with
-   `api_key_env` (the name of a variable in your shell) or `api_key_command` (a command that prints
-   a key, for example to mint a short-lived one). Watts passes the variable through for you.
+## Using the runtime role
 
-## Using the agent in a workflow
+Reference the created role on an Agent with `spec.runtime_agent: <name>`. The Workflow step references that Agent with `use: {kind: Agent, name: <resource-name>}`. Set `provider`, `model`, `identity`, `prompt`, `runtime: pi`, and `sandbox: {mode: local}` on the Agent, directly or through ConfigMap defaults.
 
-Add a step to `spec.workflow.steps` in `watts.yaml` (see `watts.example.yaml`) and run
-`watts task run <task>`. A step with `agent` runs Pi under this agent with the given prompt,
-where `{task}` is the task folder. A step with `command` runs a shell command, and a step with
-`check` runs one of the kit scripts.
+Agent `skills_dirs` and `thinking` customize execution; Project agent settings supply directory and Pi defaults. Register MCP connections in Project `spec.mcps`, then select names in Agent `spec.mcps`; MCPs do not belong in `pi_settings`. Bind provider credentials through Agent `auth` and a Secret resource, or use Project provider credential sources.
+
+Watts generates private Pi settings and model definitions from resolved configuration. User-written `models.json` files are preserved unless configuration is applied with `--force`. Private HOME and agent directories separate local runtime state; they are not a filesystem sandbox. See the [runbook](../../../../../docs/runbook.md) for setup and diagnostics.

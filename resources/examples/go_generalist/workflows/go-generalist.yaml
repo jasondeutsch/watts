@@ -1,109 +1,44 @@
 kind: Workflow
-name: go-generalist
 schema_version: 1
+name: "go-generalist"
 spec:
   capture_baseline: true
-  version: 1
   steps:
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    model: deepseek/deepseek-v4-flash
-    name: specification
-    outputs:
-    - SPEC.md
-    prompt: Read the human's request in {task}/SPEC.md; it may be rough notes rather than a complete draft.
-      Use the spec-template skill to investigate the project and draft or refine {task}/SPEC.md. Preserve
-      existing human intent, constraints, and substantive content; never overwrite it with a blank template.
-      Record unresolved questions rather than inventing requirements. Incorporate previous review feedback.
-      Write the updated SPEC.md to disk. Do not implement code or approve documents. The project root
-      is the current working directory containing watts.yaml. Implement application source, tests, modules,
-      and other project files in the project root and its normal source directories. The task directory
-      holds workflow documents, story logs, review artifacts, and execution evidence only; do not create
-      application code or a separate application module inside it. Quality gates run from the project
-      root, not with a task-directory working directory.
-    provider: openrouter
-    checks:
-    - script: check-spec
-  - human: true
-    inputs:
-    - SPEC.md
-    name: spec-review
-    transitions:
-      approved: planning
-      rejected: specification
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    model: deepseek/deepseek-v4-flash
-    name: planning
-    outputs:
-    - PLAN.md
-    prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template
-      skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous
-      review feedback. Do not implement code or approve documents. The project root is the current working
-      directory containing watts.yaml. Implement application source, tests, modules, and other project
-      files in the project root and its normal source directories. The task directory holds workflow documents,
-      story logs, review artifacts, and execution evidence only; do not create application code or a separate
-      application module inside it. Quality gates run from the project root, not with a task-directory
-      working directory. Include `bash resources/examples/go_generalist/scripts/lint.sh` in PLAN.md quality
-      gates. Lint findings must be fixed without weakening the lint configuration.
-    provider: openrouter
-    checks:
-    - script: check-plan
-  - human: true
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    name: plan-review
-    transitions:
-      approved: build
-      rejected: planning
-  - agent: build
-    identity: watts-agent
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    mcps:
-    - gopls
-    model: deepseek/deepseek-v4-flash
-    name: build
-    outputs:
-    - STORY_LOG.md
-    prompt: /ralph --path ./{task}
-    provider: openrouter
-    checks:
-    - args:
-      - --strict
-      script: check-stories
-    - script: gates
-    - script: check-rework
-    pre_checks:
-    - script: preflight
-  - command: bash resources/examples/go_generalist/scripts/lint.sh
-    name: lint
-    timeout_seconds: 360
-  - agent: review
-    identity: watts-reviewer
-    inputs:
-    - SPEC.md
-    - PLAN.md
-    - STORY_LOG.md
-    model: deepseek/deepseek-v4-flash
-    name: review
-    on_failure: build
-    outputs:
-    - review/VERDICT.md
-    prompt: /ralph --path ./{task}/review
-    provider: openrouter
-    checks:
-    - args:
-      - --require-pass
-      script: check-verdict
-    pre_checks:
-    - script: pre-review
+    - name: specification
+      use:
+        kind: Agent
+        name: specification
+    - name: spec-review
+      transitions:
+        approved: planning
+        rejected: specification
+      use:
+        kind: Procedure
+        name: spec-review
+    - name: planning
+      use:
+        kind: Agent
+        name: planning
+    - name: plan-review
+      transitions:
+        approved: build
+        rejected: planning
+      use:
+        kind: Procedure
+        name: plan-review
+    - name: build
+      use:
+        kind: Agent
+        name: build
+    - name: lint
+      use:
+        kind: Procedure
+        name: lint
+    - name: review
+      on_failure: build
+      use:
+        kind: Agent
+        name: review
   templates:
     .gitignore: |
       .watts-state/
@@ -507,3 +442,135 @@ spec:
       ## Completion
 
       Stop with <promise>REVIEWED</promise> only when `__TASKS__/__NAME__/review/VERDICT.md` exists, ends with one valid verdict line, and the verdict file check above reports a valid verdict.
+  version: 1
+---
+kind: Agent
+schema_version: 1
+name: "build"
+spec:
+  checks:
+    - args:
+        - --strict
+      script: check-stories
+    - script: gates
+    - script: check-rework
+  config_ref: agent-defaults
+  identity: watts-agent
+  inputs:
+    - SPEC.md
+    - PLAN.md
+  mcps:
+    - gopls
+  outputs:
+    - STORY_LOG.md
+  pre_checks:
+    - script: preflight
+  prompt: /ralph --path ./{task}
+  runtime_agent: build
+  skills_dirs:
+    - resources/examples/go_generalist/skills
+---
+kind: Agent
+schema_version: 1
+name: "planning"
+spec:
+  checks:
+    - script: check-plan
+  config_ref: agent-defaults
+  identity: watts-agent
+  inputs:
+    - SPEC.md
+  outputs:
+    - PLAN.md
+  prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Include `bash resources/examples/go_generalist/scripts/lint.sh` in PLAN.md quality gates. Lint findings must be fixed without weakening the lint configuration.
+  runtime_agent: build
+---
+kind: Agent
+schema_version: 1
+name: "review"
+spec:
+  checks:
+    - args:
+        - --require-pass
+      script: check-verdict
+  config_ref: agent-defaults
+  identity: watts-reviewer
+  inputs:
+    - SPEC.md
+    - PLAN.md
+    - STORY_LOG.md
+  outputs:
+    - review/VERDICT.md
+  pre_checks:
+    - script: pre-review
+  prompt: /ralph --path ./{task}/review
+  runtime_agent: review
+---
+kind: Agent
+schema_version: 1
+name: "specification"
+spec:
+  checks:
+    - script: check-spec
+  config_ref: agent-defaults
+  identity: watts-agent
+  inputs:
+    - SPEC.md
+  outputs:
+    - SPEC.md
+  prompt: Read the human's request in {task}/SPEC.md; it may be rough notes rather than a complete draft. Use the spec-template skill to investigate the project and draft or refine {task}/SPEC.md. Preserve existing human intent, constraints, and substantive content; never overwrite it with a blank template. Record unresolved questions rather than inventing requirements. Incorporate previous review feedback. Write the updated SPEC.md to disk. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+  runtime_agent: build
+---
+kind: Procedure
+schema_version: 1
+name: "lint"
+spec:
+  execution:
+    command: bash resources/examples/go_generalist/scripts/lint.sh
+    type: command
+  timeout_seconds: 360
+---
+kind: Procedure
+schema_version: 1
+name: "plan-review"
+spec:
+  execution:
+    type: approval
+  inputs:
+    - SPEC.md
+    - PLAN.md
+---
+kind: Procedure
+schema_version: 1
+name: "spec-review"
+spec:
+  execution:
+    type: approval
+  inputs:
+    - SPEC.md
+---
+kind: ConfigMap
+schema_version: 1
+name: "agent-defaults"
+spec:
+  data:
+    api: openai-completions
+    auth:
+      env: OPENROUTER_API_KEY
+      secret:
+        key: api-key
+        name: model-credentials
+    base_url: https://openrouter.ai/api/v1
+    model: deepseek/deepseek-v4-flash
+    provider: openrouter
+    runtime: pi
+    sandbox:
+      mode: local
+    thinking: medium
+---
+kind: Secret
+schema_version: 1
+name: "model-credentials"
+spec:
+  env:
+    api-key: OPENROUTER_API_KEY

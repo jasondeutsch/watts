@@ -1,0 +1,4 @@
+kind: Workflow
+schema_version: 1
+name: {{ .Values.workflow.name | quote }}
+spec: {{ .Values.workflow.spec | toYaml | nindent 2 }}

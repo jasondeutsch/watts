@@ -2,15 +2,15 @@
 
 ![Watts proposed architecture](resources/diagrams/watts-architecture.svg)
 
-*Forward-looking design: compilation, portable stage packages, and distributed isolation are proposed. See [stage communication](stage-communication.md).*
+*Forward-looking diagram: portable stage packages and distributed isolation are proposed. See [stage communication](docs/stage-communication.md).*
 
-Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. Temporal manages workflow state; project workers execute the stages. The current implementation uses Pi and Ralph for agent execution.
+Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. Temporal manages workflow state; project workers execute the stages. The current implementation uses Pi and Ralph for agent execution. YAML bundles compose Workflow, Procedure, Agent, ConfigMap, and Secret resources; see [Kinds and usage](docs/kinds.md).
 
 This is an MVP and proof of concept. The application version remains **0.1.0** while the design evolves. Watts does not require Git.
 
 ## Get started
 
-You need Go 1.27 or later to build Watts, Node.js for Pi, and a running Temporal server. See the [runbook](runbook.md) for prerequisites and provider setup.
+You need Go 1.27 or later to build Watts, Node.js for Pi, and a running Temporal server. See the [runbook](docs/runbook.md) for prerequisites and provider setup.
 
 From this checkout, build Watts and start local Temporal with Docker Compose:
 
@@ -19,7 +19,7 @@ make build
 docker compose up -d --wait
 ```
 
-The build produces `bin/watts`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](temporal.md).
+The build produces `bin/watts`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](docs/temporal.md).
 
 From the project directory where you want application work performed:
 
@@ -30,7 +30,7 @@ watts doctor
 watts start -d
 ```
 
-The bundled workflows currently select `deepseek/deepseek-v4-flash` through OpenRouter. Export `OPENROUTER_API_KEY` in the shell **before starting Watts**. Configure another provider or model through [project configuration](runbook.md#configure-the-project) and [workflow templates](workflows.md).
+The bundled workflows currently select `deepseek/deepseek-v4-flash` through OpenRouter. Export `OPENROUTER_API_KEY` in the shell **before starting Watts**. Configure another provider or model through [project configuration](docs/runbook.md#configure-the-project) and [workflow templates](docs/workflows.md).
 
 `watts start` starts the project's worker and web UI, opens your default browser, and stays in the foreground. Use `-d` to detach and `watts stop` to stop both. Detached logs are in `.watts/service.log`. Temporal is managed separately.
 
@@ -63,13 +63,13 @@ To request changes, add `--reject --feedback "Changes needed"`. Agent review can
 
 Task submission returns before execution finishes. Follow progress in the web UI or with `task status`. If a stage fails, inspect its error and output, then use `watts task run <task>` or the UI's retry button. Submitted workflow definitions and runtime configuration are pinned; retry does not load subsequent edits.
 
-See the [task runbook](runbook.md) for the full procedure, approval rules, cancellation, and recovery.
+See the [task runbook](docs/runbook.md) for the full procedure, approval rules, cancellation, and recovery.
 
 ## Project layout
 
 The directory containing `watts.yaml` is the project root. Application source, tests, dependencies, and build files belong there or in its normal source directories.
 
-- `watts.yaml`: provider connections, agent settings, task location, and default workflow selection.
+- `watts.yaml`: project infrastructure, local runtime defaults, tool connections, task location, and default workflow selection.
 - `.watts/`: local agent state, generated assets, and service files.
 - `tasks/<task>/`: `SPEC.md`, `PLAN.md`, `workflow.yaml`, review documents, logs, and execution evidence.
 
@@ -77,18 +77,23 @@ A project can contain multiple tasks. Each task receives its own workflow defini
 
 ## Documentation
 
+The [documentation index](docs/README.md) groups guides by task.
+
 | Document | Covers |
 | --- | --- |
-| [Runbook](runbook.md) | Setup, configuration, task execution, and recovery |
-| [Workflows](workflows.md) | Templates, stages, capabilities, routing, and implementation location |
-| [Temporal](temporal.md) | Infrastructure, workers, durable execution, and recovery |
+| [Runbook](docs/runbook.md) | Setup, configuration, task execution, and recovery |
+| [Kinds](docs/kinds.md) | Resource definitions, references, shared defaults, and credentials |
+| [Workflow execution](docs/workflows.md) | Routing, results, plugins, events, and MCP tools |
+| [Templating](docs/templates.md) | Values-driven packages and rendering |
+| [Go team example](resources/examples/go_generalist/README.md) | Custom workflow, skills, gopls, and lint |
+| [Temporal](docs/temporal.md) | Infrastructure, workers, durable execution, and recovery |
 | [Web UI](web/readme.md) | Task monitoring, output, and retry controls |
 | [Agent resources](resources/readme.md) | Coordinator skill and supporting resources |
 | [Go workflow eval](evals/go-workflow/README.md) | Repeatable task cases, human scoring, and comparison records |
 | [CLI organization](cli/readme.md) | Command-layer structure |
-| [Workflow design](workflow-design.md) | Architecture and design rationale |
-| [Stage communication](stage-communication.md) | Proposed stage interfaces and build/review feedback |
-| [Sandboxing](sandbox.md) | Isolation considerations |
+| [Workflow design](docs/workflow-design.md) | Architecture and design rationale |
+| [Stage communication](docs/stage-communication.md) | Proposed stage interfaces and build/review feedback |
+| [Sandboxing](docs/sandbox.md) | Isolation considerations |
 | [Issues](issues.md) | Known problems, proposed improvements, and design questions |
 
 ## Development

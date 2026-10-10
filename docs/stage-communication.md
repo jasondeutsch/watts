@@ -1,10 +1,10 @@
 # Workflow stage communication
 
-Status: proposal for discussion. This document defines a direction for stage interfaces, including compilation into portable execution packages and a build/review loop. It does not introduce new configuration fields or claim container execution is implemented.
+Status: proposal for portable execution and publication. Named [Kinds](kinds.md) and local resource resolution exist today; the packages, input bindings, workspace revisions, and distributed lifecycle below remain proposed.
 
 ## Purpose
 
-A stage describes work and its contract. An executor performs that work using Pi/Ralph, another agent, a script, or eventually a container. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
+In this proposal, “stage” means a Workflow step executing a referenced Agent or Procedure; it is not an additional Kind. An executor performs that work using Pi/Ralph, a script, or eventually a container. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
 
 Stages communicate through engine-delivered results and referenced artifacts. They do not launch or call another stage directly. The interface should remain consistent across executor implementations.
 
@@ -149,20 +149,20 @@ Temporal coordinates orchestration. Watts executor adapters own package material
 
 Watts already has stage inputs and outputs, a shared executor result containing outcome/feedback/artifacts/data, validated transitions, attempt records, and previous-stage feedback. See [workflow configuration](workflows.md) and [workflow architecture](workflow-design.md).
 
-Watts currently pins workflow definitions and runtime settings, but it does not compile self-contained stage packages. Explicit upstream bindings, immutable artifact delivery across executors, a workspace revision and publication contract, and distributed container execution require further design and implementation. Current task-relative output files and snapshots should not be mistaken for the complete proposed interface.
+Watts resolves Agent/Procedure references, ConfigMap defaults, and Secret source names into pinned workflow definitions and runtime settings. It does not compile self-contained stage packages. Explicit upstream bindings, immutable artifact delivery across executors, a workspace revision and publication contract, and distributed container execution require further design and implementation. Current task-relative output files and snapshots should not be mistaken for the complete proposed interface.
 
 ## Relationship to tracked issues
 
-The proposal overlaps with these items in [issues.md](issues.md), without implying that implementing it resolves them:
+The proposal overlaps with these items in [issues.md](../issues.md), without implying that implementing it resolves them:
 
 | Issue | Connection |
 | --- | --- |
-| [wiss-007](issues.md#wiss-007-executor-abstraction) | A common stage contract separates workflow behavior from Pi/Ralph and future container executors |
-| [wiss-014](issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
-| [wiss-006](issues.md#wiss-006-shared-logging-across-projects), [wiss-009](issues.md#wiss-009-worker-terminal-output) | Distributed logs need consistent project, task, stage, and attempt identities |
-| [wiss-003](issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
-| [wiss-013](issues.md#wiss-013-ralph-artifact-location) | Executor evidence becomes attempt-scoped published artifacts |
-| [wiss-011](issues.md#wiss-011-completion-report) | Recorded results and evidence supply verification, timing, and usage reporting |
+| [wiss-007](../issues.md#wiss-007-executor-abstraction) | A common stage contract separates workflow behavior from Pi/Ralph and future container executors |
+| [wiss-014](../issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
+| [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
+| [wiss-003](../issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](../issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
+| [wiss-013](../issues.md#wiss-013-ralph-artifact-location) | Executor evidence becomes attempt-scoped published artifacts |
+| [wiss-011](../issues.md#wiss-011-evolving-workflow-report) | Recorded results and evidence supply verification, timing, and usage reporting |
 
 ## Open decisions
 

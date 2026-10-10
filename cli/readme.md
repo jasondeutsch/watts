@@ -8,7 +8,7 @@
 | `settings` | Configuration display, edits, application and environment settings |
 | `agents` | Interactive Pi, agent discovery, creation, cleanup and session feeds |
 | `tasks` | Task lifecycle, execution, status and human decisions |
-| `templates` | Standalone YAML package rendering and terminal/file output |
+| `templates` | Standalone YAML rendering, resource validation, and terminal/file output |
 | `devtools` | Mock model gateway |
 | `arguments` | Flag parsing, argument validation and common execution flags |
 | `terminal` | Streams, prompts, diagnostic output, JSON and execution previews |
@@ -18,3 +18,5 @@ Command packages depend on the shared argument and terminal packages and on appl
 Keep commands focused on translating arguments into application calls and rendering the result. Configuration rules, persistence, orchestration and process execution belong in the core `internal` packages. Dependency tests enforce these boundaries recursively. The root integration tests exercise the complete CLI through `Run`; command and presentation tests can live beside their implementation.
 
 Application behavior and live Temporal tests live in `internal/application`; deterministic workflow tests live in `internal/orchestration`. Tests use Testify `assert` for independent expectations and `require` for prerequisites. CLI tests retain end-to-end command coverage without reexporting core types through test aliases.
+
+User-facing behavior is documented in the [runbook](../docs/runbook.md), [Kinds reference](../docs/kinds.md), and [templating guide](../docs/templates.md).

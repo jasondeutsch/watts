@@ -31,7 +31,7 @@ The Temporal UI is separate, normally at [localhost:8233](http://localhost:8233)
 
 ## Configure the project
 
-`watts.yaml` contains project infrastructure and agent execution settings. Each task's `workflow.yaml` selects its stages, agents, identities, providers, and models.
+`watts.yaml` uses a `kind: Project` envelope for infrastructure, task location, local runtime defaults, MCP connections, and plugins. Workflow bundles define [Workflow, Procedure, Agent, ConfigMap, and Secret resources](kinds.md); each task receives its own resolved bundle.
 
 ```sh
 watts config show
@@ -39,14 +39,14 @@ watts config show --resolved
 watts config apply
 ```
 
-Settings live under `spec` in the typed Project manifest; see the [YAML manifest reference](workflows.md#yaml-manifests). `config show` emits YAML; `--resolved` emits diagnostic JSON.
+Settings live under `spec` in the typed Project manifest; see the [Kinds reference](kinds.md#envelope-and-bundles). `config show` emits YAML; `--resolved` emits diagnostic JSON.
 
 Edit nested settings directly in `watts.yaml`, then apply them. `config apply` merges Pi settings and refreshes installed skills. It preserves an existing `models.json`; use `watts config apply --force` when you intend to regenerate that file. Unknown configuration fields are rejected.
 
 | Setting | Purpose |
 | --- | --- |
 | `tasks_dir` | Project-relative task directory; default `tasks` |
-| `default_workflow` | Project-relative workflow template copied into new tasks |
+| `default_workflow` | Bundled name or project-relative bundle file/directory resolved into new tasks |
 | `providers` | Provider endpoints, credential sources, and model definitions |
 | `agents` | Agent directories, thinking levels, skills, Pi settings, and protected paths |
 | `skills_dirs`, `pi_settings`, `forbidden_paths` | Shared settings extended or overridden by each agent |
@@ -62,7 +62,7 @@ An inline `workflow` can replace `default_workflow`; do not set both. Prefer a s
 
 ### Providers and models
 
-The bundled workflows use OpenRouter's `deepseek/deepseek-v4-flash`. Change `provider` and `model` on the relevant workflow stages before submitting a task. Build and review may use the same model.
+The bundled workflows use OpenRouter's `deepseek/deepseek-v4-flash`. Change `provider` and `model` in Agent specifications or their ConfigMap defaults before creating/submitting a task. Build and review may use the same model. Agent resources can also declare `base_url`, `api`, and `auth` Secret bindings; see [Agent configuration](kinds.md#agent) and [Secrets](kinds.md#secret).
 
 A custom provider declaration looks like this:
 
@@ -87,7 +87,7 @@ Custom providers require a model list. Ollama may omit that list: Watts derives 
 
 ### Agent settings and environment
 
-Built-in roles are `build` and `review`. Configure thinking under `agents.<name>.thinking`; the default is `medium`. Custom roles can be registered with `watts agent new <name>` and selected by workflow stages.
+Built-in runtime roles are `build` and `review`. These select local Pi directories; they are distinct from Agent resource names. An Agent can select a role with `runtime_agent` and customize `thinking` and `skills_dirs` in its specification. Project `agents.<name>` entries supply runtime directory and Pi defaults; `watts agent new <name>` creates a custom interactive role. See [Agent fields](kinds.md#agent).
 
 Each role uses its own Pi directory, normally `.watts/pi-agent-<name>/`, and private HOME, `.watts/home-<name>/`. Your normal `~/.pi/agent` settings and credentials are separate. Generated Pi settings disable project trust, so project-level `.pi` configuration is ignored. Add skills with `skills_dirs` and Pi settings with `pi_settings`, globally or per agent.
 
@@ -183,16 +183,16 @@ If its attempt budget is exhausted, explicitly authorize another attempt after i
 watts task run <task> --ignore-attempt-limit
 ```
 
-Retries retain prior attempts and pinned configuration. Activities do not automatically retry through Temporal; workflow transitions and explicit retries control rework. Stage `timeout_seconds` and `max_attempts` override project limits. If neither supplies a value, activities default to one hour and three attempts. Human approval waits do not expire.
+Retries retain prior attempts and pinned configuration. Activities do not automatically retry through Temporal; workflow transitions and explicit retries control rework. Agent/Procedure `timeout_seconds` and `max_attempts` override project limits. If neither supplies a value, activities default to one hour and three attempts. Human approval waits do not expire.
 
-Cancel with `watts task cancel <task>`. Cancellation stops active subprocess groups through the worker. File edits are not rolled back. If worker loss leaves a process recorded in the workspace journal, inspect and stop that process before retrying. See [Temporal recovery](temporal.md#decisions-and-recovery).
+Cancel with `watts task cancel <task>`. Cancellation stops active subprocess groups through the worker. File edits are not rolled back. If worker loss leaves a process recorded in the workspace journal, inspect and stop that process before retrying. See [Temporal recovery](temporal.md#worker-and-recovery).
 
 ## Files and evidence
 
 | Location | Contents |
 | --- | --- |
 | `watts.yaml` | Project settings |
-| `workflows/` | Project workflow templates |
+| `workflows/` | Project workflow bundles and rendered packages |
 | `<tasks_dir>/<task>/` | SPEC, PLAN, workflow definition, and other declared artifacts |
 | `<task>/.watts-state/` | Snapshots, approvals, pinned settings, logs, and attempt evidence |
 | `.watts/kit/` | Installed checks, templates, and skills |
@@ -207,9 +207,9 @@ Retain task evidence, project files, and the Temporal database. Treat private ag
 
 - **Missing credentials or HTTP 401:** run `watts doctor --live` and `watts agent env <agent>`. Check the provider's variable in the worker's launch environment and the private `models.json` credential reference. Restart the worker after exporting a missing variable.
 - **Provider error:** inspect the complete attempt log. Rate limits, model availability, and upstream failures require a provider-side fix or a new task with different pinned settings.
-- **Timeout:** check activity output and provider responsiveness. Increase the stage timeout or project limit before submitting a new task. Local models may need more time, memory, or a smaller workload.
+- **Timeout:** check activity output and provider responsiveness. Increase the Agent/Procedure timeout or project limit before submitting a new task. Local models may need more time, memory, or a smaller workload.
 - **Missing Ralph extension:** run `watts install ralph`, then restart the service. `watts doctor` checks installation per role.
 - **Guardrail blocks legitimate work:** inspect the task's RALPH.md and workflow checks. A successful process exit alone does not satisfy required outputs or completion checks.
 - **No progress after worker restart:** inspect task status and the workspace process journal. The worker must use the task's project queue and have access to the correct files.
 
-For developer tests, run `go test ./...`. For repeatable workflow quality evaluation, see [the Go workflow eval](evals/go-workflow/README.md). The [coordinator skill](resources/skills/watts-coordinator/SKILL.md) explains how an external agent can guide the task lifecycle.
+For a values-driven team workflow, follow the [Go generalist example](../resources/examples/go_generalist/README.md). For developer tests, run `go test ./...`. For repeatable workflow quality evaluation, see [the Go workflow eval](../evals/go-workflow/README.md). The [coordinator skill](../resources/skills/watts-coordinator/SKILL.md) explains how an external agent can guide the task lifecycle.

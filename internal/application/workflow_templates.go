@@ -53,7 +53,7 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 		if err := projectconfig.ValidRelPath("default_workflow", name); err != nil {
 			return WorkflowSelection{}, err
 		}
-		contents, err = os.ReadFile(filepath.Join(app.Root, filepath.FromSlash(name)))
+		contents, err = manifest.ReadWorkflowSource(filepath.Join(app.Root, filepath.FromSlash(name)))
 	} else {
 		if !orchestration.ValidName(name) {
 			return WorkflowSelection{}, fmt.Errorf("invalid workflow template %q", name)

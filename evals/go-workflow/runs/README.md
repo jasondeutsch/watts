@@ -6,7 +6,7 @@ Suggested layout:
 
 ```text
 <run-id>/
-  configuration/       # Actual workflow and relevant settings; no secrets
+  configuration/       # Values, rendered bundle, task workflow, project settings; no secrets
   <case-id>.md         # Execution record and review
   <case-id>/
     final-project/     # Resulting application and task artifacts

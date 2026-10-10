@@ -23,6 +23,12 @@ func DefaultWorkflow() orchestration.Definition {
 }
 
 func (c Config) ValidateWorkflow(definition orchestration.Definition) error {
+	c = c.WithWorkflowAgents(definition)
+	validation := c
+	validation.Workflow = nil
+	if err := validation.Validate(); err != nil {
+		return err
+	}
 	if err := definition.Validate(); err != nil {
 		return err
 	}
@@ -65,6 +71,52 @@ func (c Config) ValidateWorkflow(definition orchestration.Definition) error {
 // WithWorkflowAgents returns a configuration view for the selected workflow without changing its persisted fields.
 func (c Config) WithWorkflowAgents(definition orchestration.Definition) Config {
 	c.agentWorkflow = &definition
+	agents := map[string]AgentConfig{}
+	for name, agent := range c.Agents {
+		agents[name] = agent
+	}
+	providers := map[string]Provider{}
+	for name, provider := range c.Providers {
+		providers[name] = provider
+	}
+	for _, step := range definition.Steps {
+		if step.Agent == "" {
+			continue
+		}
+		agent := agents[step.Agent]
+		if settings := step.AgentSettings; settings != nil {
+			if settings.Thinking != "" {
+				agent.Thinking = settings.Thinking
+			}
+			if len(settings.SkillsDirs) > 0 {
+				agent.SkillsDirs = settings.SkillsDirs
+			}
+			provider := providers[step.Provider]
+			if settings.BaseURL != "" {
+				provider.BaseURL = settings.BaseURL
+				found := false
+				for _, model := range provider.Models {
+					found = found || model.ID == step.Model
+				}
+				if !found {
+					provider.Models = append(append([]ProviderModel(nil), provider.Models...), ProviderModel{ID: step.Model, ContextWindow: 1048576, MaxTokens: 16384})
+				}
+			}
+			if settings.API != "" {
+				provider.API = settings.API
+			}
+			if settings.APIKeyEnv != "" {
+				provider.APIKeyEnv = settings.APIKeyEnv
+				provider.APIKeyCommand = nil
+			}
+			if settings.BaseURL != "" || settings.API != "" || settings.APIKeyEnv != "" {
+				providers[step.Provider] = provider
+			}
+		}
+		agents[step.Agent] = agent
+	}
+	c.Agents = agents
+	c.Providers = providers
 	return c
 }
 
