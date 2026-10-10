@@ -9,6 +9,7 @@ import (
 	"github.com/jasondeutsch/watts/cli/internal/settings"
 	"github.com/jasondeutsch/watts/cli/internal/setup"
 	"github.com/jasondeutsch/watts/cli/internal/tasks"
+	"github.com/jasondeutsch/watts/cli/internal/templates"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
 )
 
@@ -35,14 +36,15 @@ func (n *node) child(name string) *node {
 
 // tree is the command structure shown by `watts help`.
 var tree = []*node{
-	{name: "init", summary: "Set up Watts in this repository (run once): kit, watts.json, agent directories, extension", needsRepo: true, run: setup.Init},
+	{name: "template", summary: "Render a YAML template package (-f values file, -o output directory)", run: templates.Template},
+	{name: "init", summary: "Set up Watts in this repository (run once): kit, watts.yaml, agent directories, extension", needsRepo: true, run: setup.Init},
 	{name: "doctor", summary: "Check prerequisites, the kit, agents and credentials (--live also calls each gateway)", needsRepo: true, run: setup.Doctor},
 	{name: "install", summary: "Install Pi and the loop extension", needsRepo: false, runOnEmpty: true, run: setup.InstallAll, children: []*node{
 		{name: "all", summary: "Install Pi, apply the config, install the extension and run doctor", needsRepo: true, run: setup.InstallAll},
 		{name: "pi", summary: "Install Pi 1.x globally with npm (skipped if 1.x is present)", run: setup.InstallPi},
 		{name: "ralph", summary: "Install the pinned pi-ralph-loop into every agent directory", needsRepo: true, run: setup.InstallRalph},
 	}},
-	{name: "config", summary: "Show and change watts.json", needsRepo: true, children: []*node{
+	{name: "config", summary: "Show and change watts.yaml", needsRepo: true, children: []*node{
 		{name: "show", summary: "Print the config (--resolved fills in every agent's defaults)", needsRepo: true, run: settings.Show},
 		{name: "set", summary: "Change a setting: watts config set <key> <value>", needsRepo: true, run: settings.Set},
 		{name: "apply", summary: "Create or refresh the agent directories from the config (--force regenerates models.json)", needsRepo: true, run: settings.Apply},
@@ -150,7 +152,7 @@ func usage() string {
 		{"Setup", []string{"init", "doctor", "install", "config"}},
 		{"Agents", []string{"agent"}},
 		{"Tasks", []string{"task", "start", "stop"}},
-		{"Other", []string{"dev", "version"}},
+		{"Other", []string{"template", "dev", "version"}},
 	}
 	for _, sec := range sections {
 		fmt.Fprintf(&b, "\n%s:\n", sec.title)

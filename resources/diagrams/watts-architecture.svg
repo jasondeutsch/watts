@@ -14,7 +14,7 @@
 
   <rect x="40" y="110" width="245" height="180" rx="12" class="box"/>
   <text x="60" y="143" class="heading">Team-owned definition</text>
-  <text x="60" y="178" class="body">workflow.json + watts.json</text>
+  <text x="60" y="178" class="body">workflow.yaml + watts.yaml</text>
   <text x="60" y="208" class="body">Instructions · skills · scripts</text>
   <text x="60" y="238" class="body">Models · MCP connections</text>
   <text x="60" y="270" class="small">Authoring inputs, not live run state</text>

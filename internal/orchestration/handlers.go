@@ -36,6 +36,7 @@ func (execution *workflowExecution) acceptDecision(updateContext workflow.Contex
 			return validationErr
 		}
 	}
+	workflow.GetLogger(updateContext).Info("Human decision received", "task", execution.input.Task, "stage", step.Name, "attempt", request.Attempt, "rejected", request.Reject)
 	execution.decision = &request
 	return nil
 }
@@ -51,7 +52,8 @@ func (execution *workflowExecution) validateDecision(request Decision) error {
 	return nil
 }
 
-func (execution *workflowExecution) acceptRetry(_ workflow.Context, request Retry) error {
+func (execution *workflowExecution) acceptRetry(ctx workflow.Context, request Retry) error {
+	workflow.GetLogger(ctx).Info("Retry authorized", "task", execution.input.Task, "stage", request.Step, "attempt", request.Attempt, "extra_attempt", request.Force)
 	execution.retryRequested = true
 	execution.allowExtraAttempt = request.Force
 	return nil
@@ -88,7 +90,8 @@ func (execution *workflowExecution) validateEvent(event Event) error {
 	return nil
 }
 
-func (execution *workflowExecution) acceptEvent(_ workflow.Context, event Event) error {
+func (execution *workflowExecution) acceptEvent(ctx workflow.Context, event Event) error {
+	workflow.GetLogger(ctx).Info("Event received", "task", execution.input.Task, "stage", event.Step, "attempt", event.Attempt, "outcome", event.Outcome)
 	execution.acceptedEvents[event.ID] = true
 	execution.event = &event
 	return nil

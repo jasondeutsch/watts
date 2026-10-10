@@ -12,7 +12,7 @@ With Docker running and Docker Compose v2 installed, start the local server from
 docker compose up -d --wait
 ```
 
-[compose.yaml](compose.yaml) runs a pinned Temporal CLI image with its development server and Web UI. The API is available at `localhost:7233`, and the UI at [localhost:8233](http://localhost:8233). Both ports are published only on the local machine. The `default` namespace is created automatically, so Watts' default connection settings work without adding a `temporal` object to `watts.json`.
+[compose.yaml](compose.yaml) runs a pinned Temporal CLI image with its development server and Web UI. The API is available at `localhost:7233`, and the UI at [localhost:8233](http://localhost:8233). Both ports are published only on the local machine. The `default` namespace is created automatically, so Watts' default connection settings work without adding a `temporal` object to `watts.yaml`.
 
 Workflow history is stored in the named Docker volume `watts-temporal-data`, independently of project `.watts` directories. One server can serve multiple Watts projects, each with its own worker queue. This setup is for local development; deployed installations should use a production Temporal service. See the [server command reference](https://docs.temporal.io/cli/command-reference/server).
 
@@ -56,40 +56,37 @@ Agent credentials must be available to the worker's environment or its private P
 
 ## Definition
 
-A `workflow` object in `watts.json` replaces the default SDLC step list. Stable stage names need not be `build` or `review`. A minimal workflow that exercises drafting, human approval and publication without a model is:
+A `spec.workflow` mapping in `watts.yaml` replaces the default SDLC step list. Stable stage names need not be `build` or `review`. A minimal workflow that exercises drafting, human approval and publication without a model is:
 
-```json
-{
-  "temporal": {"address": "localhost:7233", "namespace": "default"},
-  "workflow": {
-    "version": 1,
-    "max_transitions": 20,
-    "steps": [
-      {
-        "name": "draft",
-        "command": "printf 'Proposal\n' > \"$WATTS_TASK/proposal.md\"",
-        "outputs": ["proposal.md"]
-      },
-      {
-        "name": "authorize",
-        "human": true,
-        "inputs": ["proposal.md"],
-        "on_failure": "draft"
-      },
-      {
-        "name": "publish",
-        "command": "cp \"$WATTS_TASK/proposal.md\" \"$WATTS_TASK/result.md\"",
-        "inputs": ["proposal.md"],
-        "outputs": ["result.md"]
-      }
-    ]
-  }
-}
+```yaml
+spec:
+  temporal:
+    address: localhost:7233
+    namespace: default
+  workflow:
+    version: 1
+    max_transitions: 20
+    steps:
+    - name: draft
+      command: printf 'Proposal\n' > "$WATTS_TASK/proposal.md"
+      outputs:
+      - proposal.md
+    - name: authorize
+      human: true
+      inputs:
+      - proposal.md
+      on_failure: draft
+    - name: publish
+      command: cp "$WATTS_TASK/proposal.md" "$WATTS_TASK/result.md"
+      inputs:
+      - proposal.md
+      outputs:
+      - result.md
 ```
 
-Merge this example into the existing configuration; `watts init --no-install` can initialize a project first. Task creation copies the selected definition to <task>/workflow.json and creates only that workflow's declared templates. The default SDLC includes specification and planning agents with explicit human review gates.
+Merge this example into the existing configuration; `watts init --no-install` can initialize a project first. Task creation copies the selected definition to <task>/workflow.yaml and creates only that workflow's declared templates. The default SDLC includes specification and planning agents with explicit human review gates.
 
-Task-local workflow.json is editable before submission. Temporal freezes its definition at first submission. Each step has exactly one executor:
+Task-local workflow.yaml is editable before submission. Temporal freezes its definition at first submission. Each step has exactly one executor:
 
 - `agent`: a configured role plus `prompt`. `{task}` in the prompt expands to the task folder.
 - `command`: Bash executed from the project root, with `WATTS_REPO`, `WATTS_TASK` and `WATTS_ROLE` set.
@@ -99,7 +96,7 @@ Task-local workflow.json is editable before submission. Temporal freezes its def
 Additional fields:
 
 - `inputs` and `outputs`: regular files relative to the task folder. Missing files, traversal and symlinks escaping the task folder fail validation. `.watts-state` is reserved for orchestration records.
-- `checks`: completion checks such as `[{"script":"check-stories","args":["--strict"]}]`. Outputs and checks must pass in addition to a successful executor exit.
+- `checks`: completion checks such as `[{script: check-stories, args: [--strict]}]`. Outputs and checks must pass in addition to a successful executor exit.
 - `next`: the next stage on success; omission means the next listed step. `end` finishes the workflow.
 - `on_failure`: a named rework stage. Without one, failure waits for an explicit retry. An optional failed stage is recorded as skipped and continues; a failure transition to `end` still fails the workflow.
 - `optional`: allows a non-human stage to fail without blocking the normal next transition.
@@ -134,9 +131,9 @@ Cancellation reaches worker activities through heartbeats and stops subprocess g
 
 ## Stored state
 
-Task creation copies the selected workflow template to editable workflow.json. First submission freezes that definition, runtime configuration and capability commands. Use a new task to adopt a different definition. See [workflows.md](workflows.md) for workflow templates, plugin outcomes and external events.
+Task creation copies the selected workflow template to editable workflow.yaml. First submission freezes that definition, runtime configuration and capability commands. Use a new task to adopt a different definition. See [workflows.md](workflows.md) for workflow templates, plugin outcomes and external events.
 
-- `<task>/workflow.json`: authoritative task definition, editable before submission.
+- `<task>/workflow.yaml`: authoritative task definition, editable before submission.
 - `<task>/.watts-state/approvals/<stage>.txt`: human artifact approval receipts.
 - `<task>/.watts-state/temporal.json`: workflow/run IDs, endpoint, queue and the pinned definition.
 - `<task>/.watts-state/workflow-config.json`: local runtime settings, verified by content hash on every activity.
@@ -164,6 +161,7 @@ The CLI is a terminal adapter: it parses flags, gathers user input, invokes type
 - `internal/application` owns task and agent operations, runtime configuration loading, activity execution, SDK connections and worker lifecycle. Each activity gets a concrete runtime containing its pinned configuration, cancellation context, environment and log streams. Agent, command, check and capability executors return `orchestration.Result`, followed by a shared validation and persistence path. `RunOptions` is a typed request independent of CLI flags. Human decisions and Temporal status return structured results. Progress and diagnostic findings are sent to an injected reporter; dry-run presentation remains in the CLI.
 - `internal/config` owns the configuration schema, defaults, agent resolution and validation, including the default workflow definition.
 - `internal/kit` owns embedded scripts, templates and skills, plus project asset initialization. The source assets live in `internal/kit/kit/`.
+- `internal/manifest` owns typed YAML authoring and strict decoding.
 - `internal/storage` owns JSON persistence primitives.
 - `internal/workspace` owns artifact hashing, exclusive workspace access, command execution and cancellation of subprocess groups.
 - `internal/orchestration` owns the workflow schema/protocol, deterministic interpreter, transition selection and validated approval/retry handlers.

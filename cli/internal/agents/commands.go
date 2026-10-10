@@ -145,7 +145,7 @@ func Clean(a *terminal.Context, args []string) error {
 }
 
 // New scaffolds a custom agent from the example shipped in the kit and registers it in
-// watts.json.
+// watts.yaml.
 func New(a *terminal.Context, args []string) error {
 	fl := arguments.NewFlags(a.ErrorOutput, "agent new")
 	dir := fl.String("path", "", "agent directory (default .watts.agents/<name>)")
@@ -168,7 +168,7 @@ func New(a *terminal.Context, args []string) error {
 	a.Say("\nCreated the %s agent in %s and registered it under agents in %s.", name, target, projectconfig.Filename)
 	a.Say("Next:")
 	a.Say("  1. Edit %s/skills", target)
-	a.Say("  2. Add a workflow step that uses it and declares provider and model. See %s/README.md and the example in %s/examples/custom-agent/watts.example.json", target, a.Rel(a.KitDir()))
+	a.Say("  2. Add a workflow step that uses it and declares provider and model. See %s/README.md and the example in %s/examples/custom-agent/watts.example.yaml", target, a.Rel(a.KitDir()))
 	a.Say("  3. watts doctor")
 	return nil
 }

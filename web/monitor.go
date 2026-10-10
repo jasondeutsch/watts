@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/jasondeutsch/watts/internal/application"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"go.temporal.io/sdk/client"
 )
@@ -135,9 +136,11 @@ func (m *monitor) readSnapshot(ctx context.Context, task string) snapshot {
 			s.RunID = binding.RunID
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		data, err = root.ReadFile("workflow.json")
+		data, err = root.ReadFile("workflow.yaml")
 		if err == nil {
-			err = json.Unmarshal(data, &s.Definition)
+			document, decodeErr := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
+			err = decodeErr
+			s.Definition = document.Spec
 		}
 	}
 	if err == nil {

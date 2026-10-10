@@ -7,14 +7,13 @@ import (
 	"testing"
 	"time"
 
+	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/manifest"
+	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
-
-	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
 )
 
 func TestSDLCManagesDraftingReviewsAndFeedback(t *testing.T) {
@@ -28,7 +27,7 @@ func TestSDLCManagesDraftingReviewsAndFeedback(t *testing.T) {
 	definition := projectconfig.DefaultWorkflow()
 	// Exercise drafting and both gates through the real worker activities, then a stubbed build.
 	definition.Steps = definition.Steps[:5]
-	require.NoError(t, storage.WriteJSON(project.TaskWorkflowPath(task), definition))
+	require.NoError(t, manifest.Write(project.TaskWorkflowPath(task), manifest.Workflow, "sdlc", definition))
 	customPi(t, sessionScript("deepseek/deepseek-v4-flash")+"\n"+`case "$2" in
  *spec-template*)
  cp "$WATTS_STEP_INPUT" "$WATTS_TASK/spec-input.json"
@@ -124,7 +123,7 @@ func TestAgentPreconditionsStopBeforePi(t *testing.T) {
 	customPi(t, "touch pi-called")
 	definition := projectconfig.DefaultWorkflow()
 	definition.Steps[0].PreChecks = []orchestration.Check{{Script: "check-spec"}}
-	require.NoError(t, storage.WriteJSON(project.TaskWorkflowPath(task), definition))
+	require.NoError(t, manifest.Write(project.TaskWorkflowPath(task), manifest.Workflow, "sdlc", definition))
 	binding, err := project.CreateWorkflowBinding(cfg, task, &RunOptions{})
 	require.NoError(t, err)
 	step := binding.Input.Definition.Steps[0]

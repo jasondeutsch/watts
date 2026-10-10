@@ -2,6 +2,7 @@ package orchestration
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"go.temporal.io/sdk/temporal"
@@ -35,7 +36,17 @@ func Run(ctx workflow.Context, input Input) (State, error) {
 	if err := execution.registerHandlers(ctx); err != nil {
 		return execution.state, err
 	}
-	return execution.runStages(ctx)
+	workflow.GetLogger(ctx).Info("Workflow started", "task", input.Task)
+	state, err := execution.runStages(ctx)
+	logger := workflow.GetLogger(ctx)
+	if temporal.IsCanceledError(err) {
+		logger.Warn("Workflow cancelled", "task", input.Task, "next_action", "Inspect task evidence before creating a new task")
+	} else if err != nil {
+		logger.Error("Workflow failed", "task", input.Task, "error", failureMessage(err), "next_action", "Inspect task status and evidence; create a new task for a terminal execution")
+	} else {
+		logger.Info("Workflow completed", "task", input.Task, "attempts", state.Transitions)
+	}
+	return state, err
 }
 
 func (execution *workflowExecution) runStages(ctx workflow.Context) (State, error) {
@@ -56,6 +67,7 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 			execution.state.Status = "waiting_retry"
 			stage.Status = "failed"
 			stage.LastError = "stage attempt limit reached"
+			workflow.GetLogger(ctx).Warn("Attempt limit reached", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", retryCommand(execution.input.Task)+" --ignore-attempt-limit (after inspecting the failure)")
 			execution.retryRequested = false
 			if err = workflow.Await(ctx, func() bool { return execution.retryRequested }); err != nil {
 				return execution.state, err
@@ -71,6 +83,9 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 		stage.Artifacts = nil
 		stage.Outcome = ""
 		execution.state.Transitions++
+		started := workflow.Now(ctx)
+		logger := workflow.GetLogger(ctx)
+		logger.Info("Stage started", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts)
 		result, stageErr := execution.executeStage(ctx, step, stage)
 		if result.Outcome == "" {
 			result.Outcome = "success"
@@ -93,6 +108,7 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 		execution.state.History = append(execution.state.History, record)
 		execution.previous = &record
 		if temporal.IsCanceledError(stageErr) {
+			logger.Warn("Stage cancelled", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts)
 			execution.state.Status = "cancelled"
 			stage.Status = "cancelled"
 			return execution.state, stageErr
@@ -100,6 +116,7 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 		if stageErr != nil {
 			stage.Status = "failed"
 			stage.LastError = failureMessage(stageErr)
+			logger.Error("Stage failed", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "elapsed", workflow.Now(ctx).Sub(started).String(), "error", stage.LastError)
 			if failureTarget, ok := step.Transitions["failure"]; ok {
 				target = failureTarget
 			} else if step.OnFailure != "" {
@@ -107,8 +124,14 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 			} else if step.Optional {
 				target = execution.input.Definition.successTransition(execution.currentStepIndex)
 				stage.Status = "skipped"
+				logger.Warn("Optional stage skipped", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_stage", target)
 			} else {
 				execution.state.Status = "waiting_retry"
+				action := retryCommand(execution.input.Task)
+				if stage.Attempts >= maxAttempts {
+					action += " --ignore-attempt-limit"
+				}
+				logger.Warn("Waiting for retry", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", "Inspect the attempt log, fix the cause, then "+action)
 				execution.retryRequested = false
 				if err = workflow.Await(ctx, func() bool { return execution.retryRequested }); err != nil {
 					return execution.state, err
@@ -117,7 +140,9 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 			}
 		} else {
 			stage.Status = "completed"
+			logger.Info("Stage completed", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "elapsed", workflow.Now(ctx).Sub(started).String(), "outcome", result.Outcome)
 		}
+		logger.Info("Workflow routing", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "outcome", result.Outcome, "next_stage", target)
 		if target == "end" {
 			// A failure transition to end is a failure, not a passing completion.
 			if stageErr != nil && !step.Optional {
@@ -158,6 +183,7 @@ func (execution *workflowExecution) executeStage(ctx workflow.Context, step Step
 		}
 		stage.Status = "waiting_event"
 		execution.state.Status = "waiting_event"
+		workflow.GetLogger(ctx).Info("Waiting for event", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", "Deliver a declared outcome through the Temporal event update")
 		execution.event = nil
 		stageErr = workflow.Await(ctx, func() bool { return execution.event != nil })
 		if stageErr == nil {
@@ -169,6 +195,7 @@ func (execution *workflowExecution) executeStage(ctx workflow.Context, step Step
 			stage.Artifacts = result.Artifacts
 			stage.Status = "waiting_approval"
 			execution.state.Status = "waiting_approval"
+			workflow.GetLogger(ctx).Info("Waiting for approval", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", "Review the input artifacts, then watts task decide "+quotedTask(execution.input.Task)+" "+step.Name)
 			execution.decision = nil
 			stageErr = workflow.Await(ctx, func() bool { return execution.decision != nil })
 			if stageErr == nil {
@@ -200,3 +227,9 @@ func failureMessage(err error) string {
 	}
 	return err.Error()
 }
+
+func quotedTask(task string) string {
+	return "'" + strings.ReplaceAll(task, "'", "'\"'\"'") + "'"
+}
+
+func retryCommand(task string) string { return "watts task run " + quotedTask(task) }

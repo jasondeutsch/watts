@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jasondeutsch/watts/internal/application"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/stretchr/testify/require"
 )
@@ -69,12 +70,12 @@ func TestStreamDeliversNewLogOutput(t *testing.T) {
 func fixture(t *testing.T) *monitor {
 	t.Helper()
 	root := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(root, "watts.json"), []byte(`{"version":1,"tasks_dir":"tasks"}`), 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "watts.yaml"), []byte("kind: Project\nschema_version: 1\nname: test\nspec:\n  version: 1\n  tasks_dir: tasks\n"), 0600))
 	require.NoError(t, os.MkdirAll(filepath.Join(root, "tasks", "sample"), 0700))
 	definition := orchestration.Definition{Version: 1, Steps: []orchestration.Step{{Name: "coding", Human: true, Inputs: []string{"SPEC.md"}}}}
-	data, err := json.Marshal(definition)
+	data, err := manifest.Encode(manifest.Workflow, "sample", definition)
 	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(filepath.Join(root, "tasks", "sample", "workflow.json"), data, 0600))
+	require.NoError(t, os.WriteFile(filepath.Join(root, "tasks", "sample", "workflow.yaml"), data, 0600))
 	m := newMonitor(&application.Service{Root: root})
 	t.Cleanup(m.close)
 	return m
@@ -88,7 +89,7 @@ func TestCatalogIncludesIncompleteTasks(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, tasks, 2)
 	require.Equal(t, "incomplete", tasks[0].Name)
-	require.Contains(t, m.readSnapshot(context.Background(), tasks[0].Path).Error, "workflow.json")
+	require.Contains(t, m.readSnapshot(context.Background(), tasks[0].Path).Error, "workflow.yaml")
 }
 
 func TestPinnedWorkflowAndOfflineLogs(t *testing.T) {
@@ -119,7 +120,7 @@ func TestRoutesAndStream(t *testing.T) {
 		require.Equal(t, 200, response.Code, path)
 	}
 	response := httptest.NewRecorder()
-	m.routes().ServeHTTP(response, httptest.NewRequest("GET", "/api/events?task=../watts.json", nil))
+	m.routes().ServeHTTP(response, httptest.NewRequest("GET", "/api/events?task=../watts.yaml", nil))
 	require.Equal(t, 404, response.Code)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

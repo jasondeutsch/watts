@@ -10,7 +10,7 @@ Stages communicate through engine-delivered results and referenced artifacts. Th
 
 ## Authoring, compilation, and execution
 
-`workflow.json` is the authoring format. Compilation combines it with project configuration and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
+`workflow.yaml` is the authoring format. Compilation combines it with project configuration and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
 
 Compilation validates stage contracts and connections, resolves executor settings and MCP definitions, and packages instructions, skills, scripts, and configuration. The source workflow remains available for editing and provenance, but workers do not reread it during that execution. Retries use the same compiled plan; configuration changes require a new compilation and application.
 

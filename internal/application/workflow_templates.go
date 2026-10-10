@@ -2,18 +2,16 @@ package application
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workspace"
 	workflowtemplates "github.com/jasondeutsch/watts/workflow-templates"
 )
@@ -26,19 +24,16 @@ type WorkflowSelection struct {
 	Definition orchestration.Definition `json:"definition"`
 }
 
-func decodeWorkflow(data []byte, value any) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(value); err != nil {
+func decodeWorkflow(data []byte, value *orchestration.Definition) error {
+	document, err := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
+	if err != nil {
 		return err
 	}
-	if err := decoder.Decode(new(any)); err != io.EOF {
-		return errors.New("expected exactly one JSON document")
-	}
+	*value = document.Spec
 	return nil
 }
 
-// ResolveWorkflow selects a bundled base template or a project-supplied JSON file.
+// ResolveWorkflow selects a bundled base template or a project-supplied YAML file.
 func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (WorkflowSelection, error) {
 	if name == "" && cfg.Workflow != nil {
 		if err := cfg.ValidateWorkflow(*cfg.Workflow); err != nil {
@@ -54,7 +49,7 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 	}
 	var contents []byte
 	var err error
-	if strings.Contains(name, "/") || strings.HasSuffix(name, ".json") {
+	if strings.Contains(name, "/") || strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml") {
 		if err := projectconfig.ValidRelPath("default_workflow", name); err != nil {
 			return WorkflowSelection{}, err
 		}
@@ -63,7 +58,7 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 		if !orchestration.ValidName(name) {
 			return WorkflowSelection{}, fmt.Errorf("invalid workflow template %q", name)
 		}
-		contents, err = workflowtemplates.Files.ReadFile(name + ".json")
+		contents, err = workflowtemplates.Files.ReadFile(name + ".yaml")
 	}
 	if err != nil {
 		return WorkflowSelection{}, fmt.Errorf("workflow %s: %w", name, err)
@@ -79,7 +74,7 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 }
 
 func (app *Service) TaskWorkflowPath(taskPath string) string {
-	return filepath.Join(app.Root, taskPath, "workflow.json")
+	return filepath.Join(app.Root, taskPath, "workflow.yaml")
 }
 
 func (app *Service) TaskWorkflow(cfg projectconfig.Config, taskPath string) (WorkflowSelection, error) {
@@ -89,7 +84,7 @@ func (app *Service) TaskWorkflow(cfg projectconfig.Config, taskPath string) (Wor
 	}
 	var definition orchestration.Definition
 	if err := decodeWorkflow(data, &definition); err != nil {
-		return WorkflowSelection{}, err
+		return WorkflowSelection{}, fmt.Errorf("%s: %w", app.Rel(app.TaskWorkflowPath(taskPath)), err)
 	}
 	if err := cfg.ValidateWorkflow(definition); err != nil {
 		return WorkflowSelection{}, err
@@ -133,9 +128,9 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	}
 	taskDefinition := selected.Definition
 	taskDefinition.Templates = nil // Scaffolding has already created these artifacts.
-	if err := storage.WriteJSONAtomically(app.TaskWorkflowPath(taskPath), taskDefinition); err != nil {
+	if err := manifest.Write(app.TaskWorkflowPath(taskPath), manifest.Workflow, filepath.Base(taskPath), taskDefinition); err != nil {
 		return "", err
 	}
-	app.say("Created %s. Customize workflow.json, then run: watts task run %s", taskPath, taskPath)
+	app.say("Created %s. Customize workflow.yaml, then run: watts task run %s", taskPath, taskPath)
 	return taskPath, nil
 }

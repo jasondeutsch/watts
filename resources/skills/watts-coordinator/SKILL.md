@@ -11,7 +11,7 @@ Start from the user's request, such as “create a hello-world server in Go.” 
 
 ## Locate files before reading them
 
-The target project and the Watts source repository are different locations. The target project contains `watts.json` and the task files; it need not contain the Watts repository or its resource directory.
+The target project and the Watts source repository are different locations. The target project contains `watts.yaml` and the task files; it need not contain the Watts repository or its resource directory.
 
 - Use the supplied project path and confirm its directory contents. Do not derive it from an assumed home directory or from the location of this skill.
 - Resolve relative resource links against the directory containing this `SKILL.md`, not the shell's working directory.
@@ -33,22 +33,22 @@ If this skill was installed separately, checkout-relative links may be unavailab
 
 ## Keep the task explicit
 
-- Work from the intended project root containing `watts.json`.
+- Work from the intended project root containing `watts.yaml`.
 - Record its verified absolute path as the target project. Give every command invocation that directory explicitly through the execution tool's working-directory option. A `cd` in a previous tool call may not persist.
 - If the execution tool cannot set a working directory, use `cd '/absolute/project/path' && watts ...` in the same command invocation. Do not run `cd ..` to locate documentation; read documentation by its absolute path instead.
-- Before creating a task, confirm `pwd` matches the intended project and read that directory's `watts.json`. Watts searches ancestors for a project, so running from the wrong directory can select a different project. Do not rely on that search to select the target.
+- Before creating a task, confirm `pwd` matches the intended project and read that directory's `watts.yaml`. Watts searches ancestors for a project, so running from the wrong directory can select a different project. Do not rely on that search to select the target.
 - Keep the exact task path returned by task creation throughout the session. Pass it explicitly to every task command.
-- Read the task's `workflow.json`; do not assume the default stages or artifact names when a workflow is customized.
+- Read the task's `workflow.yaml`; do not assume the default stages or artifact names when a workflow is customized.
 - Use the public CLI. Do not edit `.watts-state` or send ad hoc Temporal updates to advance stages.
 - Never claim execution, approval, or completion from an agent's narrative alone. Confirm with task status and evidence.
 
 ## Create and draft
 
 1. Confirm that the user's request identifies the intended behavior. A rough request is sufficient; ask for missing intent rather than inventing a task.
-2. Run `watts task new <slug>` with the target project as the explicit working directory and retain the reported path. Verify that the task folder and `workflow.json` exist beneath the target project's configured `tasks_dir` before writing anything. Resolve reported relative paths against the target project, never against the Watts source checkout or an unrelated current directory. If the task was created elsewhere, stop and report the mismatch; do not create more tasks or move files silently. If the user names an existing task, inspect it instead of creating another.
+2. Run `watts task new <slug>` with the target project as the explicit working directory and retain the reported path. Verify that the task folder and `workflow.yaml` exist beneath the target project's configured `tasks_dir` before writing anything. Resolve reported relative paths against the target project, never against the Watts source checkout or an unrelated current directory. If the task was created elsewhere, stop and report the mismatch; do not create more tasks or move files silently. If the user names an existing task, inspect it instead of creating another.
 3. Read the scaffolded `SPEC.md` and preserve any existing human content. Use the spec skill located by the instructions above when available. Draft from the request and relevant project evidence: state the intent, scope, non-goals, constraints, numbered observable acceptance criteria (`- AC-1: ...`), and unresolved questions. Separate facts from assumptions; do not invent requirements. Use the scaffold as a structure reference, never as a replacement for existing human input.
 4. Keep what and why in `SPEC.md`; implementation approach and sequencing belong in `PLAN.md`. Record assumptions and unresolved questions explicitly. Do not create a separate requirements document.
-5. If the user requested a different workflow, customize the task's `workflow.json` before submission. Do not change workflow policy merely to bypass a failure or approval gate.
+5. If the user requested a different workflow, customize the task's `workflow.yaml` before submission. Do not change workflow policy merely to bypass a failure or approval gate.
 
 Do not start execution when the user asked only for a draft. When execution is authorized, continue below.
 
@@ -114,4 +114,4 @@ Cancellation is available with `watts task cancel <task>` when the user asks to 
 Tell the user which task and stage are active, what happened, what evidence supports it, and what action is needed next. Distinguish submitted, running, waiting, and completed. Never claim that a test passed unless its actual result supports that claim.
 
 
-Application source and tests belong to the project rooted at watts.json. Task folders hold SPEC.md, PLAN.md, workflow.json, logs and evidence. Do not scaffold a separate application inside a task folder. Ensure plan quality gates target the project root.
+Application source and tests belong to the project rooted at watts.yaml. Task folders hold SPEC.md, PLAN.md, workflow.yaml, logs and evidence. Do not scaffold a separate application inside a task folder. Ensure plan quality gates target the project root.

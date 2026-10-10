@@ -25,7 +25,7 @@ Code changes now preserve extension command arguments and validate Ralph's curre
 
 ### wiss-002: Application code created inside the task directory
 
-The test implementation was created under `tasks/<task>/` rather than in the project rooted at `watts.json`.
+The test implementation was created under `tasks/<task>/` rather than in the project rooted at `watts.yaml`.
 
 Application source, tests, dependencies, and build files belong in the project root or its normal source directories. Task directories hold specifications, plans, workflow definitions, review documents, and execution evidence. Planning must use project-root quality gates rather than direct application commands into a task directory.
 
@@ -61,17 +61,17 @@ Remove tight coupling to Pi and Ralph so engineers can use their preferred tools
 
 Allow one UI to display multiple projects and workers. Decouple the web server's lifetime from an individual project worker. Project roots, task queues, and configuration must remain distinct when the UI aggregates them.
 
-### wiss-009: Worker terminal output
-
-Provide readable, well-formatted logs showing stage and attempt boundaries, meaningful progress, failures, and shutdown. Include a concise failure explanation and a next action rather than only a process exit code.
-
 ### wiss-010: MCP interface for coordinators
 
 Add a thin MCP adapter over the existing application services. Initial tools should cover task creation, status, output, and retry. Return structured errors and available next actions; preserve human approval boundaries. Do not implement a second workflow engine or expose every internal operation.
 
-### wiss-011: Completion report
+### wiss-011: Evolving workflow report
 
-Report elapsed time, completed stages, attempts and retries, artifacts, and verification results. Include token usage and cost when the provider or executor supplies them; distinguish unavailable values from zero. Include failed attempts in usage totals where possible.
+Produce a task-level report early in execution and update it throughout the workflow, rather than generating it only at completion. Refresh it at stage and attempt boundaries, failures, retries, approval/event waits, and terminal outcomes. Include the current state, latest update time, elapsed time, completed stages, attempts and retries, errors, artifacts, verification results, and the next action when one is required.
+
+Retain stage and attempt history as the report evolves, including rework and failed attempts. Include cumulative token usage and cost when the provider or executor supplies them; distinguish unavailable values from zero and include failed attempts in totals where possible. Repeated updates or worker restarts must not double-count usage.
+
+Derive the report from Temporal state and recorded execution evidence; it is a readable view, not a separate source of workflow truth. Keep it useful for humans and coordinator agents during execution. The final report should be the completed version of the same report, preserving the history gathered along the way.
 
 ## Design questions
 
@@ -79,7 +79,7 @@ Report elapsed time, completed stages, attempts and retries, artifacts, and veri
 
 `watts task decide` is cumbersome. Explore a clearer way to express document readiness and workflow decisions. A ready `SPEC.md` should advance only according to the task's workflow; document readiness and human approval are separate concepts.
 
-Consider whether a generated JSON or TOML task manifest should record readiness and decisions alongside the documents. Avoid introducing a second source of truth that conflicts with Temporal history or the approved document hashes.
+Consider whether a generated JSON or YAML task manifest should record readiness and decisions alongside the documents. Avoid introducing a second source of truth that conflicts with Temporal history or the approved document hashes.
 
 A manual override may be useful, but its scope remains undefined. Specify which stages may be overridden and how the override is recorded before adding it.
 
@@ -93,10 +93,60 @@ Determine where `.ralph-runner` belongs. It currently contains task-specific sta
 
 Task-scoped execution evidence should remain easy to associate with its task. Consider placing executor artifacts under the task's `.watts-state/` directory rather than exposing a separate runtime directory. A project-level `.watts/` location would need to preserve task and attempt isolation.
 
-### wiss-015: TOML for configuration and workflow authoring
+### wiss-016: Typed workflow resources and compiled execution packages
 
-Use TOML as the preferred direction for replacing JSON in human-authored project configuration and workflow definitions. Prioritize readable stage declarations, comments, multiline instructions, clear validation errors, and tooling support. Validate the representation against the Go generalist workflow, including nested checks, transitions, and MCP connections.
+Define reusable resource kinds that separate orchestration, units of work, agent configuration, shared configuration, and credentials:
 
-Distinguish TOML authoring files from generated stage manifests and executor request/result protocols. Those machine-facing formats may remain JSON. Define how TOML inputs are resolved into deterministic compiled plans with stable content hashes. See [stage communication](stage-communication.md) for the proposed compilation boundary.
+- `Workflow`: stage references, input bindings, outcome routing, approval/event waits, and overall limits.
+- `Stage`: inputs, outputs, checks, allowed outcomes, executor requirements, workspace access, and attempt limits.
+- `Agent`: reusable runtime, model, instructions, skills, and tool configuration selected by an agent executor.
+- `ConfigMap`: reusable, non-secret configuration values or configuration file contents referenced by Workflow, Stage, or Agent resources.
+- `Secret`: named references to sensitive values, such as API keys, gateway credentials, and authentication tokens, supplied by the user or organization.
+- `Model`: ?
+- `Prompt`: ?
 
-Define filenames, schema, and the scope of the change before implementation. Prefer one authoring format rather than adding YAML or Pkl support without a concrete need.
+Define explicit bindings for ConfigMap entries, such as named parameters, environment variables, or mounted configuration files. Resolve and snapshot referenced entries during compilation so runs retain the configuration they were compiled with; editing a ConfigMap must not silently change an active run. Validate missing entries, incompatible values, and conflicting bindings. Credentials remain separate scoped secret references and must not be stored in ConfigMaps.
+
+Allow teams to bring their own model providers, gateways, and API keys. Keep provider endpoints and other non-sensitive settings in Agent configuration or ConfigMaps, and bind authentication through explicit Secret references. Define how local environment variables, protected files, and managed secret stores can supply values without committing credentials to authoring manifests.
+
+Compiled packages should contain only Secret references and declared access requirements. Resolve values at launch and expose only the required entries to the authorized stage or runtime through environment variables or protected files. Do not include secret values in Temporal history, logs, reports, published artifacts, or the web UI. Report missing or inaccessible credentials clearly without revealing their values. Define rotation and revocation behavior, retry semantics when credentials change, and cleanup after an attempt; record source/version identifiers where available without recording credential contents.
+
+A stage abstracts execution generally: scripts, human gates, and event waits do not require an Agent. Specify how reusable stage definitions differ from their placement in a workflow, so routing and upstream bindings remain workflow-owned. Keep definitions distinct from runtime records such as WorkflowRun and StageAttempt; an Agent definition is not a running process.
+
+Compile resource references and project settings into an immutable orchestration manifest and self-contained stage packages. Package required instructions, skills, scripts, and configuration, and pin runtime dependencies. Workers execute the compiled plan without rereading authoring files. Bind workspace revisions, upstream evidence, attempt identities, and scoped credentials at launch; do not embed secrets or future execution values during compilation.
+
+The contract must support container or sandbox execution on distinct nodes, isolated workspaces, durable artifact transfer, and explicit publication of accepted changes. Preserve the build/review loop with attempt-specific findings and exact workspace revision bindings. See [stage communication](stage-communication.md); coordinate with wiss-007's executor abstraction and wiss-014's worker design.
+
+Before implementation, define resource identity and reference resolution, validation rules, package integrity, and the compile/apply boundary. Demonstrate the model with the Go generalist workflow and a shared Agent used by multiple stages. Add further resource kinds only when independent reuse or management justifies them; Kubernetes-style continuous reconciliation is not implied.
+
+## Long-term features
+
+These items describe future capabilities beyond the MVP. Implementation choices remain open; develop them around the stage contracts and workflow policies rather than adding separate orchestration paths.
+
+### wiss-017: Sandboxed execution in a developer's local environment
+
+Let developers run workflow stages against a local project while viewing code changes, diffs, stage output, and generated artifacts in real time through their editor and the Watts UI. Support the same experience for build, review, QA, and other stages, with workspace permissions appropriate to each stage.
+
+Evaluate local containers, microVMs, and operating-system sandboxes. Compare a constrained project mount with an isolated project copy that the editor can inspect and Watts can apply back to the project. A mounted directory alone does not provide a security boundary. Define access to project files, dependencies, network services, MCP tools, and credentials explicitly; keep unrelated host files, host credentials, and privileged runtime sockets inaccessible by default. Watts' current agent guardrails are not a sandbox. See [sandbox research](sandbox.md).
+
+Preserve the [stage communication contract](stage-communication.md): live changes are a candidate revision, and downstream stages consume explicitly published revisions. Builder stages may write application code; review and QA stages should normally inspect that code read-only and write their own reports separately. Seeing a change in the editor must not count as accepting it or approving the task.
+
+Define how concurrent developer edits, cancellation, failed attempts, and partial changes are handled. Pin the revision under review, detect conflicts before applying accepted changes, and invalidate approval when the reviewed content changes. Demonstrate that a developer can follow an attempt live, stop it, inspect its changes, and choose whether to apply them without exposing the rest of their machine. Coordinate with wiss-007 and wiss-016.
+
+### wiss-018: Source-host integrations
+
+Provide optional adapters for GitHub, GitLab, and other source hosts. Let teams map a Watts project to a repository, select a base revision, publish accepted changes as a pull or merge request, and link task reports and verification evidence to that request. Keep Git and source-host services optional; local workflows must continue to work without them.
+
+Allow workflows to consume remote check results, review decisions, and other configured events. Bind each result to the exact revision it concerns so a passing check or approval for older code cannot advance a newer candidate. Define how external review relates to Watts approval policy, and make merging or deployment a separately authorized action.
+
+Use scoped credentials and verified webhook delivery. Handle duplicate events, retries, and interrupted publication without creating duplicate requests or advancing a task twice. Show integration failures and the next action in the task report and UI. Keep provider-specific behavior in adapters over the same application services used by the CLI and proposed MCP interface.
+
+### wiss-019: Ticket intake and automated task initiation
+
+Let teams create Watts tasks from Jira, Linear, and other issue trackers. Map the ticket to a project and workflow, retain a source link and ticket identity, and capture the relevant title, description, and acceptance criteria as the initial `SPEC.md` draft. The configured specification stage refines that draft; planning then follows the workflow's normal `PLAN.md` process.
+
+Support opt-in automation rules, such as starting a task when a ticket moves to “In Progress,” matches a label, or receives an explicit command. For example, a transition could create the task, run specification refinement, and pause with a draft ready for approval. Whether approval is required and which stages may run automatically must come from workflow and intake policy. A ticket status change is not itself specification approval.
+
+Define project/workflow selection, execution authorization, concurrency limits, and spending limits before unattended execution. Verify incoming events and deduplicate them using stable ticket and event identities. Distinguish a repeated delivery from an intentional new run or a later transition back to “In Progress.”
+
+Record the ticket version used to create the draft. Later ticket edits should produce a visible update request or new revision, without silently replacing a submitted or approved specification. Optionally report task progress, errors, approval requests, and completion back to the tracker; prevent those updates from retriggering intake in a loop. Reuse the coordinator services in wiss-010 and the evolving report in wiss-011, keeping ticket retrieval and provider-specific automation outside the core workflow engine.

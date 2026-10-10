@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
+	"github.com/jasondeutsch/watts/internal/manifest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLocalIgnoresStayInsideWatts(t *testing.T) {
@@ -89,10 +89,10 @@ func TestAgentThinkingAndSharedProviderConnection(t *testing.T) {
 		require.Equal(t, "$LOCAL_MODEL_KEY", models.Providers["ollama"].APIKey)
 		require.NotEmpty(t, models.Providers["ollama"].Models)
 	}
-	var saved map[string]any
-	require.NoError(t, json.Unmarshal([]byte(readFile(t, app.ConfigPath())), &saved))
+	saved, err := manifest.Decode([]byte(readFile(t, app.ConfigPath())), manifest.Project, map[string]any{})
+	require.NoError(t, err)
 	for _, key := range []string{"thinking", "ollama_url", "pi_range", "ralph_version"} {
-		require.NotContains(t, saved, key)
+		require.NotContains(t, saved.Spec, key)
 	}
 }
 func TestConfigAgentsPreservesUserWork(t *testing.T) {

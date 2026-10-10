@@ -1,7 +1,7 @@
-// Package workflowtemplates embeds the base workflow JSON files shipped with Watts.
+// Package workflowtemplates embeds the base workflow YAML files shipped with Watts.
 package workflowtemplates
 
 import "embed"
 
-//go:embed *.json
+//go:embed *.yaml
 var Files embed.FS

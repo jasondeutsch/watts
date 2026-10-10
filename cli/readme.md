@@ -1,6 +1,6 @@
 # CLI organization
 
-`Run` is the public entry point. The root package owns the command tree, help, dispatch and process exit status. Command implementations live under `cli/internal` so they are private to the CLI:
+`cmd/cli/main.go` is the executable entry point and calls `cli.Run`. `Run` is the public entry point of this package. The root package owns the command tree, help, dispatch and process exit status. Command implementations live under `cli/internal` so they are private to the CLI:
 
 | Package | Responsibility |
 | --- | --- |
@@ -8,6 +8,7 @@
 | `settings` | Configuration display, edits, application and environment settings |
 | `agents` | Interactive Pi, agent discovery, creation, cleanup and session feeds |
 | `tasks` | Task lifecycle, execution, status and human decisions |
+| `templates` | Standalone YAML package rendering and terminal/file output |
 | `devtools` | Mock model gateway |
 | `arguments` | Flag parsing, argument validation and common execution flags |
 | `terminal` | Streams, prompts, diagnostic output, JSON and execution previews |

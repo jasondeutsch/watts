@@ -31,7 +31,7 @@ type Service struct {
 	TimeoutUnit time.Duration
 }
 
-// Locate finds the project root: the nearest folder above the current one that holds watts.json
+// Locate finds the project root: the nearest folder above the current one that holds watts.yaml
 // or .watts; failing that, the current folder, so `watts init` works anywhere. It never asks git.
 func (a *Service) Locate() error {
 	cwd, err := os.Getwd()

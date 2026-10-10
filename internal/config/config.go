@@ -12,45 +12,45 @@ import (
 	"github.com/jasondeutsch/watts/internal/orchestration"
 )
 
-// Config is watts.json, at the project root. It declares execution infrastructure;
+// Config is watts.yaml, at the project root. It declares execution infrastructure;
 // workflow definitions declare stage identities, providers and models.
 // Secrets never go in here: they live in the environment and are named, not stored (see
 // EnvPassthrough and Provider.APIKeyEnv).
 type Config struct {
 	agentWorkflow *orchestration.Definition
 
-	Version int  `json:"version"`
-	Offline bool `json:"offline"`
+	Version int  `json:"version" yaml:"version"`
+	Offline bool `json:"offline" yaml:"offline"`
 
 	// EnvPassthrough lists environment variable NAMES copied from your shell into every agent's
 	// otherwise empty environment. Watts adds the api_key_env of each agent's provider on its own.
-	EnvPassthrough []string `json:"env_passthrough"`
+	EnvPassthrough []string `json:"env_passthrough" yaml:"env_passthrough"`
 
 	// TasksDir is where task folders live, relative to the repository root.
-	TasksDir string `json:"tasks_dir"`
+	TasksDir string `json:"tasks_dir" yaml:"tasks_dir"`
 	// SnapshotExclude lists extra paths, relative to the project, that snapshots skip.
 	// Watts' own files, the tasks folder, .git, node_modules and .venv are always skipped.
-	SnapshotExclude []string `json:"snapshot_exclude,omitempty"`
+	SnapshotExclude []string `json:"snapshot_exclude,omitempty" yaml:"snapshot_exclude,omitempty"`
 
-	Limits          Limits                    `json:"limits"`
-	Providers       map[string]Provider       `json:"providers,omitempty"`
-	SkillsDirs      []string                  `json:"skills_dirs,omitempty"`
-	PiSettings      map[string]any            `json:"pi_settings,omitempty"`
-	ForbiddenPaths  []string                  `json:"forbidden_paths,omitempty"`
-	Agents          map[string]AgentConfig    `json:"agents,omitempty"`
-	DefaultWorkflow string                    `json:"default_workflow,omitempty"`
-	MCPs            map[string]MCPServer      `json:"mcps,omitempty"`
-	Capabilities    map[string]Capability     `json:"capabilities,omitempty"`
-	Workflow        *orchestration.Definition `json:"workflow,omitempty"`
-	Temporal        *TemporalSettings         `json:"temporal,omitempty"`
+	Limits          Limits                    `json:"limits" yaml:"limits"`
+	Providers       map[string]Provider       `json:"providers,omitempty" yaml:"providers,omitempty"`
+	SkillsDirs      []string                  `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
+	PiSettings      map[string]any            `json:"pi_settings,omitempty" yaml:"pi_settings,omitempty"`
+	ForbiddenPaths  []string                  `json:"forbidden_paths,omitempty" yaml:"forbidden_paths,omitempty"`
+	Agents          map[string]AgentConfig    `json:"agents,omitempty" yaml:"agents,omitempty"`
+	DefaultWorkflow string                    `json:"default_workflow,omitempty" yaml:"default_workflow,omitempty"`
+	MCPs            map[string]MCPServer      `json:"mcps,omitempty" yaml:"mcps,omitempty"`
+	Capabilities    map[string]Capability     `json:"capabilities,omitempty" yaml:"capabilities,omitempty"`
+	Workflow        *orchestration.Definition `json:"workflow,omitempty" yaml:"workflow,omitempty"`
+	Temporal        *TemporalSettings         `json:"temporal,omitempty" yaml:"temporal,omitempty"`
 }
 
 // Limits cap a run. Zero means no limit.
 type Limits struct {
 	// MaxMinutes is the wall-clock limit for one Pi run.
-	MaxMinutes int `json:"max_minutes"`
+	MaxMinutes int `json:"max_minutes" yaml:"max_minutes"`
 	// MaxAttempts is how many times one stage may be started on one task, counting retries.
-	MaxAttempts int `json:"max_attempts"`
+	MaxAttempts int `json:"max_attempts" yaml:"max_attempts"`
 }
 
 // Provider declares a model provider so Watts can write models.json for it. The key is always
@@ -58,60 +58,60 @@ type Limits struct {
 // Watts outside the sandbox at launch (for example to mint a short-lived key). The command's
 // output is handed to Pi in memory and is never written to disk.
 type Provider struct {
-	Name          string          `json:"name,omitempty"`
-	BaseURL       string          `json:"base_url"`
-	API           string          `json:"api,omitempty"`
-	APIKeyEnv     string          `json:"api_key_env,omitempty"`
-	APIKeyCommand []string        `json:"api_key_command,omitempty"`
-	Models        []ProviderModel `json:"models,omitempty"`
+	Name          string          `json:"name,omitempty" yaml:"name,omitempty"`
+	BaseURL       string          `json:"base_url" yaml:"base_url"`
+	API           string          `json:"api,omitempty" yaml:"api,omitempty"`
+	APIKeyEnv     string          `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
+	APIKeyCommand []string        `json:"api_key_command,omitempty" yaml:"api_key_command,omitempty"`
+	Models        []ProviderModel `json:"models,omitempty" yaml:"models,omitempty"`
 }
 
 type ProviderModel struct {
-	ID            string `json:"id"`
-	Name          string `json:"name,omitempty"`
-	Reasoning     bool   `json:"reasoning,omitempty"`
-	ContextWindow int    `json:"context_window,omitempty"`
-	MaxTokens     int    `json:"max_tokens,omitempty"`
+	ID            string `json:"id" yaml:"id"`
+	Name          string `json:"name,omitempty" yaml:"name,omitempty"`
+	Reasoning     bool   `json:"reasoning,omitempty" yaml:"reasoning,omitempty"`
+	ContextWindow int    `json:"context_window,omitempty" yaml:"context_window,omitempty"`
+	MaxTokens     int    `json:"max_tokens,omitempty" yaml:"max_tokens,omitempty"`
 }
 
 // AgentConfig defines agent directories, skills and execution settings. The built-in
 // agents are build and review. Workflow stages select each agent’s provider and model.
 type AgentConfig struct {
-	Thinking string `json:"thinking,omitempty"`
+	Thinking string `json:"thinking,omitempty" yaml:"thinking,omitempty"`
 	// Path is the agent directory (Pi's PI_CODING_AGENT_DIR), relative to the repository root.
 	// Empty means .watts/pi-agent-<name>.
-	Path           string         `json:"path,omitempty"`
-	SkillsDirs     []string       `json:"skills_dirs,omitempty"`
-	PiSettings     map[string]any `json:"pi_settings,omitempty"`
-	ForbiddenPaths []string       `json:"forbidden_paths,omitempty"`
+	Path           string         `json:"path,omitempty" yaml:"path,omitempty"`
+	SkillsDirs     []string       `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
+	PiSettings     map[string]any `json:"pi_settings,omitempty" yaml:"pi_settings,omitempty"`
+	ForbiddenPaths []string       `json:"forbidden_paths,omitempty" yaml:"forbidden_paths,omitempty"`
 }
 
 // Capability names a project-configured executable plugin. It reads JSON on stdin and returns JSON on stdout.
 type Capability struct {
-	Command []string `json:"command"`
+	Command []string `json:"command" yaml:"command"`
 }
 
 // MCPServer defines a Pi-compatible server connection; stages opt in by name.
 type MCPServer struct {
-	Command     string            `json:"command,omitempty"`
-	Args        []string          `json:"args,omitempty"`
-	URL         string            `json:"url,omitempty"`
-	Env         map[string]string `json:"env,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
-	Cwd         string            `json:"cwd,omitempty"`
-	Exposure    string            `json:"exposure,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Command     string            `json:"command,omitempty" yaml:"command,omitempty"`
+	Args        []string          `json:"args,omitempty" yaml:"args,omitempty"`
+	URL         string            `json:"url,omitempty" yaml:"url,omitempty"`
+	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Cwd         string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
+	Exposure    string            `json:"exposure,omitempty" yaml:"exposure,omitempty"`
+	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 type TemporalSettings struct {
-	Address   string `json:"address,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-	TaskQueue string `json:"task_queue,omitempty"`
+	Address   string `json:"address,omitempty" yaml:"address,omitempty"`
+	Namespace string `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	TaskQueue string `json:"task_queue,omitempty" yaml:"task_queue,omitempty"`
 }
 
 const (
 	ConfigVersion = 1
-	Filename      = "watts.json"
+	Filename      = "watts.yaml"
 
 	DefaultTasksDir = "tasks"
 )

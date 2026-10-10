@@ -7,14 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/testsuite"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/testsuite"
 )
 
 func pinActivityConfig(t *testing.T, project *Service, request *orchestration.ActivityInput, cfg projectconfig.Config) {
@@ -132,8 +131,8 @@ func TestActivityUsesPinnedAgentAndTemporalAttempt(t *testing.T) {
 func TestCompletionChecksCannotChangeProtectedPaths(t *testing.T) {
 	project, request := boundTemporalTask(t, orchestration.Step{Name: "coding", Agent: "build", Provider: "ollama", Model: "qwen2.5-coder:7b", Prompt: "Work", Checks: []orchestration.Check{{Script: "bad-check"}}})
 	customPi(t, "true")
-	writeFile(t, filepath.Join(project.KitDir(), "scripts", "bad-check.sh"), `printf changed >> "$WATTS_REPO/watts.json"`)
+	writeFile(t, filepath.Join(project.KitDir(), "scripts", "bad-check.sh"), `printf changed >> "$WATTS_REPO/watts.yaml"`)
 	_, err := runActivity(t, project.Service, request)
-	require.ErrorContains(t, err, "the agent changed paths it may not change: watts.json")
+	require.ErrorContains(t, err, "the agent changed paths it may not change: watts.yaml")
 	assert.NoFileExists(t, filepath.Join(project.StateDir(request.Input.Task), "steps", "coding-1", "result.json"))
 }

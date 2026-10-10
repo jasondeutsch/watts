@@ -7,7 +7,7 @@ description: Produces PLAN.md from the bundled template once the spec-review wor
 
 Copy `plan-template.md`, bundled in this skill's folder, into the task directory as `PLAN.md`, then fill it in against SPEC.md approved by the preceding workflow gate. `watts task new <slug>` puts a copy in place. The spec-review workflow gate must approve the specification before planning starts; approval lives in workflow history, not in an agent-written signature.
 
-The project root is the current working directory containing watts.json. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
 
 Rules worth repeating here rather than assuming they're obvious:
 

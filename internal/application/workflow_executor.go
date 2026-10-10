@@ -2,6 +2,7 @@ package application
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/workspace"
@@ -19,24 +21,40 @@ func (runtime *activityRuntime) execute() (orchestration.Result, error) {
 	request := runtime.request
 	var err error
 	for _, check := range request.Step.PreChecks {
+		runtime.logProgress("Precondition check", "check", check.Script)
 		if err := runtime.runCheck(check.Script, append([]string{request.Input.Task}, check.Args...)...); err != nil {
 			return orchestration.Result{}, fmt.Errorf("precondition check %s: %w", check.Script, err)
 		}
 	}
 	switch {
 	case request.Step.Capability != "":
+		runtime.logProgress("Capability starting", "capability", request.Step.Capability)
 		return runtime.runCapability()
 	case request.Step.Agent != "":
+		runtime.logProgress("Agent starting", "agent", request.Step.Agent, "provider", request.Step.Provider, "model", request.Step.Model)
 		err = runtime.runAgent()
 	case request.Step.Command != "":
+		runtime.logProgress("Command starting")
 		command := exec.Command("bash", "-c", request.Step.Command)
 		command.Dir = runtime.project.Root
 		command.Env = append(os.Environ(), runtime.environment...)
 		command.Env = append(command.Env, "WATTS_REPO="+runtime.project.Root, "WATTS_TASK="+request.Input.Task, "WATTS_ROLE="+request.Step.Name)
 		command.Stdin = EmptyWorkerInput()
-		command.Stdout, command.Stderr = runtime.output, runtime.errorOutput
+		var output, diagnostics checkOutput
+		command.Stdout = io.MultiWriter(runtime.output, &output)
+		command.Stderr = io.MultiWriter(runtime.errorOutput, &diagnostics)
 		err = runtime.runProcess(command, 0)
+		if err != nil {
+			detail := strings.TrimSpace(string(diagnostics.tail))
+			if detail == "" {
+				detail = strings.TrimSpace(string(output.tail))
+			}
+			if detail != "" {
+				err = fmt.Errorf("command: %s (%w)", detail, err)
+			}
+		}
 	case request.Step.Check != "":
+		runtime.logProgress("Check starting", "check", request.Step.Check)
 		err = runtime.runCheck(request.Step.Check, append([]string{request.Input.Task}, request.Step.Args...)...)
 	default:
 		err = errors.New("this step must be handled by the workflow, not an execution activity")
@@ -51,10 +69,12 @@ func (runtime *activityRuntime) execute() (orchestration.Result, error) {
 // regardless of the executor that produced the result. Watts supplies artifact hashes.
 func (runtime *activityRuntime) validateResult(result orchestration.Result) (orchestration.Result, error) {
 	request := runtime.request
+	runtime.logProgress("Validating stage result")
 	if _, err := request.Input.Definition.Target(stepIndex(request), result.Outcome); err != nil {
 		return result, err
 	}
 	for _, check := range request.Step.Checks {
+		runtime.logProgress("Completion check", "check", check.Script)
 		if err := runtime.runCheck(check.Script, append([]string{request.Input.Task}, check.Args...)...); err != nil {
 			return result, fmt.Errorf("completion check %s: %w", check.Script, err)
 		}
@@ -106,8 +126,12 @@ func (runtime *activityRuntime) runCapability() (orchestration.Result, error) {
 	process.Env = append(process.Env, "WATTS_REPO="+app.Root, "WATTS_TASK="+request.Input.Task, "WATTS_ROLE="+request.Step.Name)
 	process.Stdin = bytes.NewReader(data)
 	var output boundedResult
-	process.Stdout, process.Stderr = &output, runtime.errorOutput
+	var diagnostics checkOutput
+	process.Stdout, process.Stderr = &output, io.MultiWriter(runtime.errorOutput, &diagnostics)
 	if err := runtime.runProcess(process, 0); err != nil {
+		if detail := strings.TrimSpace(string(diagnostics.tail)); detail != "" {
+			err = fmt.Errorf("capability %s: %s (%w)", request.Step.Capability, detail, err)
+		}
 		return orchestration.Result{}, err
 	}
 	return parseStepResult(output.Bytes())
@@ -124,7 +148,7 @@ func parseStepResult(data []byte) (orchestration.Result, error) {
 	if len(data) > maximumCapabilityResult {
 		return result, errors.New("capability result exceeds 1 MiB")
 	}
-	if err := decodeWorkflow(data, &wire); err != nil {
+	if err := decodeExecutorJSON(data, &wire); err != nil {
 		return result, fmt.Errorf("invalid capability result: %w", err)
 	}
 	result.Outcome, result.Feedback, result.Data = wire.Outcome, wire.Feedback, wire.Data
@@ -167,4 +191,16 @@ func stepIndex(request orchestration.ActivityInput) int {
 		}
 	}
 	return 0 // prepareActivity requires membership in the pinned definition.
+}
+
+func decodeExecutorJSON(data []byte, value any) error {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(value); err != nil {
+		return err
+	}
+	if err := decoder.Decode(new(any)); err != io.EOF {
+		return errors.New("expected exactly one JSON document")
+	}
+	return nil
 }

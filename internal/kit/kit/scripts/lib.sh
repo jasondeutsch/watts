@@ -14,10 +14,10 @@ WATTS_KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 REPO="${WATTS_REPO:-}"
 if [ -z "$REPO" ]; then
   d="$PWD"
-  while [ "$d" != "/" ] && [ ! -e "$d/watts.json" ] && [ ! -d "$d/.watts" ]; do d="$(dirname "$d")"; done
+  while [ "$d" != "/" ] && [ ! -e "$d/watts.yaml" ] && [ ! -d "$d/.watts" ]; do d="$(dirname "$d")"; done
   [ "$d" != "/" ] && REPO="$d"
 fi
-[ -n "$REPO" ] || { echo "error: run this from inside a Watts project (a folder with watts.json), or set WATTS_REPO" >&2; exit 1; }
+[ -n "$REPO" ] || { echo "error: run this from inside a Watts project (a folder with watts.yaml), or set WATTS_REPO" >&2; exit 1; }
 cd "$REPO"
 REPO="$(pwd -P)"
 
@@ -25,7 +25,7 @@ REPO="$(pwd -P)"
 AGENT_NAME="${WATTS_AGENT_NAME:-watts-agent}"
 # shellcheck disable=SC2034
 REVIEWER_NAME="${WATTS_REVIEWER_NAME:-watts-reviewer}"
-# Where task folders live. watts sets it from watts.json.
+# Where task folders live. watts sets it from watts.yaml.
 # shellcheck disable=SC2034
 TASKS_DIR="${WATTS_TASKS_DIR:-tasks}"
 
@@ -90,7 +90,7 @@ sha256_of() { "${SHA[@]}" "$1" | awk '{print $1}'; }
 # snap_files lists the project files a snapshot covers: everything except Watts' own files, the
 # tasks folder, common dependency folders, and WATTS_SNAPSHOT_EXCLUDE (one path per line).
 snap_files() {
-  local ex=(-path ./.git -o -path ./.watts -o -path ./watts.json -o -path "./$TASKS_DIR" -o -path ./node_modules -o -path ./.venv) x
+  local ex=(-path ./.git -o -path ./.watts -o -path ./watts.yaml -o -path "./$TASKS_DIR" -o -path ./node_modules -o -path ./.venv) x
   while IFS= read -r x; do
     if [ -n "$x" ]; then ex+=(-o -path "./$x"); fi
   done <<EOT

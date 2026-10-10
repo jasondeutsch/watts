@@ -22,7 +22,10 @@ func Show(a *terminal.Context, args []string) error {
 		return err
 	}
 	if !*resolved {
-		data, _ := terminal.JSON(cfg)
+		data, err := os.ReadFile(a.ConfigPath())
+		if err != nil {
+			return err
+		}
 		a.Say("%s", data)
 		return nil
 	}

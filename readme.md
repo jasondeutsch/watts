@@ -12,14 +12,14 @@ This is an MVP and proof of concept. The application version remains **0.1.0** w
 
 You need Go 1.27 or later to build Watts, Node.js for Pi, and a running Temporal server. See the [runbook](runbook.md) for prerequisites and provider setup.
 
-From this checkout, install Watts and start local Temporal with Docker Compose:
+From this checkout, build Watts and start local Temporal with Docker Compose:
 
 ```sh
-go install .
+make build
 docker compose up -d --wait
 ```
 
-Ensure the Go binary directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](temporal.md).
+The build produces `bin/watts`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](temporal.md).
 
 From the project directory where you want application work performed:
 
@@ -40,7 +40,7 @@ The bundled workflows currently select `deepseek/deepseek-v4-flash` through Open
 watts task new hello-server
 ```
 
-Use the task path printed by the command. Write the request or rough notes in its `SPEC.md`, and customize its `workflow.json` before submission.
+Use the task path printed by the command. Write the request or rough notes in its `SPEC.md`, and customize its `workflow.yaml` before submission.
 
 ```sh
 watts task run <task>
@@ -67,13 +67,13 @@ See the [task runbook](runbook.md) for the full procedure, approval rules, cance
 
 ## Project layout
 
-The directory containing `watts.json` is the project root. Application source, tests, dependencies, and build files belong there or in its normal source directories.
+The directory containing `watts.yaml` is the project root. Application source, tests, dependencies, and build files belong there or in its normal source directories.
 
-- `watts.json`: provider connections, agent settings, task location, and default workflow selection.
+- `watts.yaml`: provider connections, agent settings, task location, and default workflow selection.
 - `.watts/`: local agent state, generated assets, and service files.
-- `tasks/<task>/`: `SPEC.md`, `PLAN.md`, `workflow.json`, review documents, logs, and execution evidence.
+- `tasks/<task>/`: `SPEC.md`, `PLAN.md`, `workflow.yaml`, review documents, logs, and execution evidence.
 
-A project can contain multiple tasks. Each task receives its own workflow definition. Bundled templates live in [workflow-templates/](workflow-templates/); projects can supply a default using `default_workflow` in `watts.json`.
+A project can contain multiple tasks. Each task receives its own workflow definition. Bundled templates live in [workflow-templates/](workflow-templates/); projects can supply a default using `default_workflow` in `watts.yaml`.
 
 ## Documentation
 

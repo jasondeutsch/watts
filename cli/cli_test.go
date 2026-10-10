@@ -111,7 +111,7 @@ func TestInitConfigSetClean(t *testing.T) {
 			"init: exit %d\n%s%s", code, out, errs)
 	}
 
-	for _, p := range []string{"watts.json", ".watts/kit/scripts/lib.sh", ".watts/pi-agent-build/settings.json", ".watts/pi-agent-review/settings.json"} {
+	for _, p := range []string{"watts.yaml", ".watts/kit/scripts/lib.sh", ".watts/pi-agent-build/settings.json", ".watts/pi-agent-review/settings.json"} {
 		assert.True(t, exists(filepath.Join(ta.Root, p)),
 			"init did not create %s", p)
 	}
@@ -119,7 +119,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	entries, _ := os.ReadDir(ta.Root)
 	for _, e := range entries {
 		switch e.Name() {
-		case ".git", "README.md", ".watts", "watts.json":
+		case ".git", "README.md", ".watts", "watts.yaml":
 		default:
 			assert.
 				Fail(t, fmt.Sprintf("init touched %s", e.Name()))
@@ -132,7 +132,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	}
 	{
 		code, out, _ := runCLI(t, ta.Root, "config", "show")
-		assert.False(t, code != 0 || !strings.Contains(out, `"tasks_dir": "tasks"`),
+		assert.False(t, code != 0 || !strings.Contains(out, `tasks_dir: tasks`),
 			"config --show: exit %d, %q", code, out)
 	}
 	{
@@ -167,7 +167,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	}
 	assert.False(t, exists(filepath.Join(ta.Root, ".watts/pi-agent-build")) || exists(filepath.Join(ta.Root, ".watts/home-build")),
 		"clean must remove the agent directories")
-	assert.False(t, !exists(filepath.Join(ta.Root, ".watts/kit/scripts/lib.sh")) || !exists(filepath.Join(ta.Root, "watts.json")),
+	assert.False(t, !exists(filepath.Join(ta.Root, ".watts/kit/scripts/lib.sh")) || !exists(filepath.Join(ta.Root, "watts.yaml")),
 		"clean must keep the kit and the config")
 	{
 		code, _, _ := runCLI(t, ta.Root, "config", "apply")

@@ -4,7 +4,7 @@ This guide covers project setup, configuration, and running a task. See the [wor
 
 ## Set up a project
 
-Install Watts from the source checkout with `go install .` and put Go's binary directory on your PATH. Building requires Go 1.27 or later. Agent execution requires Node.js 22.22.1 or later, Pi, and the Ralph extension; `watts install` installs the supported Pi and Ralph versions. The bundled checks require Bash, awk, find, xargs, and sha256sum or shasum. Use WSL on Windows.
+Install Watts from the source checkout with `make install`. It builds `./cmd/cli` as `bin/watts` and uses sudo to install it to `/usr/local/bin`; ensure that directory is on your PATH. For a user-owned installation directory, use `make install INSTALL_DIR="$HOME/.local/bin" SUDO=`. Use `make build` to build without installing and `make test` to run the Go tests. Building requires Go 1.27 or later. Agent execution requires Node.js 22.22.1 or later, Pi, and the Ralph extension; `watts install` installs the supported Pi and Ralph versions. The bundled checks require Bash, awk, find, xargs, and sha256sum or shasum. Use WSL on Windows.
 
 Start the local Temporal server from the Watts checkout with Docker running:
 
@@ -23,7 +23,7 @@ watts doctor
 watts start -d
 ```
 
-`init` initializes the current directory, even if a parent is already a Watts project. It creates `watts.json`, project workflow templates, and the local kit and agent directories. It asks where tasks should live; use `watts init --tasks-dir tasks` to specify that without a prompt. Existing kit assets and user-written model files are preserved.
+`init` initializes the current directory, even if a parent is already a Watts project. It creates `watts.yaml`, project workflow templates, and the local kit and agent directories. It asks where tasks should live; use `watts init --tasks-dir tasks` to specify that without a prompt. Existing kit assets and user-written model files are preserved.
 
 `watts start -d` runs the project worker and Watts web UI in the background and opens the UI in your default browser. Use `watts start` for foreground operation and `watts stop` to stop the managed service. After rebuilding Watts, restart the service to use the new binary. Credentials must be available in the shell that starts the worker.
 
@@ -31,7 +31,7 @@ The Temporal UI is separate, normally at [localhost:8233](http://localhost:8233)
 
 ## Configure the project
 
-`watts.json` contains project infrastructure and agent execution settings. Each task's `workflow.json` selects its stages, agents, identities, providers, and models.
+`watts.yaml` contains project infrastructure and agent execution settings. Each task's `workflow.yaml` selects its stages, agents, identities, providers, and models.
 
 ```sh
 watts config show
@@ -39,7 +39,9 @@ watts config show --resolved
 watts config apply
 ```
 
-Edit nested settings directly in `watts.json`, then apply them. `config apply` merges Pi settings and refreshes installed skills. It preserves an existing `models.json`; use `watts config apply --force` when you intend to regenerate that file. Unknown configuration fields are rejected.
+Settings live under `spec` in the typed Project manifest; see the [YAML manifest reference](workflows.md#yaml-manifests). `config show` emits YAML; `--resolved` emits diagnostic JSON.
+
+Edit nested settings directly in `watts.yaml`, then apply them. `config apply` merges Pi settings and refreshes installed skills. It preserves an existing `models.json`; use `watts config apply --force` when you intend to regenerate that file. Unknown configuration fields are rejected.
 
 | Setting | Purpose |
 | --- | --- |
@@ -64,19 +66,17 @@ The bundled workflows use OpenRouter's `deepseek/deepseek-v4-flash`. Change `pro
 
 A custom provider declaration looks like this:
 
-```json
-{
-  "providers": {
-    "example": {
-      "base_url": "https://inference.example.com/v1",
-      "api": "openai-completions",
-      "api_key_env": "EXAMPLE_API_KEY",
-      "models": [
-        { "id": "example/coding-model", "context_window": 128000, "max_tokens": 16384 }
-      ]
-    }
-  }
-}
+```yaml
+spec:
+  providers:
+    example:
+      base_url: https://inference.example.com/v1
+      api: openai-completions
+      api_key_env: EXAMPLE_API_KEY
+      models:
+      - id: example/coding-model
+        context_window: 128000
+        max_tokens: 16384
 ```
 
 `api_key_env` names a variable; it does not contain the secret. Watts automatically passes that provider's variable to its agent and generates Pi's model credential reference as `$EXAMPLE_API_KEY`. Export the value before starting the worker. Alternatively, `api_key_command` accepts an argument array for a command that prints a credential at launch. Set one credential source, not both. Keep secrets out of configuration, prompts, and commands recorded in workflow history.
@@ -108,7 +108,7 @@ Private directories and protected-path checks are guardrails, not a filesystem s
 watts task new http-retry
 ```
 
-Use the task path printed by that command in the examples below. Write the request as rough notes in `<task>/SPEC.md`; the specification agent refines it. SPEC describes what to build and why. PLAN describes how to implement and verify it. Customize `<task>/workflow.json` before submitting if needed.
+Use the task path printed by that command in the examples below. Write the request as rough notes in `<task>/SPEC.md`; the specification agent refines it. SPEC describes what to build and why. PLAN describes how to implement and verify it. Customize `<task>/workflow.yaml` before submitting if needed.
 
 ```sh
 watts task run <task> --dry-run
@@ -116,7 +116,7 @@ watts task run <task>
 watts task status <task>
 ```
 
-`run` submits and returns; completion happens asynchronously. The default workflow drafts the specification, waits for human approval, drafts the plan, waits for human approval, builds, and reviews. Implementation belongs in the project containing `watts.json`; the task directory holds documents and execution evidence.
+`run` submits and returns; completion happens asynchronously. The default workflow drafts the specification, waits for human approval, drafts the plan, waits for human approval, builds, and reviews. Implementation belongs in the project containing `watts.yaml`; the task directory holds documents and execution evidence.
 
 At each human gate, inspect the document before deciding:
 
@@ -136,6 +136,20 @@ Approval records the input file hashes. Changed inputs invalidate the pending ap
 First submission pins the workflow definition and runtime configuration. Editing the template or task workflow afterward does not alter that execution. Create a new task to use a changed definition or configuration.
 
 Task commands accept a folder or task name. You may omit it when the project has exactly one task; otherwise supply it explicitly.
+
+## Worker output
+
+Foreground `watts start` prints timestamped logs; detached `watts start -d` appends the same output to `.watts/service.log`:
+
+```sh
+tail -f .watts/service.log
+```
+
+Lifecycle entries identify the project, task, stage, and workflow attempt. They show stage start/completion, elapsed time, checks, outcomes, and the next stage. Approval, event, and retry waits include a `next_action`; automatic rework reports its destination instead of asking for a manual retry. An exhausted attempt budget identifies the explicit retry override. Worker readiness and shutdown are logged too.
+
+A command or capability failure includes a bounded diagnostic tail when available. Full executor output remains in the attempt log, whose path is printed at activity start. Commands with no diagnostics still report their exit failure. Agent startup reports the selected role, provider, and model; prompts and credential values are not added to lifecycle entries.
+
+An executor running for more than 30 seconds emits periodic elapsed-time notices. These indicate that the worker is still waiting for the process, not that the agent has made progress. Cancellation is reported separately from failure. Normal output omits SDK debug/heartbeat messages; workflow lifecycle logging uses Temporal's replay-aware logger.
 
 ## Inspect failures and retry
 
@@ -177,7 +191,7 @@ Cancel with `watts task cancel <task>`. Cancellation stops active subprocess gro
 
 | Location | Contents |
 | --- | --- |
-| `watts.json` | Project settings |
+| `watts.yaml` | Project settings |
 | `workflows/` | Project workflow templates |
 | `<tasks_dir>/<task>/` | SPEC, PLAN, workflow definition, and other declared artifacts |
 | `<task>/.watts-state/` | Snapshots, approvals, pinned settings, logs, and attempt evidence |

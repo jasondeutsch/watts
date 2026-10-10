@@ -5,11 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadConfigErrors(t *testing.T) {
@@ -20,21 +19,38 @@ func TestLoadConfigErrors(t *testing.T) {
 			"missing config should point at watts init, got %v", err)
 	}
 
-	writeFile(t, ta.ConfigPath(), `{"version":1,"provder":"ollama"}`)
+	writeFile(t, ta.ConfigPath(), `kind: Project
+schema_version: 1
+name: test
+spec:
+  version: 1
+  provder: ollama
+`)
 	{
 		_, err := ta.LoadConfig()
 		require.False(t, err == nil || !strings.Contains(err.Error(), "provder"),
 			"a typo in a key must be rejected, got %v", err)
 	}
 
-	writeFile(t, ta.ConfigPath(), `{"version":1,"thinking":"extreme"}`)
+	writeFile(t, ta.ConfigPath(), `kind: Project
+schema_version: 1
+name: test
+spec:
+  version: 1
+  thinking: extreme
+`)
 	{
 		_, err := ta.LoadConfig()
 		require.False(t, err == nil || !strings.Contains(err.Error(), "thinking"),
 			"an invalid value must be rejected, got %v", err)
 	}
 
-	writeFile(t, ta.ConfigPath(), `{"version":2}`)
+	writeFile(t, ta.ConfigPath(), `kind: Project
+schema_version: 1
+name: test
+spec:
+  version: 2
+`)
 	{
 		_, err := ta.LoadConfig()
 		require.Error(t, err,
@@ -45,7 +61,7 @@ func TestLoadConfigErrors(t *testing.T) {
 	{
 		_, err := ta.LoadConfig()
 		require.Error(t, err,
-			"invalid JSON must be rejected")
+			"invalid YAML must be rejected")
 	}
 }
 func TestConfigRoundTripAndPartialFile(t *testing.T) {
@@ -61,7 +77,12 @@ func TestConfigRoundTripAndPartialFile(t *testing.T) {
 	require.False(t, got.Workflow.Steps[0].Provider != "anthropic" || len(got.EnvPassthrough) != 1 || got.EnvPassthrough[0] != "ANTHROPIC_API_KEY",
 		"round trip lost data: %+v", got)
 
-	writeFile(t, ta.ConfigPath(), `{"version":1}`)
+	writeFile(t, ta.ConfigPath(), `kind: Project
+schema_version: 1
+name: test
+spec:
+  version: 1
+`)
 	got, err = ta.LoadConfig()
 	require.NoError(t, err)
 	require.False(t, got.Agents["build"].Thinking != "medium",
@@ -96,6 +117,6 @@ func TestConfigurationRequiresProjectFile(t *testing.T) {
 	{
 		_, err := ta.LoadConfig()
 		require.Error(t, err,
-			"configuration must come from the project watts.json")
+			"configuration must come from the project watts.yaml")
 	}
 }

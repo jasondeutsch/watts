@@ -19,7 +19,7 @@ import (
 // wattsGitignore is written to .watts/.gitignore, inside Watts' own folder, so that if the project
 // happens to be tracked by version control the local state is not picked up by accident. Watts
 // itself does not use version control and never edits the project's own .gitignore. Everything
-// under .watts can be rebuilt from watts.json.
+// under .watts can be rebuilt from watts.yaml.
 const WattsGitignore = `# Local Pi state for the agents: logins, packages, sessions. Never commit.
 pi-agent-*/
 home-*/
@@ -94,7 +94,7 @@ type PiProvider struct {
 	Models     []PiModel `json:"models"`
 }
 
-// providerModelsJSON renders a provider declared in watts.json. apiKey is always a $NAME reference to an
+// providerModelsJSON renders a provider declared in watts.yaml. apiKey is always a $NAME reference to an
 // environment variable, never a key: the variable is api_key_env, or the one Watts fills from
 // api_key_command.
 func ProviderModelsJSON(name string, p projectconfig.Provider) []byte {
@@ -155,7 +155,7 @@ func WantModelsJSON(cfg projectconfig.Config, agent projectconfig.ResolvedAgent)
 // configAgents creates or refreshes the private agent directory and private HOME for each agent.
 // It never replaces a models.json you wrote yourself: a file is only regenerated while it still
 // matches what Watts last wrote, or when force is set. Running it after deleting .watts rebuilds
-// everything from watts.json.
+// everything from watts.yaml.
 func (a *Service) ConfigAgents(cfg projectconfig.Config, force bool) error {
 	return a.configureAgents(cfg, cfg.AgentNames(), force)
 }
@@ -177,7 +177,7 @@ func (a *Service) configureAgents(cfg projectconfig.Config, names []string, forc
 		}
 
 		// settings.json: merge, so installed packages and anything you added survive. Values under
-		// pi_settings in watts.json are merged; workflow model selection is applied last.
+		// pi_settings in watts.yaml are merged; workflow model selection is applied last.
 		settingsPath := filepath.Join(dir, "settings.json")
 		settings := map[string]any{}
 		if data, err := os.ReadFile(settingsPath); err == nil {
@@ -203,7 +203,7 @@ func (a *Service) configureAgents(cfg projectconfig.Config, names []string, forc
 			return err
 		}
 
-		// models.json: generated for Ollama and for providers declared in watts.json, and never
+		// models.json: generated for Ollama and for providers declared in watts.yaml, and never
 		// over a file you edited.
 		if want := WantModelsJSON(cfg, agent); want != nil {
 			p := filepath.Join(dir, "models.json")

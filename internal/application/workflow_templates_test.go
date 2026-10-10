@@ -7,13 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func workflowProject(t *testing.T) (*Service, projectconfig.Config) {
@@ -28,9 +27,9 @@ func TestProjectWorkflowSelectionAndPinnedTaskDefinition(t *testing.T) {
 	app, cfg := workflowProject(t)
 	definition := orchestration.Definition{Version: 1, Templates: map[string]string{"proposal.md": "Research question\n"}, Steps: []orchestration.Step{{Name: "research", Command: "true"}}}
 
-	require.NoError(t, storage.WriteJSON(filepath.Join(app.Root, "workflows", "research.json"), definition))
+	require.NoError(t, manifest.Write(filepath.Join(app.Root, "workflows", "research.yaml"), manifest.Workflow, "test-workflow", definition))
 
-	cfg.DefaultWorkflow = "workflows/research.json"
+	cfg.DefaultWorkflow = "workflows/research.yaml"
 	task, err := app.CreateTask(cfg, "question", "")
 	require.NoError(t, err)
 	{
@@ -45,14 +44,14 @@ func TestProjectWorkflowSelectionAndPinnedTaskDefinition(t *testing.T) {
 
 	definition.Steps[0].Name = "changed"
 
-	require.NoError(t, storage.WriteJSON(filepath.Join(app.Root, "workflows", "research.json"), definition))
+	require.NoError(t, manifest.Write(filepath.Join(app.Root, "workflows", "research.yaml"), manifest.Workflow, "test-workflow", definition))
 
 	selected, err := app.TaskWorkflow(cfg, task)
 	require.NoError(t, err)
 	require.Equal(t, "research", selected.Definition.Steps[0].Name,
 		"editing the project changed a task's pinned definition")
 
-	next, err := app.CreateTask(cfg, "next-question", "workflows/research.json")
+	next, err := app.CreateTask(cfg, "next-question", "workflows/research.yaml")
 	require.NoError(t, err)
 
 	selected, err = app.TaskWorkflow(cfg, next)
@@ -62,21 +61,29 @@ func TestProjectWorkflowSelectionAndPinnedTaskDefinition(t *testing.T) {
 
 func TestWorkflowFileValidation(t *testing.T) {
 	app, cfg := workflowProject(t)
-	for _, name := range []string{"../outside.json", "Bad Name", "missing.json"} {
+	for _, name := range []string{"../outside.yaml", "Bad Name", "missing.yaml"} {
 		_, err := app.ResolveWorkflow(cfg, name)
 		require.Error(t, err)
 	}
-	require.NoError(t, os.WriteFile(filepath.Join(app.Root, "custom.json"), []byte(`{"steps":[{"name":"work","command":"true"}],"typo":1}`), 0644))
-	_, err := app.ResolveWorkflow(cfg, "custom.json")
+	require.NoError(t, os.WriteFile(filepath.Join(app.Root, "custom.yaml"), []byte(`kind: Workflow
+schema_version: 1
+name: test
+spec:
+  typo: 1
+  steps:
+  - name: work
+    command: 'true'
+`), 0644))
+	_, err := app.ResolveWorkflow(cfg, "custom.yaml")
 	require.Error(t, err, "unknown definition fields accepted")
 }
 
 func TestTaskWorkflowCanBeCustomizedBeforeSubmission(t *testing.T) {
 	app, cfg := workflowProject(t)
 
-	require.NoError(t, storage.WriteJSON(filepath.Join(app.Root, "custom.json"), orchestration.Definition{Steps: []orchestration.Step{{Name: "work", Command: "true"}}}))
+	require.NoError(t, manifest.Write(filepath.Join(app.Root, "custom.yaml"), manifest.Workflow, "test-workflow", orchestration.Definition{Steps: []orchestration.Step{{Name: "work", Command: "true"}}}))
 
-	task, err := app.CreateTask(cfg, "question", "custom.json")
+	task, err := app.CreateTask(cfg, "question", "custom.yaml")
 	require.NoError(t, err)
 
 	selected, err := app.TaskWorkflow(cfg, task)
@@ -84,7 +91,7 @@ func TestTaskWorkflowCanBeCustomizedBeforeSubmission(t *testing.T) {
 
 	selected.Definition.Steps[0].Command = "other"
 
-	require.NoError(t, storage.WriteJSON(app.TaskWorkflowPath(task), selected.Definition))
+	require.NoError(t, manifest.Write(app.TaskWorkflowPath(task), manifest.Workflow, "test-workflow", selected.Definition))
 
 	edited, err := app.TaskWorkflow(cfg, task)
 	require.NoError(t, err)
@@ -92,7 +99,7 @@ func TestTaskWorkflowCanBeCustomizedBeforeSubmission(t *testing.T) {
 	binding, err := app.CreateWorkflowBinding(cfg, task, &RunOptions{})
 	require.NoError(t, err)
 	edited.Definition.Steps[0].Command = "later"
-	require.NoError(t, storage.WriteJSON(app.TaskWorkflowPath(task), edited.Definition))
+	require.NoError(t, manifest.Write(app.TaskWorkflowPath(task), manifest.Workflow, "test-workflow", edited.Definition))
 	frozen, err := app.LoadWorkflowBinding(task)
 	require.NoError(t, err)
 	require.Equal(t, binding.Input.Definition, frozen.Input.Definition)
@@ -103,8 +110,8 @@ func TestProjectCanOverrideBundledDefaultWorkflow(t *testing.T) {
 	app, cfg := workflowProject(t)
 	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "custom-work", Command: "true"}}}
 
-	require.NoError(t, storage.WriteJSON(filepath.Join(app.Root, "workflows", "sdlc.json"), definition))
-	cfg.DefaultWorkflow = "workflows/sdlc.json"
+	require.NoError(t, manifest.Write(filepath.Join(app.Root, "workflows", "sdlc.yaml"), manifest.Workflow, "test-workflow", definition))
+	cfg.DefaultWorkflow = "workflows/sdlc.yaml"
 
 	selected, err := app.ResolveWorkflow(cfg, "")
 	require.False(t, err != nil || selected.Definition.Steps[0].Name != "custom-work",
@@ -123,10 +130,10 @@ func TestClonedSDLCIncludesDeclaredTemplatesAndBaseline(t *testing.T) {
 	app, cfg := workflowProject(t)
 	err := kit.Initialize(app.KitDir())
 	require.NoError(t, err)
-	require.NoError(t, storage.WriteJSON(filepath.Join(app.Root, "bugfix.json"), projectconfig.DefaultWorkflow()))
-	task, err := app.CreateTask(cfg, "clone", "bugfix.json")
+	require.NoError(t, manifest.Write(filepath.Join(app.Root, "bugfix.yaml"), manifest.Workflow, "test-workflow", projectconfig.DefaultWorkflow()))
+	task, err := app.CreateTask(cfg, "clone", "bugfix.yaml")
 	require.NoError(t, err)
-	for _, artifact := range []string{"workflow.json", "SPEC.md", "PLAN.md", "RALPH.md", "review/RALPH.md", "BASE"} {
+	for _, artifact := range []string{"workflow.yaml", "SPEC.md", "PLAN.md", "RALPH.md", "review/RALPH.md", "BASE"} {
 		info, err := os.Stat(filepath.Join(app.Root, task, artifact))
 		require.NoError(t, err, artifact)
 		assert.Positive(t, info.Size(), artifact)
@@ -180,7 +187,7 @@ func TestSDLCScaffoldSeparatesTaskDocumentsFromImplementation(t *testing.T) {
 	require.NoError(t, err)
 	plan, err := os.ReadFile(filepath.Join(app.Root, task, "PLAN.md"))
 	require.NoError(t, err)
-	require.Contains(t, string(plan), "Implementation root: the project directory containing watts.json")
+	require.Contains(t, string(plan), "Implementation root: the project directory containing watts.yaml")
 	require.Contains(t, string(plan), "Do not create a separate application or module under the task directory")
 	build, err := os.ReadFile(filepath.Join(app.Root, task, "RALPH.md"))
 	require.NoError(t, err)

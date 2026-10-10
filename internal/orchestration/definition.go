@@ -9,44 +9,44 @@ import (
 )
 
 type Definition struct {
-	CaptureBaseline bool              `json:"capture_baseline,omitempty"`
-	Version         int               `json:"version,omitempty"`
-	Steps           []Step            `json:"steps"`
-	MaxTransitions  int               `json:"max_transitions,omitempty"`
-	Templates       map[string]string `json:"templates,omitempty"`
+	CaptureBaseline bool              `json:"capture_baseline,omitempty" yaml:"capture_baseline,omitempty"`
+	Version         int               `json:"version,omitempty" yaml:"version,omitempty"`
+	Steps           []Step            `json:"steps" yaml:"steps"`
+	MaxTransitions  int               `json:"max_transitions,omitempty" yaml:"max_transitions,omitempty"`
+	Templates       map[string]string `json:"templates,omitempty" yaml:"templates,omitempty"`
 }
 
 type Check struct {
-	Script string   `json:"script"`
-	Args   []string `json:"args,omitempty"`
+	Script string   `json:"script" yaml:"script"`
+	Args   []string `json:"args,omitempty" yaml:"args,omitempty"`
 }
 
 type Step struct {
-	MCPs           []string          `json:"mcps,omitempty"`
-	Name           string            `json:"name"`
-	Capability     string            `json:"capability,omitempty"`
-	Parameters     map[string]any    `json:"parameters,omitempty"`
-	Event          bool              `json:"event,omitempty"`
-	ResultFile     string            `json:"result_file,omitempty"`
-	Transitions    map[string]string `json:"transitions,omitempty"`
-	Identity       string            `json:"identity,omitempty"`
-	Provider       string            `json:"provider,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	Agent          string            `json:"agent,omitempty"`
-	Prompt         string            `json:"prompt,omitempty"`
-	Command        string            `json:"command,omitempty"`
-	Check          string            `json:"check,omitempty"`
-	Args           []string          `json:"args,omitempty"`
-	Human          bool              `json:"human,omitempty"`
-	Optional       bool              `json:"optional,omitempty"`
-	Inputs         []string          `json:"inputs,omitempty"`
-	Outputs        []string          `json:"outputs,omitempty"`
-	PreChecks      []Check           `json:"pre_checks,omitempty"`
-	Checks         []Check           `json:"checks,omitempty"`
-	Next           string            `json:"next,omitempty"`
-	OnFailure      string            `json:"on_failure,omitempty"`
-	TimeoutSeconds int               `json:"timeout_seconds,omitempty"`
-	MaxAttempts    int               `json:"max_attempts,omitempty"`
+	MCPs           []string          `json:"mcps,omitempty" yaml:"mcps,omitempty"`
+	Name           string            `json:"name" yaml:"name"`
+	Capability     string            `json:"capability,omitempty" yaml:"capability,omitempty"`
+	Parameters     map[string]any    `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Event          bool              `json:"event,omitempty" yaml:"event,omitempty"`
+	ResultFile     string            `json:"result_file,omitempty" yaml:"result_file,omitempty"`
+	Transitions    map[string]string `json:"transitions,omitempty" yaml:"transitions,omitempty"`
+	Identity       string            `json:"identity,omitempty" yaml:"identity,omitempty"`
+	Provider       string            `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Model          string            `json:"model,omitempty" yaml:"model,omitempty"`
+	Agent          string            `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Prompt         string            `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	Command        string            `json:"command,omitempty" yaml:"command,omitempty"`
+	Check          string            `json:"check,omitempty" yaml:"check,omitempty"`
+	Args           []string          `json:"args,omitempty" yaml:"args,omitempty"`
+	Human          bool              `json:"human,omitempty" yaml:"human,omitempty"`
+	Optional       bool              `json:"optional,omitempty" yaml:"optional,omitempty"`
+	Inputs         []string          `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Outputs        []string          `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	PreChecks      []Check           `json:"pre_checks,omitempty" yaml:"pre_checks,omitempty"`
+	Checks         []Check           `json:"checks,omitempty" yaml:"checks,omitempty"`
+	Next           string            `json:"next,omitempty" yaml:"next,omitempty"`
+	OnFailure      string            `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
+	TimeoutSeconds int               `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
+	MaxAttempts    int               `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
 }
 
 // AgentIdentity returns the identity declared by a workflow's agent stages.

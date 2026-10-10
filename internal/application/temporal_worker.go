@@ -37,7 +37,7 @@ func (app *Service) RunTemporalWorker(ctx context.Context) error {
 	settings := app.ResolvedTemporalSettings(config)
 	dialCtx, dialCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer dialCancel()
-	temporalClient, err := ConnectTemporal(dialCtx, settings)
+	temporalClient, err := app.ConnectTemporalWorker(dialCtx, settings)
 	if err != nil {
 		return err
 	}
@@ -46,8 +46,13 @@ func (app *Service) RunTemporalWorker(ctx context.Context) error {
 	if err = workflowWorker.Start(); err != nil {
 		return err
 	}
-	defer workflowWorker.Stop()
-	app.say("Watts worker for %s, namespace %s, queue %s", app.Root, settings.Namespace, settings.TaskQueue)
+	logger := app.WorkerLogger()
+	defer func() {
+		logger.Info("Worker stopping", "next_action", "Active work is stopping; Temporal retains workflow history")
+		workflowWorker.Stop()
+		logger.Info("Worker stopped", "next_action", "Run watts start to resume processing")
+	}()
+	logger.Info("Worker ready", "address", settings.Address, "namespace", settings.Namespace, "queue", settings.TaskQueue)
 	<-ctx.Done()
 	return nil
 }

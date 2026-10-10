@@ -7,6 +7,7 @@ import (
 
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
+	temporallog "go.temporal.io/sdk/log"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
@@ -31,7 +32,16 @@ func (app *Service) ResolvedTemporalSettings(config projectconfig.Config) projec
 }
 
 func ConnectTemporal(ctx context.Context, settings projectconfig.TemporalSettings) (client.Client, error) {
-	temporalClient, err := client.DialContext(ctx, client.Options{HostPort: settings.Address, Namespace: settings.Namespace})
+	return connectTemporal(ctx, settings, nil)
+}
+
+// ConnectTemporalWorker directs SDK and workflow logs to the worker's output.
+func (app *Service) ConnectTemporalWorker(ctx context.Context, settings projectconfig.TemporalSettings) (client.Client, error) {
+	return connectTemporal(ctx, settings, app.WorkerLogger())
+}
+
+func connectTemporal(ctx context.Context, settings projectconfig.TemporalSettings, logger temporallog.Logger) (client.Client, error) {
+	temporalClient, err := client.DialContext(ctx, client.Options{HostPort: settings.Address, Namespace: settings.Namespace, Logger: logger})
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to Temporal at %s (namespace %s): %w", settings.Address, settings.Namespace, err)
 	}

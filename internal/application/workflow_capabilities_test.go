@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExecutableCapabilityReturnsEvidenceAndReceivesFeedback(t *testing.T) {
@@ -40,7 +39,7 @@ func TestExecutableCapabilityReturnsEvidenceAndReceivesFeedback(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(app.Root, task, "plugin-input.json"))
 	require.NoError(t, err)
 
-	require.NoError(t, decodeWorkflow(data, &input))
+	require.NoError(t, decodeExecutorJSON(data, &input))
 
 	require.False(t, input.Previous == nil || input.Previous.Feedback != "Added edge cases" || input.Parameters["suite"] != "integration",
 		"plugin input=%+v", input)

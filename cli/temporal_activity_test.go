@@ -1,17 +1,15 @@
 package cli
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTemporalConfigAndCommandsWithoutAApp(t *testing.T) {
@@ -27,7 +25,7 @@ func TestTemporalConfigAndCommandsWithoutAApp(t *testing.T) {
 
 	_ = os.MkdirAll(filepath.Join(ta.Root, "tasks", "custom"), 0700)
 	{
-		require.NoError(t, storage.WriteJSON(ta.TaskWorkflowPath("tasks/custom"), cfg.Workflow))
+		require.NoError(t, manifest.Write(ta.TaskWorkflowPath("tasks/custom"), manifest.Workflow, "custom", cfg.Workflow))
 		code, out, errs := runCLI(t, ta.Root, "task", "run", "tasks/custom", "--dry-run")
 		require.False(t, code != 0 || !strings.Contains(out, "authorize"),
 			"dry run: %d %s%s", code, out, errs)
@@ -43,7 +41,7 @@ func TestTemporalConfigAndCommandsWithoutAApp(t *testing.T) {
 	var decoded projectconfig.Config
 	data, _ := os.ReadFile(ta.ConfigPath())
 	{
-		err = json.Unmarshal(data, &decoded)
+		err = decodeProjectConfig(data, &decoded)
 		require.False(t, err != nil || decoded.Temporal == nil,
 			"temporal settings not persisted", err)
 	}
@@ -72,4 +70,10 @@ func TestStatusWithoutTaskUsesOnlyTaskAndListsAmbiguousChoices(t *testing.T) {
 	code, output, errors = runCLI(t, project.Root, "task", "status", first, "--json")
 	require.Equal(t, 0, code, errors)
 	require.Contains(t, output, first)
+}
+
+func decodeProjectConfig(data []byte, cfg *projectconfig.Config) error {
+	doc, err := manifest.Decode(data, manifest.Project, projectconfig.Config{})
+	*cfg = doc.Spec
+	return err
 }

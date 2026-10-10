@@ -27,7 +27,7 @@ Pi's guide documents a ready-made kit. Check the [Pi kit README](https://github.
 
 What does not carry over automatically:
 
-- `watts` is a single static binary, so it is easy to put in a sandbox image: copy it in (or `go install` it there) and run `watts init` inside the sandboxed checkout (only `watts.json` needs to travel with the repository; everything under `.watts` is rebuilt). Inside a sandbox the sandbox is the isolation, so the CLI's cleared environment and private agent directories are belt and braces, not the boundary. Credentials for the provider should come from the sandbox's proxy, not from `watts config env add`.
+- `watts` is a single static binary, so it is easy to put in a sandbox image: copy it in (or `go install` it there) and run `watts init` inside the sandboxed checkout (only `watts.yaml` needs to travel with the repository; everything under `.watts` is rebuilt). Inside a sandbox the sandbox is the isolation, so the CLI's cleared environment and private agent directories are belt and braces, not the boundary. Credentials for the provider should come from the sandbox's proxy, not from `watts config env add`.
 - The check scripts under `.watts/kit/scripts` need `bash`, `awk`, `find`, `xargs` and `sha256sum` or `shasum` in the sandbox image. Workflow stages run their declared checks inside the execution environment.
 - Watts needs no version-control repository or Git identity in the sandbox. Build and review use task snapshots and role names; Watts does not configure Git.
 - Work on a separate filesystem copy of your project when you need isolation from your original files. Inspect the Watts snapshot diff on the host before copying changes back. Choose the mount mode according to the sandbox provider’s documentation.

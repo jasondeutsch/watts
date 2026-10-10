@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -15,17 +15,17 @@ func TestProjectDefaultWorkflowScaffoldsTask(t *testing.T) {
 	project := newProject(t)
 	project.initRepo(t)
 	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "research", Agent: "build", Provider: "ollama", Model: "qwen2.5-coder:7b", Identity: "research-agent", Prompt: "Investigate this task"}}}
-	require.NoError(t, storage.WriteJSON(filepath.Join(project.Root, "research.json"), definition))
+	require.NoError(t, manifest.Write(filepath.Join(project.Root, "research.yaml"), manifest.Workflow, "test-workflow", definition))
 	cfg, err := project.LoadConfig()
 	require.NoError(t, err)
-	cfg.DefaultWorkflow = "research.json"
+	cfg.DefaultWorkflow = "research.yaml"
 	require.NoError(t, project.SaveConfig(cfg))
 	code, _, errors := runCLI(t, project.Root, "task", "new", "question")
 	require.Equal(t, 0, code, errors)
 	matches, err := filepath.Glob(filepath.Join(project.Root, "tasks", "*-question"))
 	require.NoError(t, err)
 	require.Len(t, matches, 1)
-	data, err := os.ReadFile(filepath.Join(matches[0], "workflow.json"))
+	data, err := os.ReadFile(filepath.Join(matches[0], "workflow.yaml"))
 	require.NoError(t, err)
 	require.Contains(t, string(data), "research-agent")
 	_, err = os.Stat(filepath.Join(matches[0], "SPEC.md"))

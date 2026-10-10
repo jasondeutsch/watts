@@ -1,24 +1,25 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	workflowtemplates "github.com/jasondeutsch/watts/workflow-templates"
 )
 
-// DefaultWorkflow reads the bundled SDLC template. The JSON file is the source of truth.
+// DefaultWorkflow reads the bundled SDLC template. The YAML file is the source of truth.
 func DefaultWorkflow() orchestration.Definition {
-	contents, err := workflowtemplates.Files.ReadFile("sdlc.json")
+	contents, err := workflowtemplates.Files.ReadFile("sdlc.yaml")
 	if err != nil {
 		panic(err)
 	}
 	var definition orchestration.Definition
-	if err := json.Unmarshal(contents, &definition); err != nil {
+	document, err := manifest.Decode(contents, manifest.Workflow, definition)
+	if err != nil {
 		panic(err)
 	}
-	return definition
+	return document.Spec
 }
 
 func (c Config) ValidateWorkflow(definition orchestration.Definition) error {

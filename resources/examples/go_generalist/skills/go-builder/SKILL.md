@@ -6,7 +6,7 @@ license: MIT
 
 # Go builder
 
-Use the task's approved SPEC.md and PLAN.md to determine scope. Follow existing project conventions unless the task explicitly changes them. Application source, tests, and modules belong in the project root containing watts.json; task directories hold workflow documents and evidence.
+Use the task's approved SPEC.md and PLAN.md to determine scope. Follow existing project conventions unless the task explicitly changes them. Application source, tests, and modules belong in the project root containing watts.yaml; task directories hold workflow documents and evidence.
 
 ## Readable implementation
 

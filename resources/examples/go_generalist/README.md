@@ -4,20 +4,21 @@ This example is being built for a team developing Go business applications and w
 
 ## Adopt the example
 
-Initialize your Go project with Watts, then copy this directory to `resources/examples/go_generalist` inside that project. Keep its layout: the workflow and script use these project-relative paths. Merge these fields into your project's existing watts.json, preserving other agent settings:
+Initialize your Go project with Watts, then copy this directory to `resources/examples/go_generalist` inside that project. Keep its layout: the workflow and script use these project-relative paths. Merge these fields into your project's existing watts.yaml, preserving other agent settings:
 
-```json
-{
-  "default_workflow": "resources/examples/go_generalist/workflows/go-generalist.json",
-  "mcps": {
-    "gopls": { "command": "gopls", "args": ["mcp"], "cwd": "." }
-  },
-  "agents": {
-    "build": {
-      "skills_dirs": ["resources/examples/go_generalist/skills"]
-    }
-  }
-}
+```yaml
+spec:
+  default_workflow: resources/examples/go_generalist/workflows/go-generalist.yaml
+  mcps:
+    gopls:
+      command: gopls
+      args:
+      - mcp
+      cwd: .
+  agents:
+    build:
+      skills_dirs:
+      - resources/examples/go_generalist/skills
 ```
 
 Install golangci-lint v2 on the worker's PATH, using a release compatible with your project's Go version. Use the same release locally and in CI. See the [installation instructions](https://golangci-lint.run/docs/welcome/install/).
@@ -48,4 +49,4 @@ After configuring the build role's `skills_dirs`, run `watts config apply` to co
 
 ## MCP tools
 
-Follow [Builder MCP setup](mcp/README.md) to install gopls, declare its connection in watts.json, and verify a tool call. The portable [MCP configuration](mcp/mcp.json) demonstrates how teams add servers without changing Watts. The build stage selects gopls with `"mcps": ["gopls"]`; the other stages do not select it.
+Follow [Builder MCP setup](mcp/README.md) to install gopls, declare its connection in watts.yaml, and verify a tool call. The portable [MCP configuration](mcp/mcp.yaml) demonstrates how teams add servers without changing Watts. The build stage selects gopls with `mcps: [gopls]`; the other stages do not select it.

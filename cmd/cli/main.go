@@ -6,9 +6,9 @@
 package main
 
 import (
- "os"
+	"os"
 
- "github.com/jasondeutsch/watts/cli"
+	"github.com/jasondeutsch/watts/cli"
 )
 
 func main() {

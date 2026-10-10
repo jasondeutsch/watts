@@ -49,7 +49,7 @@ func (a *Service) CreateAgent(cfg projectconfig.Config, options CreateAgentOptio
 			return err
 		}
 		taskPath := strings.TrimPrefix(strings.TrimPrefix(p, root), "/")
-		if taskPath == "" || taskPath == "watts.example.json" {
+		if taskPath == "" || taskPath == "watts.example.yaml" {
 			return nil
 		}
 		if d.IsDir() {

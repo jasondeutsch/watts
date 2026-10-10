@@ -1,0 +1,38 @@
+kind: Project
+name: watts.example
+schema_version: 1
+spec:
+  agents:
+    security-review:
+      path: .watts.agents/security-review
+      skills_dirs:
+      - .watts.agents/security-review/skills
+      thinking: high
+      pi_settings: {}
+  workflow:
+    steps:
+    - check: preflight
+      name: preflight
+    - agent: build
+      model: devstral-small-2:24b
+      name: build
+      prompt: /ralph --path ./{task}
+      provider: ollama
+    - agent: security-review
+      identity: watts-security
+      model: devstral-small-2:24b
+      name: security-review
+      prompt: Review the changes since this task's baseline snapshot for security problems. Write findings
+        to {task}/SECURITY.md.
+      provider: ollama
+    - command: make test
+      name: gates
+    - agent: review
+      model: devstral-small-2:24b
+      name: review
+      prompt: /ralph --path ./{task}/review
+      provider: ollama
+    - args:
+      - --require-pass
+      check: check-verdict
+      name: verdict

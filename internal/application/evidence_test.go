@@ -16,15 +16,15 @@ func TestRunIsCheckedAgainstWhatWasRecorded(t *testing.T) {
 	needTools(t, "awk")
 	ta, task := taskRepo(t)
 
-	customPi(t, `echo "tampered" >> watts.json
+	customPi(t, `echo "tampered" >> watts.yaml
 `+sessionScript("deepseek/deepseek-v4-flash"))
 	code, out, errs := executeAgentActivity(t, ta, task, "build", false)
-	assert.False(t, code == 0 || !strings.Contains(out+errs, "changed paths it may not change: watts.json"),
-		"a change to watts.json must fail the stage: %d\n%s%s", code, out, errs)
+	assert.False(t, code == 0 || !strings.Contains(out+errs, "changed paths it may not change: watts.yaml"),
+		"a change to watts.yaml must fail the stage: %d\n%s%s", code, out, errs)
 	assert.False(t, !strings.Contains(out, "models seen: deepseek/deepseek-v4-flash") || !strings.Contains(out, "tool calls: 1"),
 		"the summary comes from the session record:\n%s", out)
 
-	_ = os.WriteFile(filepath.Join(ta.Root, "watts.json"), []byte(strings.ReplaceAll(readFile(t, filepath.Join(ta.Root, "watts.json")), "tampered\n", "")), 0o644)
+	_ = os.WriteFile(filepath.Join(ta.Root, "watts.yaml"), []byte(strings.ReplaceAll(readFile(t, filepath.Join(ta.Root, "watts.yaml")), "tampered\n", "")), 0o644)
 
 	customPi(t, sessionScript("some-other-model"))
 	_ = os.RemoveAll(filepath.Join(ta.AgentDir(loadCfg(t, ta), "build"), "sessions"))

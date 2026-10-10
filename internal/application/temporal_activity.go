@@ -11,13 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"go.temporal.io/sdk/activity"
-
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workspace"
+	"go.temporal.io/sdk/activity"
 )
 
 // prepareActivity confines activities to a task submitted by this project and checks the
@@ -144,10 +143,21 @@ func (app *Service) ValidateApprovalArtifacts(ctx context.Context, request orche
 
 func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestration.ActivityInput) (result orchestration.Result, err error) {
 	defer startActivityHeartbeat(ctx)()
+	logger := activity.GetLogger(ctx)
+	started := time.Now()
+	logger.Info("Attempt execution started", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt)
+	defer func() {
+		if errors.Is(err, context.Canceled) {
+			logger.Warn("Attempt execution cancelled", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "elapsed", time.Since(started).Round(time.Second).String(), "next_action", "Inspect task status before retrying or creating a new task")
+		} else if err != nil {
+			logger.Error("Attempt execution failed", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "elapsed", time.Since(started).Round(time.Second).String(), "error", err.Error(), "next_action", "Inspect task status and the attempt log; workflow routing determines retry or rework")
+		}
+	}()
 	runtime, err := app.prepareActivity(ctx, request)
 	if err != nil {
 		return result, err
 	}
+	runtime.logger = logger
 	unlock, err := workspace.LockWorkflowWorkspace(app.Wd())
 	if err != nil {
 		return result, err
@@ -165,13 +175,14 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 		return result, err
 	}
 	defer logFile.Close()
+	logger.Info("Attempt output", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "log", app.Rel(logPath))
 	runtime.output = io.MultiWriter(app.Output, logFile)
 	runtime.errorOutput = io.MultiWriter(app.ErrorOutput, logFile)
 	protectedPaths := append([]string(nil), projectconfig.DefaultForbidden...)
 	if agent, ok := runtime.config.Agent(request.Step.Agent); ok {
 		protectedPaths = append(protectedPaths, agent.Forbidden...)
 	}
-	protectedPaths = append(protectedPaths, filepath.Join(request.Input.Task, "workflow.json"), filepath.Join(request.Input.Task, ".watts-state", "approvals"))
+	protectedPaths = append(protectedPaths, filepath.Join(request.Input.Task, "workflow.yaml"), filepath.Join(request.Input.Task, ".watts-state", "approvals"))
 	for _, input := range request.Step.Inputs {
 		if !projectconfig.Contains(request.Step.Outputs, input) {
 			protectedPaths = append(protectedPaths, filepath.Join(request.Input.Task, input))

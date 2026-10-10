@@ -1,0 +1,15 @@
+kind: Workflow
+name: research
+schema_version: 1
+spec:
+  version: 1
+  steps:
+  - agent: build
+    identity: watts-researcher
+    model: deepseek/deepseek-v4-flash
+    name: research
+    outputs:
+    - REPORT.md
+    prompt: Investigate the question described in this task's files. Inspect the project and write your
+      findings, supporting evidence and unresolved questions to {task}/REPORT.md.
+    provider: openrouter

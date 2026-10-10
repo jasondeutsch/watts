@@ -16,6 +16,7 @@ import (
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workspace"
+	temporallog "go.temporal.io/sdk/log"
 )
 
 // activityRuntime holds dependencies scoped to one Temporal activity. Project services
@@ -28,9 +29,12 @@ type activityRuntime struct {
 	output      io.Writer
 	errorOutput io.Writer
 	environment []string
+	logger      temporallog.Logger
 }
 
 func (runtime *activityRuntime) runProcess(command *exec.Cmd, limit time.Duration) error {
+	stopProgress := runtime.reportProcessProgress()
+	defer stopProgress()
 	return workspace.RunProcess(runtime.context, runtime.project.Wd("workflow-active-process.json"), command, limit)
 }
 
@@ -175,4 +179,36 @@ func sortedOutcomes(transitions map[string]string) []string {
 	}
 	sort.Strings(outcomes)
 	return outcomes
+}
+
+// Elapsed time indicates a live activity, not evidence of executor progress.
+func (runtime *activityRuntime) reportProcessProgress() func() {
+	stop := make(chan struct{})
+	done := make(chan struct{})
+	started := time.Now()
+	go func() {
+		defer close(done)
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				runtime.logProgress("Executor still running", "elapsed", time.Since(started).Round(time.Second).String())
+			case <-stop:
+				return
+			case <-runtime.context.Done():
+				return
+			}
+		}
+	}()
+	return func() { close(stop); <-done }
+}
+
+func (runtime *activityRuntime) logProgress(message string, fields ...any) {
+	fields = append([]any{"task", runtime.request.Input.Task, "stage", runtime.request.Step.Name, "attempt", runtime.request.Attempt}, fields...)
+	logger := runtime.logger
+	if logger == nil {
+		logger = runtime.project.WorkerLogger()
+	}
+	logger.Info(message, fields...)
 }

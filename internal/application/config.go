@@ -1,46 +1,48 @@
 package application
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/jasondeutsch/watts/internal/manifest"
 )
 
 func (a *Service) ConfigPath() string { return filepath.Join(a.Root, projectconfig.Filename) }
 
-// LoadConfig reads the project's watts.json and rejects unknown settings.
+// LoadConfig reads the project's watts.yaml and rejects unknown settings.
 func (a *Service) LoadConfig() (projectconfig.Config, error) {
 	data, err := os.ReadFile(a.ConfigPath())
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return projectconfig.Config{}, errors.New("watts is not set up here (no watts.json found). Run: watts init in your project root")
+			return projectconfig.Config{}, errors.New("watts is not set up here (no watts.yaml found). Run: watts init in your project root")
 		}
 		return projectconfig.Config{}, err
 	}
 	cfg := projectconfig.Default()
 	// Defaults apply when a section is omitted; explicitly supplied maps replace it.
 	// Decoding directly into default maps would silently add agents or connections.
-	var sections map[string]json.RawMessage
-	if err := json.Unmarshal(data, &sections); err != nil {
+	sections, err := manifest.Decode(data, manifest.Project, map[string]any{})
+	if err != nil {
 		return projectconfig.Config{}, fmt.Errorf("%s: %w", a.Rel(a.ConfigPath()), err)
 	}
-	if _, provided := sections["providers"]; provided {
+	if sections.Spec == nil {
+		return projectconfig.Config{}, fmt.Errorf("%s: manifest requires a spec mapping", a.Rel(a.ConfigPath()))
+	}
+	if _, provided := sections.Spec["providers"]; provided {
 		cfg.Providers = nil
 	}
-	if _, provided := sections["agents"]; provided {
+	if _, provided := sections.Spec["agents"]; provided {
 		cfg.Agents = nil
 	}
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&cfg); err != nil {
+
+	document, err := manifest.Decode(data, manifest.Project, cfg)
+	if err != nil {
 		return projectconfig.Config{}, fmt.Errorf("%s: %w", a.Rel(a.ConfigPath()), err)
 	}
+	cfg = document.Spec
 	if err := cfg.Validate(); err != nil {
 		return projectconfig.Config{}, fmt.Errorf("%s: %w", a.Rel(a.ConfigPath()), err)
 	}
@@ -58,7 +60,13 @@ func (a *Service) SaveConfig(cfg projectconfig.Config) error {
 	if cfg.EnvPassthrough == nil {
 		cfg.EnvPassthrough = []string{}
 	}
-	if err := storage.WriteJSON(a.ConfigPath(), cfg); err != nil {
+	name := filepath.Base(a.Root)
+	if data, err := os.ReadFile(a.ConfigPath()); err == nil {
+		if document, err := manifest.Decode(data, manifest.Project, map[string]any{}); err == nil {
+			name = document.Name
+		}
+	}
+	if err := manifest.Write(a.ConfigPath(), manifest.Project, name, cfg); err != nil {
 		return err
 	}
 	return nil

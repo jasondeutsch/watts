@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Watts runs workflow commands from the project root containing watts.json.
-if [[ ! -f watts.json || ! -f go.mod ]]; then
-  echo 'lint: run from the Go project root containing watts.json and go.mod' >&2
+# Watts runs workflow commands from the project root containing watts.yaml.
+if [[ ! -f watts.yaml || ! -f go.mod ]]; then
+  echo 'lint: run from the Go project root containing watts.yaml and go.mod' >&2
   exit 1
 fi
 

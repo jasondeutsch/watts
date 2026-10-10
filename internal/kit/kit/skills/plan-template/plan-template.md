@@ -1,7 +1,7 @@
 # PLAN: <name>
 
 Task documents: tasks/<date>-<slug>/
-Implementation root: the project directory containing watts.json
+Implementation root: the project directory containing watts.yaml
 
 Application source, tests, dependencies, and build files belong in the project root and its normal source directories. The task directory stores workflow documents and evidence only. Do not create a separate application or module under the task directory.
 Spec ref: SPEC.md v<N>

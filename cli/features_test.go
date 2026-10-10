@@ -10,17 +10,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/activity"
-	"go.temporal.io/sdk/testsuite"
-
 	"github.com/jasondeutsch/watts/cli/internal/devtools"
 	"github.com/jasondeutsch/watts/internal/application"
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
-	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/testsuite"
 )
 
 // customPi puts a pi stand-in first on PATH. body runs for every call that is not --version,
@@ -103,7 +102,7 @@ func TestWattsDirIsRebuildable(t *testing.T) {
 
 	require.NoError(t, ta.ConfigAgents(cfg, false))
 
-	before := readFile(t, filepath.Join(ta.Root, "watts.json"))
+	before := readFile(t, filepath.Join(ta.Root, "watts.yaml"))
 	want := readFile(t, filepath.Join(ta.Root, ".watts/pi-agent-build/models.json"))
 
 	require.NoError(t, os.RemoveAll(filepath.Join(ta.Root, ".watts")))
@@ -113,10 +112,10 @@ func TestWattsDirIsRebuildable(t *testing.T) {
 		require.Equal(t, 0, code,
 			"re-init after deleting .watts: %d %s%s", code, out, errs)
 	}
-	assert.Equal(t, before, readFile(t, filepath.Join(ta.Root, "watts.json")),
+	assert.Equal(t, before, readFile(t, filepath.Join(ta.Root, "watts.yaml")),
 		"deleting .watts and running init must not change the configuration")
 	assert.Equal(t, want, readFile(t, filepath.Join(ta.Root, ".watts/pi-agent-build/models.json")),
-		"models.json must be regenerated from watts.json")
+		"models.json must be regenerated from watts.yaml")
 	assert.False(t, !exists(filepath.Join(ta.Root, ".watts/pi-agent-review/skills/my-skill/SKILL.md")) || !exists(filepath.Join(ta.Root, ".watts/kit/scripts/lib.sh")),
 		"the kit and the project skills must come back")
 }
@@ -370,7 +369,7 @@ func TestAgentNewAndWorkflowRun(t *testing.T) {
 		assert.True(t, exists(filepath.Join(dir, f)),
 			"the scaffold lacks %s", f)
 	}
-	assert.False(t, exists(filepath.Join(dir, "watts.example.json")),
+	assert.False(t, exists(filepath.Join(dir, "watts.example.yaml")),
 		"the config example is a reference and must not be copied into the agent")
 	assert.False(t, !exists(filepath.Join(dir, "settings.json")) || !exists(filepath.Join(dir, "skills", "example-skill", "SKILL.md")),
 		"the agent directory must be configured")
@@ -400,7 +399,7 @@ func TestAgentNewAndWorkflowRun(t *testing.T) {
 
 	require.NoError(t, os.MkdirAll(filepath.Join(ta.Root, task), 0755))
 
-	require.NoError(t, storage.WriteJSON(ta.TaskWorkflowPath(task), cfg.Workflow))
+	require.NoError(t, manifest.Write(ta.TaskWorkflowPath(task), manifest.Workflow, "custom", cfg.Workflow))
 	binding, err := ta.CreateWorkflowBinding(cfg, task, &application.RunOptions{})
 	require.NoError(t, err)
 
@@ -436,22 +435,19 @@ func TestAgentNewAndWorkflowRun(t *testing.T) {
 	}
 }
 func TestExampleAgentIsShippedAndDocumented(t *testing.T) {
-	for _, f := range []string{"README.md", "watts.example.json", "skills/example-skill/SKILL.md"} {
+	for _, f := range []string{"README.md", "watts.example.yaml", "skills/example-skill/SKILL.md"} {
 		{
 			_, err := fs.ReadFile(kit.Files, "kit/examples/custom-agent/"+f)
 			assert.NoError(t, err,
 				"the example agent lacks %s: %v", f, err)
 		}
 	}
-	data, _ := fs.ReadFile(kit.Files, "kit/examples/custom-agent/watts.example.json")
+	data, _ := fs.ReadFile(kit.Files, "kit/examples/custom-agent/watts.example.yaml")
 	var c projectconfig.Config
 	c = projectconfig.Default()
-	var example struct {
-		Agents   map[string]projectconfig.AgentConfig `json:"agents"`
-		Workflow *orchestration.Definition            `json:"workflow"`
-	}
-
-	require.NoError(t, json.Unmarshal(data, &example))
+	document, err := manifest.Decode(data, manifest.Project, projectconfig.Config{})
+	require.NoError(t, err)
+	example := document.Spec
 
 	c.Agents, c.Workflow = example.Agents, example.Workflow
 	{

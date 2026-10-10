@@ -5,18 +5,17 @@ import (
 	"strings"
 	"testing"
 
+	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/storage"
 )
 
 func TestSameReviewModelIsAllowedWithoutWarnings(t *testing.T) {
 	directory := t.TempDir()
 	cfg := projectconfig.Default()
 	setWorkflowModels(&cfg, "ollama", "devstral:24b", "devstral:24b")
-	require.NoError(t, storage.WriteJSON(filepath.Join(directory, projectconfig.Filename), cfg))
+	require.NoError(t, manifest.Write(filepath.Join(directory, projectconfig.Filename), manifest.Project, "test", cfg))
 	for _, args := range [][]string{{"config", "show"}, {"config", "set", "max_attempts", "3"}} {
 		code, _, errors := runCLI(t, directory, args...)
 		require.Equal(t, 0, code, errors)

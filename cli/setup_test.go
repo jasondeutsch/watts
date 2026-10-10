@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"github.com/jasondeutsch/watts/internal/storage"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/jasondeutsch/watts/cli/internal/setup"
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/manifest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInitFlagsPersistAndRerunKeepsConfig(t *testing.T) {
@@ -101,7 +100,7 @@ func TestInitTargetsCurrentDirectoryInsideParentProject(t *testing.T) {
 			if marker == projectconfig.Filename {
 				cfg := projectconfig.Default()
 				cfg.Agents["build"] = projectconfig.AgentConfig{Thinking: "high"}
-				require.NoError(t, storage.WriteJSON(filepath.Join(parent, marker), cfg))
+				require.NoError(t, manifest.Write(filepath.Join(parent, marker), manifest.Project, "test", cfg))
 			} else {
 				require.NoError(t, os.Mkdir(filepath.Join(parent, marker), 0755))
 				writeFile(t, filepath.Join(parent, marker, "sentinel"), "parent assets")
@@ -127,13 +126,13 @@ func TestInitTargetsCurrentDirectoryInsideParentProject(t *testing.T) {
 			require.NoError(t, os.Mkdir(nested, 0755))
 			code, out, errors = runCLI(t, nested, "config", "show")
 			require.Equal(t, 0, code, errors)
-			require.Contains(t, out, `"thinking": "medium"`)
+			require.Contains(t, out, `thinking: medium`)
 			code, out, errors = runCLI(t, child, "task", "new", "project-root-check")
 			require.Equal(t, 0, code, out+errors)
 			tasks, err := os.ReadDir(filepath.Join(child, "tasks"))
 			require.NoError(t, err)
 			require.Len(t, tasks, 1)
-			require.FileExists(t, filepath.Join(child, "tasks", tasks[0].Name(), "workflow.json"))
+			require.FileExists(t, filepath.Join(child, "tasks", tasks[0].Name(), "workflow.yaml"))
 			require.NoDirExists(t, filepath.Join(parent, "tasks"))
 		})
 	}

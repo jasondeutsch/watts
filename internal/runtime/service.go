@@ -65,7 +65,7 @@ func Start(ctx context.Context, app *application.Service, detached bool) error {
 	}
 	settings := app.ResolvedTemporalSettings(cfg)
 	dialContext, dialCancel := context.WithTimeout(ctx, 10*time.Second)
-	client, err := application.ConnectTemporal(dialContext, settings)
+	client, err := app.ConnectTemporalWorker(dialContext, settings)
 	dialCancel()
 	if err != nil {
 		return err
@@ -75,7 +75,12 @@ func Start(ctx context.Context, app *application.Service, detached bool) error {
 	if err = worker.Start(); err != nil {
 		return err
 	}
-	defer worker.Stop()
+	logger := app.WorkerLogger()
+	defer func() {
+		logger.Info("Worker stopping", "next_action", "Active work is stopping; Temporal retains workflow history")
+		worker.Stop()
+		logger.Info("Worker stopped", "next_action", "Run watts start to resume processing")
+	}()
 	done := make(chan error, 1)
 	go func() { done <- web.Serve(ctx, app, listener) }()
 	_, path := paths(app)
@@ -85,7 +90,7 @@ func Start(ctx context.Context, app *application.Service, detached bool) error {
 		return err
 	}
 	defer os.Remove(path)
-	fmt.Fprintf(app.Output, "Watts started: %s\n", state.URL)
+	logger.Info("Worker ready", "address", settings.Address, "namespace", settings.Namespace, "queue", settings.TaskQueue, "web_ui", state.URL)
 	if err = openBrowser(state.URL); err != nil {
 		fmt.Fprintf(app.ErrorOutput, "Could not open browser: %v. Open %s manually.\n", err, state.URL)
 	}

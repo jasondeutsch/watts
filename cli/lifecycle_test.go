@@ -9,10 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jasondeutsch/watts/cli/internal/terminal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/jasondeutsch/watts/cli/internal/terminal"
 )
 
 // plainProject is a folder with nothing in it: no repository, no history.
@@ -61,7 +60,7 @@ func lifecycle(t *testing.T, dir string, a *terminal.Context) {
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
 		switch e.Name() {
-		case ".git", ".watts", "watts.json", "README.md", "wip.txt":
+		case ".git", ".watts", "watts.yaml", "README.md", "wip.txt":
 		default:
 			assert.
 				Fail(t, fmt.Sprintf("init created %s", e.Name()))
@@ -85,7 +84,7 @@ func lifecycle(t *testing.T, dir string, a *terminal.Context) {
 		"BASE must name a snapshot: %q", base)
 
 	snapshotManifest := readFile(t, filepath.Join(matches[0], ".watts-state", "snapshots", base))
-	assert.False(t, !strings.Contains(snapshotManifest, "  main.go") || strings.Contains(snapshotManifest, "node_modules") || strings.Contains(snapshotManifest, "watts.json") || strings.Contains(snapshotManifest, "SPEC.md"),
+	assert.False(t, !strings.Contains(snapshotManifest, "  main.go") || strings.Contains(snapshotManifest, "node_modules") || strings.Contains(snapshotManifest, "watts.yaml") || strings.Contains(snapshotManifest, "SPEC.md"),
 		"a snapshot covers the project's own files only:\n%s", snapshotManifest)
 
 	ralph := readFile(t, filepath.Join(matches[0], "RALPH.md"))
@@ -271,7 +270,7 @@ func TestProjectRootIsFoundFromSubfolders(t *testing.T) {
 	_ = os.MkdirAll(sub, 0o755)
 	{
 		code, out, _ := runCLI(t, sub, "config", "show")
-		assert.False(t, code != 0 || !strings.Contains(out, `"tasks_dir": "tasks"`),
+		assert.False(t, code != 0 || !strings.Contains(out, `tasks_dir: tasks`),
 			"the project root must be found from a subfolder: %d %s", code, out)
 	}
 }
