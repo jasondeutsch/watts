@@ -254,6 +254,8 @@ Consider central watts worker or a stateless watts worker with persistence abstr
 
 ### wiss-013: Containerized workloads across Kinds
 
+See the focused [container images and workload execution proposal](docs/container-workloads.md) for image requirements, adapter responsibilities, and initial scope.
+
 Establish a container or sandbox execution boundary for Watts workloads, rather than centering execution on host-installed Pi/Ralph. The model must cover every Kind according to its role: Workflow owns orchestration; Agent and Procedure define executable work; ConfigMap and Secret supply scoped configuration and credentials. This does not require a separate running container for each resource. Approval and event waits remain durable orchestration states rather than idle containers.
 
 Each Agent or Procedure attempt receives an isolated execution environment containing its resolved configuration, instructions, tools, and dependencies. Pi is an Agent runtime; Ralph is a tool used by Pi. Their private files belong inside that environment and must not define core orchestration or leak into the application workspace. Deterministic Procedures use the same lifecycle and publication contract without requiring an agent runtime or model.

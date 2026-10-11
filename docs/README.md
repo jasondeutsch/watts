@@ -9,6 +9,7 @@
 | [Temporal](temporal.md) | Server operations, worker responsibilities, and stored state |
 | [Architecture](workflow-design.md) | Authoring-to-execution flow and package responsibilities |
 | [Stage communication proposal](stage-communication.md) | Future portable packages, isolated workspaces, and publication |
+| [Container workloads proposal](container-workloads.md) | Images, container backends, agent adapters, and initial execution scope |
 | [Package/runtime layout proposal](package-runtime-layout.md) | Authored Watts packages, durable task evidence, worker storage, and retention |
 | [Sandboxing](sandbox.md) | Current security boundaries and isolation research |
 
