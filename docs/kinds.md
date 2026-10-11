@@ -12,6 +12,12 @@ Watts separates a workflow's routing from the work it runs. A **step** is a name
 
 An Agent shares the Procedure input/output and execution-limit contract, but has its own Kind and fields. It does not reference a separate Procedure. There are no Stage, Model, or Prompt Kinds. The project settings file uses a separate `kind: Project` envelope; it configures local infrastructure rather than a unit of workflow work.
 
+## Proposed workload boundary
+
+In the target architecture, an isolated workload is the common execution primitive. Agent and executable Procedure attempts specialize it. Workflow orchestrates those workloads; ConfigMap and Secret supply scoped configuration and credentials. Approval/event Procedures remain durable waits rather than running containers. No additional grouping Kind is needed: the Watts package groups resources and, in the proposed selection model, multiple named Workflows.
+
+Pi and Ralph are runtime/tool choices inside an Agent environment, not core execution primitives. Containers/sandboxes will enforce that environment's access and lifecycle boundaries. Host execution remains the current implementation. See [stage communication](stage-communication.md#isolated-workload-primitive) and [package/runtime layout](package-runtime-layout.md); the fields and one-Workflow runnable-bundle behavior below describe current implementation.
+
 ## Envelope and bundles
 
 Each resource has this envelope:

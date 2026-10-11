@@ -92,6 +92,152 @@ Retain stage and attempt history as the report evolves, including rework and fai
 
 Derive the report from Temporal state and recorded execution evidence; it is a readable view, not a separate source of workflow truth. Keep it useful for humans and coordinator agents during execution. The final report should be the completed version of the same report, preserving the history gathered along the way.
 
+## Temporal integration completion
+
+Temporal remains the workflow engine. It owns durable progress, routing, waits, and decisions; Watts owns executor lifecycle, workspace changes, evidence, and publication. Kubernetes may later supply execution capacity, but it does not replace orchestration. These issues complete that boundary rather than introduce another runner.
+
+Prioritize wiss-021 through wiss-025 for reliable local execution. Remote connectivity and portable execution can follow. The [tic-tac-toe eval](evals/go-workflow/runs/2026-10-10-tic-tac-toe/README.md) provides observed failure evidence; distributed requirements below are proposed capabilities, not demonstrated failures.
+
+### wiss-021: Reconcile interrupted executors before retrying
+
+The eval's heartbeat timeout left Ralph state marked active. The next attempt rejected stale evidence and required manual archiving. A durable Temporal state does not establish that the previous subprocess stopped or that its workspace is safe to reuse.
+
+Define an attempt lifecycle shared by executor adapters. Reconcile process ownership and adapter state after timeout, cancellation, worker shutdown, or restart. Preserve partial output and identify unaccepted workspace changes; cancellation must not imply rollback. Distinguish an ordinary worker stop from canceling the task, and document how work continues after each.
+
+Acceptance criteria:
+
+- Every launch and recovery uses workflow/run, stage, attempt, and execution identities. A stale process or Ralph loop cannot supply evidence for a new attempt.
+- Cancellation stops the owned process tree and records cleanup status. When cleanup cannot be confirmed, report the uncertainty and refuse overlapping mutation.
+- Retrying an interrupted attempt requires no manual deletion or archiving in the supported Pi/Ralph path. Preserve prior evidence rather than overwrite it.
+- Heartbeat, stage execution, and worker shutdown limits have documented purposes. Local sleep and server disconnection produce actionable diagnoses; they do not silently extend execution limits.
+- Exercise heartbeat timeout, worker termination, cancellation, and local interruption with live Temporal and a controlled subprocess. Confirm recovery without surviving writers or fabricated success.
+
+Coordinate with wiss-007, wiss-013, and wiss-017. Existing workspace locks and process journals are safeguards to build on, not proof that adapter recovery is complete.
+
+### wiss-022: Make execution and result publication idempotent
+
+An executor can finish its work while Temporal fails to receive its completion. Explicit retry or future automatic redelivery must not blindly repeat side effects or accept output from an obsolete execution. Disabling activity retries does not resolve this boundary.
+
+Use stable execution identities and durable attempt receipts. Separate executor completion, validated output publication, and Temporal acceptance. Define recovery at each boundary, including reuse of a valid existing result and refusal of ambiguous partial work. External actions require their own idempotency strategy; do not promise exactly-once effects.
+
+Acceptance criteria:
+
+- Repeated delivery of the same execution request cannot launch concurrent writers or publish duplicate accepted results.
+- A validated result is atomically recorded with its input/configuration identities and artifact hashes before reporting success. Recovery verifies it before reuse.
+- Output from a timed-out or canceled execution cannot supersede the current accepted result. Replacement executions fence obsolete writers or remain blocked until termination is confirmed.
+- Fault-injection tests cover crashes before launch, after execution, during publication, and after publication but before activity completion is acknowledged.
+- Keep application code and workspace handling independent of Git.
+
+Coordinate with wiss-016 for immutable packages and workspace publication. Implement the local receipt/recovery contract before introducing remote storage.
+
+### wiss-023: Prevent incompatible workers from consuming a run
+
+A stale installed Watts worker consumed the first build attempt in the eval while the rebuilt worker consumed other activities on the same queue. Project queue isolation alone does not protect protocol or adapter compatibility.
+
+Define and record worker build identity, execution protocol version, and required capabilities. Use the official Temporal SDK's supported worker deployment/versioning facilities where appropriate; otherwise make queue isolation explicit. Do not build a parallel scheduler. Enforce project/runtime compatibility when accepting activity requests.
+
+Acceptance criteria:
+
+- Submissions are routed to compatible workers; an older binary cannot silently execute a newer run's activities.
+- CLI/UI diagnostics expose the required execution version, connected worker identity where available, and an actionable incompatible/no-worker state.
+- Document an upgrade policy for in-flight runs and pinned packages. Preserve replay compatibility or explicitly reject unsupported history; do not silently reinterpret it.
+- Test two worker builds, restart, upgrade during an approval wait, and replay of captured histories. Use SDK replay tests without replaying external side effects.
+
+Coordinate with wiss-014 and wiss-016. Watts is still 0.1.0; an internal protocol/build identity does not require a product version change.
+
+### wiss-024: Separate runtime evidence from application changes
+
+The eval reviewer wrote PASS, but the read-only completion gate rejected Ralph's project-root `.ralph-runner/active-loops/` registry as an unauthorized code change. Ralph then retried work it could not repair.
+
+Define explicit locations and ownership for application files, task outputs, and executor/control metadata. Review and approval checks must compare the intended application revision while still detecting real unauthorized writes. Classify runtime or evidence failures separately from a completed review's `changes-required` outcome.
+
+Acceptance criteria:
+
+- Supported runtime metadata writes do not invalidate a read-only review. Exclusions are narrowly owned paths, not blanket permission to modify hidden directories.
+- A reviewer change to application code or protected inputs still fails and retains evidence.
+- Runtime bookkeeping failures surface as execution errors with their cause and next action. They do not become code findings or trigger futile agent rework.
+- Retain attempt-specific verdicts and findings; subsequent attempts cannot overwrite the evidence used for an earlier decision.
+- Repeat the minimal Go eval through final workflow completion without manual metadata cleanup or weakened gates.
+
+Coordinate with wiss-001, wiss-013, wiss-016, and wiss-021.
+
+### wiss-025: Persist complete attempt telemetry across failures
+
+Drafting sessions supplied token usage, but Ralph's nested Pi processes ran with `--no-session` and retained no usage totals. Full workflow tokens and cost could not be evaluated. Temporal history should carry orchestration references, not substitute for missing executor telemetry.
+
+Collect structured lifecycle events, logs, provider usage, and failures through the common executor contract. Persist them incrementally so cancellation or a crash does not erase earlier responses. Use these records to support wiss-003 and wiss-011 rather than creating independent reporting state.
+
+Acceptance criteria:
+
+- Capture usage for every supported agent path, including nested Ralph iterations, failed responses, rework, and canceled attempts when the provider supplies it.
+- Stable response/event identities prevent double counting on restart or repeated delivery. Report input, output, and cache usage with their provider semantics; missing data remains unknown rather than zero.
+- Record reported cost separately from estimated cost, including pricing provenance. Never infer actual billing from an unset model price.
+- Preserve failure causes and cleanup status after terminal cancellation; CLI, UI, and reports retain stage/attempt history even when a live workflow query is unavailable.
+- Store bulk transcripts and logs outside Temporal history, with bounded references and protected credential handling. A controlled multi-stage failure/retry test verifies cumulative accounting.
+
+### wiss-026: Support authenticated remote Temporal connections
+
+The current connection is documented for local or trusted self-hosted endpoints; TLS and Temporal Cloud authentication are not configured. Running Watts remotely requires a defined connection and credential policy.
+
+Acceptance criteria:
+
+- Use official SDK connection options for the supported TLS/authentication modes, namespace, endpoint, and connection deadlines. Document the supported deployment targets.
+- Keep service connection settings outside portable workflow manifests and credentials outside packages, logs, and history. Reuse Secret/credential-source abstractions where appropriate without treating Temporal credentials as agent credentials.
+- CLI and worker use consistent settings and produce distinct actionable errors for authentication, connection failure, missing namespace, and missing compatible worker.
+- Verify against an authenticated test service. Keep the local development defaults usable.
+
+### wiss-027: Execute portable stages through Temporal
+
+The local worker depends on project files and local configuration. Complete the proposed distributed boundary so Temporal orchestrates resolved execution plans and executor adapters materialize stage packages, workspaces, and bound artifacts. This is a follow-on deployment capability, not a prerequisite for local recovery fixes.
+
+Acceptance criteria:
+
+- Temporal receives an immutable orchestration plan with package references, routing, upstream bindings, approval policies, and limits. Retries do not reread mutable authoring templates.
+- Large artifacts and workspace revisions live in durable storage; orchestration records integrity-checked references. A worker on another node can materialize the same inputs without the originating project's absolute paths.
+- Build publishes a candidate revision; review consumes that exact revision read-only. Failed or partial publication does not become accepted input for downstream stages.
+- Human approvals bind to exact artifact/revision identities and remain durable without keeping an execution container alive.
+- Define executor launch, observation, cancellation, and publication interfaces. A future Kubernetes adapter creates/reattaches to Jobs using stable execution identity, validates their output, and prevents duplicate launch; Kubernetes does not own Watts workflow routing.
+- Verify node loss and replacement, repeated completion delivery, interrupted artifact transfer, and a build/review rework loop across isolated workspaces.
+
+Coordinate with wiss-007, wiss-014, wiss-016, and wiss-017. The [stage communication proposal](docs/stage-communication.md) owns the contract; this issue wires it into Temporal rather than defining a competing schema.
+
+### wiss-028: Separate Watts packages, task executions, and worker runtime
+
+Project roots currently accumulate `.watts`, `watts.yaml`, `values.yaml`, `tasks`, `templates`, and `.ralph-runner`. Separate authored workflow design from task records and machine-owned execution state, taking inspiration from a repository's `helm/` chart directory.
+
+The project's `watts/` directory is the **Watts package**, not a parent directory containing another default package:
+
+```text
+project/
+  main.go
+  go.mod
+  watts/
+    watts.yaml
+    values.yaml       # optional
+    templates/
+    resources/        # skills, scripts, and other authored assets
+```
+
+`watts.yaml` describes the package; values and templates describe its resources. A package may define multiple named Workflow resources and their supporting Agent, Procedure, ConfigMap, and Secret resources. No additional grouping Kind is needed. Select a workflow explicitly or through a declared default when several exist; filenames carry no semantic meaning. Continue supporting external package references and composition.
+
+Tasks and their durable execution records are separate from this package. Preserve SPEC.md, PLAN.md, pinned plans, approvals, results, and attempt history independently of worker working files. The exact task-storage location remains to be selected; this issue does not prescribe moving tasks into the package or treating runtime files as durable task storage.
+
+Machine-level worker configuration lives at `~/.watts/config/settings.json`. Host execution environments and worker bookkeeping live at `~/.watts/runtime/`, with stable identities preventing collisions between projects or tasks. Do not put worker settings in package manifests. The only new worker setting needed for this scope is runtime retention; do not add speculative configuration options.
+
+Default retention is **the latest execution per task**, including every attempt in that execution. It is not the last run across the whole worker. Preserve active executions and state required for recovery even when they exceed the retention limit. Remove older runtime data only after required evidence has been durably published. Durable task documents, approvals, reports, and published artifacts are outside this cleanup policy. Define ordering of executions and safe cleanup after restart; do not infer ownership solely from directory names or modification times.
+
+Acceptance criteria:
+
+- A project can author or extend its package using `<project>/watts/watts.yaml`, optional values, templates, and resources without generating runtime or execution data there.
+- Multiple named workflows can be selected without an additional Kind or filename-based inference. Package location and application workspace root remain distinct, including for external packages.
+- Worker settings and working files use the agreed home-directory locations. Do not create project-root `.watts` or tool-private directories for the new execution path.
+- Define task/evidence storage before implementation, including which records are durable and how CLI/UI resolve them after worker cleanup or on another worker.
+- Default cleanup retains all attempts of the latest execution for each task, never deletes active/recovery-required state, and never removes durable evidence. Test concurrent tasks, failed/canceled executions, restart, and repeated cleanup.
+- Agent runtimes and their tools use generic attempt-scoped environments with the container/sandbox boundary tracked in wiss-013. Future containers/sandboxes preserve this contract rather than introducing another workflow lifecycle.
+- Update discovery, scaffolding, examples, documentation, and diagnostics together. Provide an explicit safe transition for existing local projects and retain their execution evidence; no compatibility layer is required solely to preserve the old architecture.
+
+Coordinate with wiss-006, wiss-007, wiss-011, wiss-013, wiss-014, wiss-016, wiss-020, wiss-021, and wiss-027. Retention configuration controls worker runtime only; artifact-store retention is a separate concern.
+
 ## Design questions
 
 ### wiss-012: Approval and task readiness
@@ -106,11 +252,23 @@ A manual override may be useful, but its scope remains undefined. Specify which 
 
 Consider central watts worker or a stateless watts worker with persistence abstracted (sqllite for local, pg in remote)
 
-### wiss-013: Ralph artifact location
+### wiss-013: Containerized workloads across Kinds
 
-Determine where `.ralph-runner` belongs. It currently contains task-specific status, events, iteration records, and transcripts under the task directory.
+Establish a container or sandbox execution boundary for Watts workloads, rather than centering execution on host-installed Pi/Ralph. The model must cover every Kind according to its role: Workflow owns orchestration; Agent and Procedure define executable work; ConfigMap and Secret supply scoped configuration and credentials. This does not require a separate running container for each resource. Approval and event waits remain durable orchestration states rather than idle containers.
 
-Task-scoped execution evidence should remain easy to associate with its task. Consider placing executor artifacts under the task's `.watts-state/` directory rather than exposing a separate runtime directory. A project-level `.watts/` location would need to preserve task and attempt isolation.
+Each Agent or Procedure attempt receives an isolated execution environment containing its resolved configuration, instructions, tools, and dependencies. Pi is an Agent runtime; Ralph is a tool used by Pi. Their private files belong inside that environment and must not define core orchestration or leak into the application workspace. Deterministic Procedures use the same lifecycle and publication contract without requiring an agent runtime or model.
+
+Acceptance criteria:
+
+- Define a common container/sandbox lifecycle for materialization, launch, observation, cancellation, recovery, and output publication. Use the resolved stage contract rather than a second workflow engine.
+- Agent and Procedure workloads declare immutable runtime/image identities and execution requirements. Workflow schedules them through Temporal; ConfigMap and Secret resources are bound at launch with explicit scope.
+- Supply upstream artifacts and an identified workspace revision explicitly. Build may write a candidate workspace; review/QA receive read-only application access and separate writable output locations. Accepted outputs are published before downstream consumption.
+- Constrain filesystem, network, resource, and credential access. A writable project mount or host directory alone is not a security boundary. Keep unrelated host files and privileged runtime sockets inaccessible by default.
+- Tool-private state, including Ralph registries, remains inside its execution environment. Shared orchestration consumes generic results and evidence rather than interpreting tool directory layouts.
+- Preserve logs, usage, results, and failure evidence outside disposable containers. Cancellation and node loss cannot leave uncontrolled writers or let obsolete attempts publish accepted changes.
+- Demonstrate an Agent workload, a deterministic Procedure, ConfigMap/Secret delivery without credential leakage, and a build/review loop across isolated environments. Verify timeout, cancellation, restart, and failed publication.
+
+Select an initial container/sandbox backend explicitly; Kubernetes is a possible deployment backend, not a requirement for the contract. Host-runtime organization and retention are tracked in wiss-028. Coordinate with wiss-007, wiss-016, wiss-017, wiss-020, wiss-021, wiss-022, wiss-024, and wiss-027.
 
 ### wiss-016: Typed workflow resources and compiled execution packages
 

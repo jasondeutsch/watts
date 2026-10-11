@@ -8,6 +8,26 @@ In this proposal, “stage” means a Workflow step executing a referenced Agent
 
 Stages communicate through engine-delivered results and referenced artifacts. They do not launch or call another stage directly. The interface should remain consistent across executor implementations.
 
+## Isolated workload primitive
+
+The proposed basic execution primitive is an **isolated workload**, analogous to the role of a Pod in Kubernetes. This is an execution abstraction, not a newly implemented Kind or a requirement to run Kubernetes. Agent and executable Procedure attempts specialize the same environment and lifecycle contract.
+
+| Resource | Role in the proposed execution model |
+| --- | --- |
+| Workflow | Orchestrates workloads, routing, approvals, and event waits through Temporal |
+| Agent | Defines a workload with model/runtime, identity, instructions, skills, and tools |
+| Procedure | Defines deterministic executable work using the same lifecycle; approval/event waits remain orchestration states |
+| ConfigMap | Supplies scoped nonsecret configuration to workloads |
+| Secret | Supplies scoped credential references resolved at launch |
+
+Resources do not each require a separate container. An attempt's environment provides materialization, launch, observation, cancellation, recovery, and publication, with explicit input/output, filesystem, network, credential, and resource boundaries. The initial host executor is an interim implementation; directory separation does not provide container or sandbox security.
+
+Pi is an implementation of an Agent runtime; Ralph is a tool used by Pi. Their configuration, registries, and private files belong inside that Agent attempt's environment. Core orchestration consumes generic execution results and evidence rather than tool-specific directory layouts. Containers/sandboxes enforce this boundary in the target implementation.
+
+Kubernetes may schedule workload containers. Temporal retains durable workflow routing and waits; Watts adapters own execution and publication. Neither container restart nor activity retry establishes exactly-once side effects or safe workspace recovery.
+
+Authored packages, durable task evidence, and worker working files have separate ownership. See the [package/runtime layout proposal](package-runtime-layout.md) for the proposed project `watts/` package and home-directory worker storage.
+
 ## Authoring, compilation, and execution
 
 `workflow.yaml` is the authoring format. Compilation combines it with project configuration and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
@@ -161,7 +181,8 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 | [wiss-014](../issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
 | [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
 | [wiss-003](../issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](../issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
-| [wiss-013](../issues.md#wiss-013-ralph-artifact-location) | Executor evidence becomes attempt-scoped published artifacts |
+| [wiss-013](../issues.md#wiss-013-containerized-workloads-across-kinds) | Isolated workloads establish the common execution primitive and container/sandbox lifecycle |
+| [wiss-028](../issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime) | Package authoring, durable task evidence, and worker runtime have separate storage and retention |
 | [wiss-011](../issues.md#wiss-011-evolving-workflow-report) | Recorded results and evidence supply verification, timing, and usage reporting |
 
 ## Open decisions

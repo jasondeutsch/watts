@@ -1,85 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="730" viewBox="0 0 1200 730" role="img" aria-labelledby="title desc">
-  <title id="title">Watts — proposed architecture</title>
-  <desc id="desc">Teams author workflows and resources. Watts compiles and applies an immutable plan containing routing and portable stage packages. Temporal coordinates isolated executors across nodes. Build, lint, and review exchange published artifacts through durable storage; review findings route back to build. CLI, web UI, and coordinators provide control and visibility. Compilation and distributed execution are proposed.</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker>
-    <style>
-      text{font-family:Arial,Helvetica,sans-serif;fill:#172033} .heading{font-size:19px;font-weight:700} .body{font-size:16px;fill:#475569} .small{font-size:14px;fill:#475569} .line{fill:none;stroke:#64748b;stroke-width:2;marker-end:url(#arrow)} .box{fill:#fff;stroke:#cbd5e1;stroke-width:1.5} .future{stroke:#6366f1;stroke-dasharray:7 5} .label{font-size:14px;fill:#4f46e5;font-weight:700}
-    </style>
-  </defs>
-  <rect width="1200" height="730" rx="18" fill="#f8fafc"/>
-  <text x="40" y="48" font-size="29" font-weight="700">Watts</text>
-  <text x="154" y="47" font-size="20" fill="#475569">Declarative agent workflows · portable stages · explicit evidence</text>
-  <text x="40" y="78" class="small">Forward-looking architecture · dashed outlines show proposed capabilities</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+<title id="title">Watts — define, execute, measure, compare, revise</title>
+<desc id="desc">A team-owned Watts package defines a versioned process. Pinned executions run agents, checks and approvals, preserving attempt evidence. Evals compare outcomes and resource use and guide package revisions. Temporal and workers support execution. Complete usage accounting, portable packages and isolated workloads are proposed capabilities.</desc>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4f46e5"/></marker>
+<style>text{font-family:Arial,Helvetica,sans-serif;fill:#172033}.title{font-size:21px;font-weight:700}.body{font-size:17px;fill:#475569}.small{font-size:14px;fill:#475569}.box{fill:white;stroke:#cbd5e1;stroke-width:1.5}.arrow{fill:none;stroke:#4f46e5;stroke-width:2.5;marker-end:url(#arrow)}.future{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5;stroke-dasharray:6 4}</style>
+</defs>
+<rect width="1200" height="680" rx="18" fill="#f8fafc"/>
+<text x="40" y="52" font-size="32" font-weight="700">Watts</text>
+<text x="40" y="89" font-size="23">Make the process explicit. Improve it with evidence.</text>
+<text x="40" y="120" class="body">A repeatable team workflow — defined, versioned, executed, and evaluated.</text>
 
-  <rect x="40" y="110" width="245" height="180" rx="12" class="box"/>
-  <text x="60" y="143" class="heading">Team-owned definition</text>
-  <text x="60" y="178" class="body">workflow.yaml + watts.yaml</text>
-  <text x="60" y="208" class="body">Instructions · skills · scripts</text>
-  <text x="60" y="238" class="body">Models · MCP connections</text>
-  <text x="60" y="270" class="small">Authoring inputs, not live run state</text>
+<rect x="40" y="167" width="255" height="215" rx="12" class="box"/>
+<text x="60" y="200" class="small">DEFINE</text>
+<text x="60" y="231" class="title">Watts package</text>
+<text x="60" y="267" class="body">Manifests · values · templates</text>
+<text x="60" y="297" class="body">Agents · tools · skills</text>
+<text x="60" y="327" class="body">Checks · approvals · routing</text>
+<text x="60" y="360" class="small">Review and version the process</text>
+<path d="M295 275 H319" class="arrow"/>
 
-  <path d="M285 200 H330" class="line"/>
-  <rect x="340" y="110" width="250" height="180" rx="12" class="box future"/>
-  <text x="360" y="143" class="heading">Watts compile / apply</text>
-  <text x="360" y="178" class="body">Validate and resolve</text>
-  <text x="360" y="208" class="body">Package stage resources</text>
-  <text x="360" y="238" class="body">Persist immutable plan</text>
-  <text x="360" y="270" class="small">Apply starts an execution</text>
+<rect x="330" y="167" width="255" height="215" rx="12" class="box"/>
+<text x="350" y="200" class="small">EXECUTE</text>
+<text x="350" y="231" class="title">Pinned execution</text>
+<text x="350" y="267" class="body">Run the selected configuration</text>
+<text x="350" y="297" class="body">Agents and deterministic work</text>
+<text x="350" y="327" class="body">Human decisions · rework</text>
+<text x="350" y="360" class="small">Retain every attempt</text>
+<path d="M585 275 H609" class="arrow"/>
 
-  <path d="M590 200 H635" class="line"/>
-  <rect x="645" y="110" width="260" height="180" rx="12" class="box future"/>
-  <text x="665" y="143" class="heading">Compiled execution plan</text>
-  <text x="665" y="178" class="body">Orchestration manifest</text>
-  <text x="665" y="202" class="small">Graph · bindings · outcomes · limits</text>
-  <text x="665" y="238" class="body">Self-contained stage packages</text>
-  <text x="665" y="262" class="small">Manifests + executable resources</text>
+<rect x="620" y="167" width="255" height="215" rx="12" class="box"/>
+<text x="640" y="200" class="small">MEASURE</text>
+<text x="640" y="231" class="title">Execution evidence</text>
+<text x="640" y="267" class="body">Outputs · checks · findings</text>
+<text x="640" y="297" class="body">Failures · retries · timing</text>
+<text x="640" y="327" class="body">Link results to configuration</text>
+<text x="640" y="360" class="small">Unknown metrics stay unknown</text>
+<path d="M875 275 H899" class="arrow"/>
 
-  <rect x="950" y="110" width="210" height="180" rx="12" class="box"/>
-  <text x="970" y="143" class="heading">Control &amp; visibility</text>
-  <text x="970" y="178" class="body">CLI · web UI</text>
-  <text x="970" y="208" class="body">Human decisions</text>
-  <text x="970" y="238" class="body">Coordinating agents</text>
-  <text x="970" y="270" class="small">Status · output · retry</text>
+<rect x="910" y="167" width="250" height="215" rx="12" class="box"/>
+<text x="930" y="200" class="small">COMPARE</text>
+<text x="930" y="231" class="title">Workflow evals</text>
+<text x="930" y="267" class="body">Comparable task cases</text>
+<text x="930" y="297" class="body">Verification and review</text>
+<text x="930" y="327" class="body">Outcomes vs. resource use</text>
+<text x="930" y="360" class="small">Identify what needs to change</text>
 
-  <path d="M775 290 V322 H295 V350" class="line"/>
-  <path d="M1055 290 V332 H315 V350" class="line"/>
-  <rect x="40" y="360" width="320" height="180" rx="12" class="box"/>
-  <text x="60" y="395" class="heading">Temporal + Watts interpreter</text>
-  <text x="60" y="430" class="body">Schedule attempts and route outcomes</text>
-  <text x="60" y="460" class="body">Approval / event waits · retry budgets</text>
-  <text x="60" y="490" class="body">Durable history · cancellation</text>
-  <text x="60" y="521" class="small">Runs the plan; does not execute agents</text>
+<path d="M1035 382 V428 H167 V382" class="arrow"/>
+<rect x="380" y="411" width="435" height="34" rx="8" fill="#f8fafc"/>
+<text x="398" y="434" font-size="17" font-weight="700" fill="#4f46e5">REVISE · change the process, then evaluate again</text>
 
-  <path d="M360 430 H405" class="line"/>
-  <text x="375" y="411" class="small">dispatch</text>
-  <rect x="420" y="360" width="740" height="180" rx="12" class="box future"/>
-  <text x="440" y="393" class="heading">Watts workers + executor adapters</text>
-  <text x="440" y="419" class="small">Materialize inputs → run isolated attempt → publish outputs → return result</text>
-  <rect x="440" y="442" width="205" height="77" rx="9" fill="#eef2ff" stroke="#c7d2fe"/>
-  <text x="455" y="470" class="heading">Build · node A</text>
-  <text x="455" y="490" class="small">Agent runtime</text>
-  <text x="455" y="510" class="small">Writable workspace</text>
-  <rect x="680" y="442" width="205" height="77" rx="9" fill="#ecfdf5" stroke="#a7f3d0"/>
-  <text x="695" y="470" class="heading">Lint · node B</text>
-  <text x="695" y="490" class="small">Script runtime</text>
-  <text x="695" y="510" class="small">Read-only source</text>
-  <rect x="920" y="442" width="220" height="77" rx="9" fill="#fff7ed" stroke="#fed7aa"/>
-  <text x="935" y="470" class="heading">Review · node C</text>
-  <text x="935" y="490" class="small">Agent runtime</text>
-  <text x="935" y="510" class="small">Read-only source</text>
+<rect x="40" y="477" width="550" height="112" rx="12" class="box"/>
+<text x="60" y="509" class="title">Execution infrastructure</text>
+<text x="60" y="542" class="body">Temporal: durable routing, waits, and workflow history</text>
+<text x="60" y="569" class="body">Watts workers: execute stages and validate results</text>
 
-  <path d="M645 480 H672" class="line"/>
-  <path d="M885 480 H912" class="line"/>
-  <path d="M1030 519 V552 H542 V519" class="line"/>
-  <text x="630" y="576" class="small">Changes required → build (routed by interpreter)</text>
-  <path d="M1150 540 V585" class="line"/>
-  <rect x="420" y="595" width="740" height="94" rx="12" class="box future"/>
-  <text x="440" y="626" class="heading">Durable packages, workspace revisions &amp; attempt evidence</text>
-  <text x="440" y="652" class="body">Explicit artifact transfer · hashes · immutable results · logs · review findings</text>
-  <text x="440" y="677" class="small">Publish accepted changes back to the user’s project through an explicit operation</text>
-  <text x="40" y="616" class="label">No shared filesystem assumed</text>
-  <text x="40" y="643" class="small">Credentials are injected at launch.</text>
-  <text x="40" y="668" class="small">Stages can run on distinct nodes.</text>
-  <text x="40" y="693" class="small">Container / sandbox boundary per attempt.</text>
+<rect x="620" y="477" width="540" height="112" rx="12" class="future"/>
+<text x="640" y="509" class="title">Proposed capabilities</text>
+<text x="640" y="542" class="body">Complete usage/cost accounting · portable packages</text>
+<text x="640" y="569" class="body">Isolated Agent/Procedure workloads · containers/sandboxes</text>
+
+<text x="40" y="631" class="small">0.1.0 proof of concept · current agent runtime: Pi, with Ralph as a tool · eval scaffold available</text>
+<text x="40" y="655" class="small">Declarative configuration makes decisions visible; it does not guarantee identical outputs or better outcomes.</text>
 </svg>

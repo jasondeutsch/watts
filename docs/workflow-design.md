@@ -2,7 +2,7 @@
 
 Watts is a 0.1.0 proof of concept. Schema versions identify formats independently of the application release number. No operation requires Git.
 
-## Authoring to execution
+## Current authoring to execution
 
 1. Users author [Workflow, Procedure, Agent, ConfigMap, and Secret resources](kinds.md), optionally through [templates](templates.md). Project settings select a default bundle and configure infrastructure, local runtime state, MCP connections, and plugins.
 2. Task creation resolves references and defaults, scaffolds artifacts, and writes an editable task bundle. First submission pins the resolved definition and runtime configuration as JSON with integrity hashes.
@@ -32,3 +32,13 @@ Temporal history is authoritative for progress and completion. Task files hold a
 ## Proposed next boundary
 
 Resource resolution exists today; self-contained execution packages, immutable cross-node artifact delivery, explicit upstream bindings, isolated workspaces, and containers do not. Those contracts are described in the [stage communication proposal](stage-communication.md). Parallel scheduling and expression conditions also remain future work.
+
+## Proposed execution and storage model
+
+An isolated workload is the basic execution primitive, analogous to a Kubernetes Pod. Agent and executable Procedure attempts specialize it; Workflow orchestrates them through Temporal, while ConfigMap and Secret supply scoped inputs. Approval/event waits are orchestration states and do not require idle containers. This is a proposed execution boundary, not a new implemented Kind.
+
+Executor adapters own runtime/tool setup, isolation, lifecycle, and output publication. Pi and its Ralph tool belong inside an Agent environment; core orchestration should not interpret their private directory structures. Kubernetes may provide execution capacity later, while Temporal remains responsible for durable routing and waits.
+
+The proposed project `watts/` directory is the authored Watts package and may define multiple named Workflows. Task/evidence storage is separate and its location remains undecided. Machine-level settings belong in `~/.watts/config/settings.json`; host runtime files belong in `~/.watts/runtime/`, retaining the latest execution per task by default while preserving active/recovery state and durable evidence.
+
+See [stage communication](stage-communication.md#isolated-workload-primitive), [package/runtime layout](package-runtime-layout.md), and [Temporal integration issues](../issues.md#temporal-integration-completion). These proposals do not change current setup commands or filesystem paths.

@@ -72,3 +72,9 @@ WATTS_TEMPORAL_INTEGRATION=1 go test ./internal/application -run TestTemporalLiv
 ## Implementation
 
 The official Temporal Go SDK handles connections, workers, workflow queries and updates, and activity scheduling. See [workflow architecture](workflow-design.md) for package responsibilities. Workflow/activity names and serialized execution fields are stable protocol elements for recorded history.
+
+## Proposed execution boundary
+
+The [isolated workload proposal](stage-communication.md#isolated-workload-primitive) keeps Temporal responsible for routing, durable waits, and decisions. Watts adapters will launch and manage Agent/Procedure workloads in containers or sandboxes and publish evidence independently of their lifetime. Kubernetes may be an execution backend; it does not replace the workflow engine.
+
+The [package/runtime layout proposal](package-runtime-layout.md) separates authored project packages from durable task records and worker-owned home-directory state. These are future changes; the stored paths above describe current behavior. Recovery, idempotent publication, compatible workers, complete telemetry, and remote authentication are tracked in [Temporal integration completion](../issues.md#temporal-integration-completion).

@@ -1,12 +1,26 @@
 # Watts
 
-![Watts proposed architecture](resources/diagrams/watts-architecture.svg)
+![Watts process improvement loop](resources/diagrams/watts-architecture.svg)
 
-*Forward-looking diagram: portable stage packages and distributed isolation are proposed. See [stage communication](docs/stage-communication.md).*
+*Define → execute → measure → compare → revise. Dashed capabilities are proposed; see [stage communication](docs/stage-communication.md).*
 
-Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. Temporal manages workflow state; project workers execute the stages. The current implementation uses Pi and Ralph for agent execution. YAML bundles compose Workflow, Procedure, Agent, ConfigMap, and Secret resources; see [Kinds and usage](docs/kinds.md).
+**Define, run, evaluate, and improve a repeatable process for agent work.**
 
-This is an MVP and proof of concept. The application version remains **0.1.0** while the design evolves. Watts does not require Git.
+A team cannot reliably improve a process it cannot describe. When each engineer improvises prompts, tools, checks, and review, a successful result is difficult to explain or reproduce. Was it the model, the instructions, the verification, extra human intervention, or luck?
+
+Watts makes that process explicit and executable. Declarative manifests define the work, agents, tools, checks, approvals, and routing. Values-driven templates package those choices so teams can share a common workflow and customize it for their needs. The process becomes something a team can review, version, and deliberately change.
+
+**Define → execute → measure → compare → revise.**
+
+Templates describe the intended process. Pinned execution definitions and attempt evidence show what actually ran. Evals connect a particular configuration to its outcomes and resource use. Together, they provide a basis for improving the workflow instead of relying on isolated successes or intuition.
+
+The goal is an auditable, portable process that teams can maintain over time: change a review policy, skill, model, or quality gate; run comparable cases; inspect the results; and decide whether the change helped. Declarative configuration makes those choices visible. It does not guarantee identical agent output or better results by itself.
+
+## Current implementation
+
+Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. YAML resources compose Workflow, Procedure, Agent, ConfigMap, and Secret definitions; see [Kinds and usage](docs/kinds.md). Temporal manages durable workflow state; project workers execute stages using Pi and Ralph today.
+
+This is an MVP and proof of concept at **0.1.0**. Pinned definitions, attempt evidence, and an [eval scaffold](evals/go-workflow/README.md) exist, but complete token/cost accounting, reliable recovery, and portable isolated execution remain work in progress. See [known issues](issues.md), the [stage communication proposal](docs/stage-communication.md), and the [package/runtime layout proposal](docs/package-runtime-layout.md). Watts does not require Git.
 
 ## Get started
 
@@ -65,7 +79,7 @@ Task submission returns before execution finishes. Follow progress in the web UI
 
 See the [task runbook](docs/runbook.md) for the full procedure, approval rules, cancellation, and recovery.
 
-## Project layout
+## Current project layout
 
 The directory containing `watts.yaml` is the project root. Application source, tests, dependencies, and build files belong there or in its normal source directories.
 
