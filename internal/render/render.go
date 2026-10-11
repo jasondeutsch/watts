@@ -25,6 +25,8 @@ type ValuesSource struct {
 type File struct {
 	Name string
 	Data []byte
+	// Context adds caller-defined scope without coupling to resource semantics.
+	Context map[string]any
 }
 
 // Result contains ordered outputs and the resolved non-secret parameter values.
@@ -73,6 +75,12 @@ func Render(packageFS fs.FS, overrides ...ValuesSource) (Result, error) {
 	if err != nil {
 		return Result{}, fmt.Errorf("load templates: %w", err)
 	}
+	return RenderSources(sources, values)
+}
+
+// RenderSources renders already-loaded sources against resolved values. Callers
+// can compose local packages while the engine remains independent of Watts.
+func RenderSources(sources []File, values map[string]any) (Result, error) {
 	engine := template.New("package").Option("missingkey=error")
 	engine.Funcs(functions(engine))
 	for _, source := range sources {
@@ -92,7 +100,7 @@ func Render(packageFS fs.FS, overrides ...ValuesSource) (Result, error) {
 		name := strings.TrimSuffix(source.Name, ".gotmpl")
 		if strings.HasSuffix(source.Name, ".gotmpl") {
 			buffer := &limitedBuffer{}
-			if err := engine.ExecuteTemplate(buffer, source.Name, map[string]any{"Values": values}); err != nil {
+			if err := engine.ExecuteTemplate(buffer, source.Name, templateContext(source.Context, values)); err != nil {
 				return Result{}, fmt.Errorf("render %s: %w", source.Name, err)
 			}
 			output = buffer.Bytes()
@@ -114,6 +122,15 @@ func Render(packageFS fs.FS, overrides ...ValuesSource) (Result, error) {
 		return Result{}, errors.New("package produced no YAML files")
 	}
 	return result, nil
+}
+
+func templateContext(context map[string]any, values map[string]any) map[string]any {
+	result := map[string]any{}
+	for key, value := range context {
+		result[key] = value
+	}
+	result["Values"] = values
+	return result
 }
 
 func functions(engine *template.Template) template.FuncMap {

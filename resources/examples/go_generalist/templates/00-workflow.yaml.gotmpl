@@ -1,4 +1,39 @@
 kind: Workflow
 schema_version: 1
 name: {{ .Values.workflow.name | quote }}
-spec: {{ .Values.workflow.spec | toYaml | nindent 2 }}
+spec:
+{{ $workflow := .Values.workflow.spec }}
+{{ if hasKey $workflow "version" }}
+  version: {{ $workflow.version }}
+{{ end }}
+{{ if hasKey $workflow "capture_baseline" }}
+  capture_baseline: {{ $workflow.capture_baseline }}
+{{ end }}
+{{ if hasKey $workflow "max_transitions" }}
+  max_transitions: {{ $workflow.max_transitions }}
+{{ end }}
+{{ if hasKey $workflow "templates" }}
+  templates: {{ $workflow.templates | toYaml | nindent 4 }}
+{{ end }}
+  steps:
+{{ range $workflow.steps }}
+    - name: {{ .name | quote }}
+      use:
+        kind: {{ .use.kind | quote }}
+        name: {{ .use.name | quote }}
+{{ if hasKey . "next" }}
+      next: {{ .next | quote }}
+{{ end }}
+{{ if hasKey . "on_failure" }}
+      on_failure: {{ .on_failure | quote }}
+{{ end }}
+{{ if hasKey . "optional" }}
+      optional: {{ .optional }}
+{{ end }}
+{{ if hasKey . "parameters" }}
+      parameters: {{ .parameters | toYaml | nindent 8 }}
+{{ end }}
+{{ if hasKey . "transitions" }}
+      transitions: {{ .transitions | toYaml | nindent 8 }}
+{{ end }}
+{{ end }}

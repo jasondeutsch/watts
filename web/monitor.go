@@ -83,7 +83,7 @@ func (m *monitor) queryState(ctx context.Context, binding application.WorkflowBi
 
 // OpenRoot confines all monitor reads, including symlinks, to the project.
 func (m *monitor) tasks() ([]taskSummary, error) {
-	cfg, err := m.app.LoadConfig()
+	cfg, err := m.app.LoadServiceConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +254,7 @@ func (m *monitor) retry(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "only a task waiting for retry can be retried", http.StatusConflict)
 		return
 	}
-	config, err := m.app.LoadConfig()
+	config, err := m.app.LoadServiceConfig()
 	if err == nil {
 		err = m.app.RunTask(config, task, &application.RunOptions{Force: true})
 	}

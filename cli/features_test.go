@@ -99,6 +99,7 @@ func TestWattsDirIsRebuildable(t *testing.T) {
 	cfg.SkillsDirs = []string{"team-skills"}
 	writeFile(t, filepath.Join(ta.Root, "team-skills", "my-skill", "SKILL.md"), "---\nname: my-skill\n---\n")
 	saveCfg(t, ta, cfg)
+	cfg = loadCfg(t, ta)
 
 	require.NoError(t, ta.ConfigAgents(cfg, false))
 
@@ -114,8 +115,14 @@ func TestWattsDirIsRebuildable(t *testing.T) {
 	}
 	assert.Equal(t, before, readFile(t, filepath.Join(ta.Root, "watts.yaml")),
 		"deleting .watts and running init must not change the configuration")
-	assert.Equal(t, want, readFile(t, filepath.Join(ta.Root, ".watts/pi-agent-build/models.json")),
-		"models.json must be regenerated from watts.yaml")
+	var beforeModels, afterModels application.ModelsFile
+	require.NoError(t, json.Unmarshal([]byte(want), &beforeModels))
+	require.NoError(t, json.Unmarshal([]byte(readFile(t, filepath.Join(ta.Root, ".watts/pi-agent-build/models.json"))), &afterModels))
+	require.Equal(t, beforeModels.Providers["gw"].BaseURL, afterModels.Providers["gw"].BaseURL)
+	require.Equal(t, beforeModels.Providers["gw"].APIKey, afterModels.Providers["gw"].APIKey)
+	require.Len(t, afterModels.Providers["gw"].Models, 2)
+	require.Equal(t, "m1", afterModels.Providers["gw"].Models[0].ID)
+	require.Equal(t, "m2", afterModels.Providers["gw"].Models[1].ID)
 	assert.False(t, !exists(filepath.Join(ta.Root, ".watts/pi-agent-review/skills/my-skill/SKILL.md")) || !exists(filepath.Join(ta.Root, ".watts/kit/scripts/lib.sh")),
 		"the kit and the project skills must come back")
 }

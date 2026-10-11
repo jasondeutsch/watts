@@ -37,7 +37,7 @@ When gopls MCP is available, use workspace discovery and package APIs to underst
 
 ## Lint and completion
 
-Run `bash resources/examples/go_generalist/scripts/lint.sh` from the project root along with the plan's build and test commands. The example's .golangci.yml is the team policy; lint findings must be resolved before declaring a story complete.
+Run the lint command declared by the task workflow from the project root along with the plan's build and test commands. The example's .golangci.yml is the team policy; lint findings must be resolved before declaring a story complete.
 
 Do not weaken lint configuration or add broad suppressions to make a change pass. Explain any narrowly scoped suppression. Formatting and lint success supplement tests and independent review; neither proves the acceptance criteria.
 

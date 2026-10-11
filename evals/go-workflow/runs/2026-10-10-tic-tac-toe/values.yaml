@@ -1,0 +1,4 @@
+config_maps:
+  agent-defaults:
+    data:
+      thinking: low

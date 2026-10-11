@@ -19,44 +19,11 @@ func TestLoadConfigErrors(t *testing.T) {
 			"missing config should point at watts init, got %v", err)
 	}
 
-	writeFile(t, ta.ConfigPath(), `kind: Project
-schema_version: 1
-name: test
-spec:
-  version: 1
-  provder: ollama
-`)
-	{
+	for _, field := range []string{"provder", "thinking", "temporal", "tasks_dir"} {
+		writeFile(t, ta.ConfigPath(), "name: test\nversion: 0.1.0\ntemplates: templates\n"+field+": unexpected\n")
 		_, err := ta.LoadConfig()
-		require.False(t, err == nil || !strings.Contains(err.Error(), "provder"),
-			"a typo in a key must be rejected, got %v", err)
+		require.ErrorContains(t, err, field)
 	}
-
-	writeFile(t, ta.ConfigPath(), `kind: Project
-schema_version: 1
-name: test
-spec:
-  version: 1
-  thinking: extreme
-`)
-	{
-		_, err := ta.LoadConfig()
-		require.False(t, err == nil || !strings.Contains(err.Error(), "thinking"),
-			"an invalid value must be rejected, got %v", err)
-	}
-
-	writeFile(t, ta.ConfigPath(), `kind: Project
-schema_version: 1
-name: test
-spec:
-  version: 2
-`)
-	{
-		_, err := ta.LoadConfig()
-		require.Error(t, err,
-			"an unknown config version must be rejected")
-	}
-
 	writeFile(t, ta.ConfigPath(), `not json`)
 	{
 		_, err := ta.LoadConfig()
@@ -74,15 +41,10 @@ func TestConfigRoundTripAndPartialFile(t *testing.T) {
 
 	got, err := ta.LoadConfig()
 	require.NoError(t, err)
-	require.False(t, got.Workflow.Steps[0].Provider != "anthropic" || len(got.EnvPassthrough) != 1 || got.EnvPassthrough[0] != "ANTHROPIC_API_KEY",
+	require.False(t, got.AgentWorkflow().Steps[0].Provider != "anthropic" || len(got.EnvPassthrough) != 1 || got.EnvPassthrough[0] != "ANTHROPIC_API_KEY",
 		"round trip lost data: %+v", got)
 
-	writeFile(t, ta.ConfigPath(), `kind: Project
-schema_version: 1
-name: test
-spec:
-  version: 1
-`)
+	writeFile(t, ta.ConfigPath(), "name: test\nversion: 0.1.0\ntemplates: templates\n")
 	got, err = ta.LoadConfig()
 	require.NoError(t, err)
 	require.False(t, got.Agents["build"].Thinking != "medium",

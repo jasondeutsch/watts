@@ -21,16 +21,29 @@ type Check struct {
 	Args   []string `json:"args,omitempty" yaml:"args,omitempty"`
 }
 
+type MCPServer struct {
+	Command     string            `json:"command,omitempty" yaml:"command,omitempty"`
+	Args        []string          `json:"args,omitempty" yaml:"args,omitempty"`
+	URL         string            `json:"url,omitempty" yaml:"url,omitempty"`
+	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
+	Cwd         string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
+	Exposure    string            `json:"exposure,omitempty" yaml:"exposure,omitempty"`
+	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
+}
+
 type AgentSettings struct {
-	Thinking   string   `json:"thinking,omitempty" yaml:"thinking,omitempty"`
-	SkillsDirs []string `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
-	BaseURL    string   `json:"base_url,omitempty" yaml:"base_url,omitempty"`
-	API        string   `json:"api,omitempty" yaml:"api,omitempty"`
-	APIKeyEnv  string   `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
-	Sandbox    string   `json:"sandbox,omitempty" yaml:"sandbox,omitempty"`
+	MCPServers map[string]MCPServer `json:"mcp_servers,omitempty" yaml:"mcp_servers,omitempty"`
+	Thinking   string               `json:"thinking,omitempty" yaml:"thinking,omitempty"`
+	SkillsDirs []string             `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
+	BaseURL    string               `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	API        string               `json:"api,omitempty" yaml:"api,omitempty"`
+	APIKeyEnv  string               `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
+	Sandbox    string               `json:"sandbox,omitempty" yaml:"sandbox,omitempty"`
 }
 
 type Step struct {
+	CapabilityCommand []string          `json:"capability_command,omitempty" yaml:"capability_command,omitempty"`
 	AgentSettings     *AgentSettings    `json:"agent_settings,omitempty" yaml:"agent_settings,omitempty"`
 	Environment       map[string]string `json:"environment,omitempty" yaml:"environment,omitempty"`
 	SecretEnvironment map[string]string `json:"secret_environment,omitempty" yaml:"secret_environment,omitempty"`

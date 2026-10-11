@@ -1,3 +1,6 @@
+# Go generalist example policy. Templates contain no runtime or tool defaults.
+# Configure agents, Ralph, checks, MCPs, lint, routing, and scaffolds here.
+# Credentials below name environment sources; never put secret values in this file.
 agents:
   build:
     checks:
@@ -13,6 +16,11 @@ agents:
       - PLAN.md
     mcps:
       - gopls
+    mcp_servers:
+      gopls:
+        command: gopls
+        args: [mcp]
+        cwd: .
     outputs:
       - STORY_LOG.md
     pre_checks:
@@ -20,7 +28,7 @@ agents:
     prompt: /ralph --path ./{task}
     runtime_agent: build
     skills_dirs:
-      - resources/examples/go_generalist/skills
+      - "{package}/skills"
   planning:
     checks:
       - script: check-plan
@@ -30,7 +38,7 @@ agents:
       - SPEC.md
     outputs:
       - PLAN.md
-    prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Include `bash resources/examples/go_generalist/scripts/lint.sh` in PLAN.md quality gates. Lint findings must be fixed without weakening the lint configuration.
+    prompt: The preceding workflow gate approved the specification. Read {task}/SPEC.md. Use the plan-template skill to write {task}/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Include `bash {package}/scripts/lint.sh` in PLAN.md quality gates. Lint findings must be fixed without weakening the lint configuration.
     runtime_agent: build
   review:
     checks:
@@ -79,7 +87,7 @@ config_maps:
 procedures:
   lint:
     execution:
-      command: bash resources/examples/go_generalist/scripts/lint.sh
+      command: bash {package}/scripts/lint.sh
       type: command
     timeout_seconds: 360
   plan-review:
@@ -230,7 +238,7 @@ workflow:
         Commands every story must pass before it counts as done, one backticked command per bullet. Real commands for this repository, run from the repository root, not placeholders. The builder runs them, and the reviewer and the Watts checks run them again independently.
 
         - `go build ./...`
-        - `bash resources/examples/go_generalist/scripts/lint.sh`
+        - `bash {package}/scripts/lint.sh`
         - `go test ./...`
 
         ## User stories

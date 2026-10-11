@@ -1,0 +1,39 @@
+main.go:87:12: Error return value of `fmt.Fprint` is not checked (errcheck)
+	fmt.Fprint(w, renderBoard(cells))
+	          ^
+main.go:88:13: Error return value of `fmt.Fprintf` is not checked (errcheck)
+	fmt.Fprintf(w, "Player %s (1-9): ", player)
+	           ^
+main.go:95:16: Error return value of `fmt.Fprintln` is not checked (errcheck)
+			fmt.Fprintln(w, "Invalid cell: must be a number from 1 to 9")
+			            ^
+main.go:96:15: Error return value of `fmt.Fprintf` is not checked (errcheck)
+			fmt.Fprintf(w, "Player %s (1-9): ", player)
+			           ^
+main.go:102:16: Error return value of `fmt.Fprintln` is not checked (errcheck)
+			fmt.Fprintln(w, msg)
+			            ^
+main.go:103:15: Error return value of `fmt.Fprintf` is not checked (errcheck)
+			fmt.Fprintf(w, "Player %s (1-9): ", player)
+			           ^
+main.go:109:13: Error return value of `fmt.Fprint` is not checked (errcheck)
+		fmt.Fprint(w, renderBoard(cells))
+		          ^
+main.go:113:15: Error return value of `fmt.Fprintf` is not checked (errcheck)
+			fmt.Fprintf(w, "Player %s wins!\n", winner)
+			           ^
+main.go:119:14: Error return value of `fmt.Fprint` is not checked (errcheck)
+			fmt.Fprint(w, "It's a draw!\n")
+			          ^
+main.go:129:14: Error return value of `fmt.Fprintf` is not checked (errcheck)
+		fmt.Fprintf(w, "Player %s (1-9): ", player)
+		           ^
+main.go:133:14: Error return value of `fmt.Fprintln` is not checked (errcheck)
+	fmt.Fprintln(w, "Goodbye.")
+	            ^
+main.go:140:1: File is not properly formatted (gofmt)
+}
+^
+12 issues:
+* errcheck: 11
+* gofmt: 1

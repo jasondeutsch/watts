@@ -1,0 +1,10 @@
+{
+  "accounting": "partial: drafting only; Ralph build/review token and billing totals unavailable",
+  "responses": 43,
+  "input_tokens": 136901,
+  "output_tokens": 33430,
+  "cache_read_tokens": 513728,
+  "cache_write_tokens": 0,
+  "cost_usd": null,
+  "human_active_minutes": null
+}

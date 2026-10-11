@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
@@ -12,6 +13,7 @@ import (
 
 func New(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "task new")
+	descriptor := flags.String("package", "", "path to the workflow package descriptor")
 	positionals, err := arguments.Parse(flags, args)
 	if err != nil {
 		return arguments.UsageError(err)
@@ -19,6 +21,13 @@ func New(app *terminal.Context, args []string) error {
 	slug, err := arguments.One(positionals, "task slug")
 	if err != nil {
 		return err
+	}
+	if *descriptor != "" {
+		app.Root = app.WorkingDirectory
+		app.PackageDescriptor, err = filepath.Abs(*descriptor)
+		if err != nil {
+			return err
+		}
 	}
 	cfg, err := app.LoadConfig()
 	if err != nil {
@@ -106,7 +115,7 @@ func selectTask(app *terminal.Context, positionals []string, command string) (pr
 	if len(positionals) == 1 {
 		task = positionals[0]
 	}
-	cfg, err := app.LoadConfig()
+	cfg, err := app.LoadServiceConfig()
 	if err != nil {
 		return cfg, "", err
 	}

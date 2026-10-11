@@ -30,7 +30,7 @@ func (app *Service) NewTemporalWorker(temporalClient client.Client, queue string
 func EmptyWorkerInput() io.Reader { return strings.NewReader("") }
 
 func (app *Service) RunTemporalWorker(ctx context.Context) error {
-	config, err := app.LoadConfig()
+	config, err := app.LoadServiceConfig()
 	if err != nil {
 		return err
 	}

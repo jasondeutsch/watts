@@ -13,7 +13,6 @@ import (
 )
 
 func loadValues(packageFS fs.FS, overrides []ValuesSource) (map[string]any, error) {
-	values := map[string]any{}
 	data, err := fs.ReadFile(packageFS, "values.yaml")
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("values.yaml: %w", err)
@@ -22,6 +21,12 @@ func loadValues(packageFS fs.FS, overrides []ValuesSource) (map[string]any, erro
 	if err == nil {
 		sources = append([]ValuesSource{{Name: "values.yaml", Data: data}}, overrides...)
 	}
+	return MergeValues(sources...)
+}
+
+// MergeValues resolves ordered YAML mappings without reading files or mutating inputs.
+func MergeValues(sources ...ValuesSource) (map[string]any, error) {
+	values := map[string]any{}
 	for _, source := range sources {
 		var incoming map[string]any
 		if err := decodeYAML(source.Data, &incoming); err != nil {
@@ -91,7 +96,8 @@ func validateYAML(data []byte) error {
 	return nil
 }
 
-func validateValues(packageFS fs.FS, values map[string]any) error {
+// ValidateValues checks a package schema against the final merged values.
+func ValidateValues(packageFS fs.FS, values map[string]any) error {
 	data, err := fs.ReadFile(packageFS, "values.schema.json")
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil
@@ -99,6 +105,11 @@ func validateValues(packageFS fs.FS, values map[string]any) error {
 	if err != nil {
 		return fmt.Errorf("values.schema.json: %w", err)
 	}
+	return ValidateSchema(data, values)
+}
+
+// ValidateSchema applies an in-memory schema without external schema loading.
+func ValidateSchema(data []byte, values map[string]any) error {
 	schemaDocument, err := jsonschema.UnmarshalJSON(bytes.NewReader(data))
 	if err != nil {
 		return fmt.Errorf("values.schema.json: %w", err)
@@ -131,4 +142,8 @@ type noExternalSchemas struct{}
 
 func (noExternalSchemas) Load(url string) (any, error) {
 	return nil, fmt.Errorf("external schema references are unsupported: %s", url)
+}
+
+func validateValues(packageFS fs.FS, values map[string]any) error {
+	return ValidateValues(packageFS, values)
 }

@@ -64,6 +64,7 @@ type Execution struct {
 	Check      string   `yaml:"check,omitempty"`
 	Args       []string `yaml:"args,omitempty"`
 	Capability string   `yaml:"capability,omitempty"`
+	Argv       []string `yaml:"argv,omitempty"`
 }
 
 type ProcedureSpec struct {
@@ -83,19 +84,20 @@ type Auth struct {
 type AgentSpec struct {
 	RuntimeAgent string `yaml:"runtime_agent,omitempty"`
 	Contract     `yaml:",inline"`
-	Runtime      string   `yaml:"runtime"`
-	Identity     string   `yaml:"identity"`
-	Provider     string   `yaml:"provider"`
-	Model        string   `yaml:"model"`
-	Prompt       string   `yaml:"prompt"`
-	Sandbox      Sandbox  `yaml:"sandbox"`
-	Auth         *Auth    `yaml:"auth,omitempty"`
-	BaseURL      string   `yaml:"base_url,omitempty"`
-	API          string   `yaml:"api,omitempty"`
-	Thinking     string   `yaml:"thinking,omitempty"`
-	SkillsDirs   []string `yaml:"skills_dirs,omitempty"`
-	MCPs         []string `yaml:"mcps,omitempty"`
-	ConfigRef    string   `yaml:"config_ref,omitempty"`
+	Runtime      string                             `yaml:"runtime"`
+	Identity     string                             `yaml:"identity"`
+	Provider     string                             `yaml:"provider"`
+	Model        string                             `yaml:"model"`
+	Prompt       string                             `yaml:"prompt"`
+	Sandbox      Sandbox                            `yaml:"sandbox"`
+	Auth         *Auth                              `yaml:"auth,omitempty"`
+	BaseURL      string                             `yaml:"base_url,omitempty"`
+	API          string                             `yaml:"api,omitempty"`
+	Thinking     string                             `yaml:"thinking,omitempty"`
+	SkillsDirs   []string                           `yaml:"skills_dirs,omitempty"`
+	MCPs         []string                           `yaml:"mcps,omitempty"`
+	MCPServers   map[string]orchestration.MCPServer `yaml:"mcp_servers,omitempty"`
+	ConfigRef    string                             `yaml:"config_ref,omitempty"`
 }
 
 type ConfigMapSpec struct {
@@ -318,7 +320,7 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		}
 		step.Identity = spec.Identity
 		step.Provider, step.Model, step.Prompt, step.MCPs = spec.Provider, spec.Model, spec.Prompt, spec.MCPs
-		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API, Sandbox: spec.Sandbox.Mode}
+		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API, Sandbox: spec.Sandbox.Mode, MCPServers: spec.MCPServers}
 		contract = spec.Contract
 		if spec.Auth != nil {
 			if contract.Secrets == nil {
@@ -344,6 +346,10 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 			step.Check, step.Args = execution.Check, execution.Args
 		case "capability":
 			step.Capability = execution.Capability
+			if step.Capability == "" && len(execution.Argv) > 0 {
+				step.Capability = resource.Name
+			}
+			step.CapabilityCommand = execution.Argv
 		case "approval":
 			step.Human = true
 		case "event":
@@ -351,7 +357,7 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		default:
 			return step, fmt.Errorf("Procedure %s: unsupported execution type %q", resource.Name, execution.Type)
 		}
-		if execution.Type != "command" && execution.Command != "" || execution.Type != "check" && (execution.Check != "" || len(execution.Args) > 0) || execution.Type != "capability" && execution.Capability != "" {
+		if execution.Type != "command" && execution.Command != "" || execution.Type != "check" && (execution.Check != "" || len(execution.Args) > 0) || execution.Type != "capability" && (execution.Capability != "" || len(execution.Argv) > 0) {
 			return step, fmt.Errorf("Procedure %s: execution fields do not match type", resource.Name)
 		}
 	}

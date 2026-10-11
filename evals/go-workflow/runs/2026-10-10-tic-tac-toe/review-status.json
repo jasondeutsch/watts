@@ -1,0 +1,42 @@
+{
+  "loopToken": "9fb71565-4625-4fab-a7aa-352d9b568816",
+  "ralphPath": "/Users/j/watts_project/test/tasks/2026-10-10-tic-tac-toe-eval/review/RALPH.md",
+  "taskDir": "/Users/j/watts_project/test/tasks/2026-10-10-tic-tac-toe-eval/review",
+  "cwd": "/Users/j/watts_project/test",
+  "status": "running",
+  "currentIteration": 3,
+  "maxIterations": 10,
+  "timeout": 900,
+  "completionPromise": "REVIEWED",
+  "startedAt": "2026-10-11T02:13:30.415Z",
+  "guardrails": {
+    "blockCommands": [
+      "(?:^|[\\s;&|/])git(?:\\s|$)",
+      "rm\\s+-rf"
+    ],
+    "protectedFiles": [
+      ".git",
+      ".git/**",
+      "**/.git",
+      "**/.git/**",
+      ".env*",
+      "*.pem",
+      "*.key",
+      "policy:secret-bearing-paths",
+      "**/SPEC.md",
+      "**/PLAN.md",
+      "**/BASE",
+      "**/STORY_LOG.md",
+      "**/RALPH.md",
+      ".watts/kit/**",
+      ".watts/**"
+    ],
+    "shellPolicy": {
+      "mode": "allowlist",
+      "allow": [
+        "bash .watts/kit/scripts/(gates|evidence|check-[a-z]+)\\.sh [^;&|<>`$]*",
+        "(ls|cat|head|tail|grep|rg|find|wc|echo|printf)( [^;&|<>`$]*)?"
+      ]
+    }
+  }
+}

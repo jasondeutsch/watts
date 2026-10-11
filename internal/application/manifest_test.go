@@ -1,13 +1,13 @@
 package application
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/workflowpackage"
 	workflowtemplates "github.com/jasondeutsch/watts/workflow-templates"
 	"github.com/stretchr/testify/require"
 )
@@ -25,18 +25,16 @@ func TestBundledYAMLAndGoGeneralistWorkflow(t *testing.T) {
 		})
 	}
 	example := filepath.Join("..", "..", "resources", "examples", "go_generalist")
-	data, err := os.ReadFile(filepath.Join(example, "mcp", "mcp.yaml"))
+	pkg, err := workflowpackage.Load(example)
 	require.NoError(t, err)
-	project, err := manifest.Decode(data, manifest.Project, projectconfig.Default())
+	resolved, err := pkg.Render()
 	require.NoError(t, err)
-	data, err = os.ReadFile(filepath.Join(example, "workflows", "go-generalist.yaml"))
+	definition, err := manifest.CompileWorkflow(resolved.Data)
 	require.NoError(t, err)
-	workflow, err := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
-	require.NoError(t, err)
-	require.NoError(t, project.Spec.ValidateWorkflow(workflow.Spec))
-	require.Contains(t, workflow.Spec.Templates["PLAN.md"], "lint.sh")
+	require.NoError(t, projectconfig.Default().WithWorkflowAgents(definition).ValidateWorkflow(definition))
+	require.Contains(t, definition.Templates["PLAN.md"], "lint.sh")
 	var build, lint orchestration.Step
-	for _, step := range workflow.Spec.Steps {
+	for _, step := range definition.Steps {
 		if step.Name == "build" {
 			build = step
 		}
@@ -75,16 +73,21 @@ func TestYAMLFormattingDoesNotChangePinnedRuntime(t *testing.T) {
 	require.Equal(t, 7200, third.Input.Definition.Steps[0].TimeoutSeconds)
 }
 
-func TestProjectManifestNameSurvivesSettingsUpdate(t *testing.T) {
+func TestPackageDescriptorSurvivesSettingsUpdate(t *testing.T) {
 	app := newProject(t)
 	cfg := projectconfig.Default()
-	require.NoError(t, manifest.Write(app.ConfigPath(), manifest.Project, "team-services", cfg))
+	require.NoError(t, app.SaveConfig(cfg))
+	source := "name: team-services\nversion: 0.1.0\ntemplates: templates\n"
+	writeFile(t, app.ConfigPath(), source)
 	cfg, err := app.LoadConfig()
 	require.NoError(t, err)
 	cfg.TasksDir = "work"
 	require.NoError(t, app.SaveConfig(cfg))
-	document, err := manifest.Decode([]byte(readFile(t, app.ConfigPath())), manifest.Project, projectconfig.Config{})
+	require.Equal(t, source, readFile(t, app.ConfigPath()))
+	descriptor, err := workflowpackage.ReadDescriptor(app.ConfigPath())
 	require.NoError(t, err)
-	require.Equal(t, "team-services", document.Name)
-	require.Equal(t, "work", document.Spec.TasksDir)
+	require.Equal(t, "team-services", descriptor.Name)
+	settings, err := app.LoadServiceConfig()
+	require.NoError(t, err)
+	require.Equal(t, "work", settings.TasksDir)
 }

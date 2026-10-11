@@ -82,6 +82,7 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 			if settings := step.AgentSettings; settings != nil {
 				agent.Thinking, agent.SkillsDirs, agent.BaseURL, agent.API = settings.Thinking, settings.SkillsDirs, settings.BaseURL, settings.API
 				agent.Sandbox.Mode = settings.Sandbox
+				agent.MCPServers = settings.MCPServers
 				if settings.APIKeyEnv != "" {
 					ref, ok := agent.Secrets[settings.APIKeyEnv]
 					if !ok {
@@ -101,6 +102,7 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 				execution.Type, execution.Check, execution.Args = "check", step.Check, step.Args
 			case step.Capability != "":
 				execution.Type, execution.Capability = "capability", step.Capability
+				execution.Argv = step.CapabilityCommand
 			case step.Human:
 				execution.Type = "approval"
 			case step.Event:

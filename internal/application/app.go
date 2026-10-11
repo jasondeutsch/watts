@@ -21,11 +21,14 @@ type Service struct {
 	Release string
 	Report  func(Event)
 
-	Root             string // absolute, symlinks resolved
-	WorkingDirectory string
-	Output           io.Writer
-	ErrorOutput      io.Writer
-	Input            io.Reader
+	packageDefinitionHash string
+	resolvedPackage       *WorkflowSelection
+	PackageDescriptor     string // Explicit descriptor path; identity comes from its contents.
+	Root                  string // absolute, symlinks resolved
+	WorkingDirectory      string
+	Output                io.Writer
+	ErrorOutput           io.Writer
+	Input                 io.Reader
 
 	// TimeoutUnit is the length of one limits.max_minutes unit. Tests shorten it.
 	TimeoutUnit time.Duration

@@ -92,16 +92,7 @@ type Capability struct {
 }
 
 // MCPServer defines a Pi-compatible server connection; stages opt in by name.
-type MCPServer struct {
-	Command     string            `json:"command,omitempty" yaml:"command,omitempty"`
-	Args        []string          `json:"args,omitempty" yaml:"args,omitempty"`
-	URL         string            `json:"url,omitempty" yaml:"url,omitempty"`
-	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Cwd         string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
-	Exposure    string            `json:"exposure,omitempty" yaml:"exposure,omitempty"`
-	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
-}
+type MCPServer = orchestration.MCPServer
 
 type TemporalSettings struct {
 	Address   string `json:"address,omitempty" yaml:"address,omitempty"`
@@ -212,7 +203,7 @@ func (c Config) Agent(name string) (ResolvedAgent, bool) {
 
 // defaultForbidden are the paths no agent may change: Watts' own configuration and check scripts.
 // A run that changes any of them is reported as failed.
-var DefaultForbidden = []string{Filename, "workflows", ".watts/kit", ".git"}
+var DefaultForbidden = []string{Filename, "workflows", ".watts/kit", ".watts/packages", ".git"}
 
 // passthroughNames is every variable name that is copied into an agent's environment: the
 // top-level list, the extras given on the command line, and the key variable of the agent's own

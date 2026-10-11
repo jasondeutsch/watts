@@ -1,0 +1,17 @@
+ok:   3 quality gate command(s) listed
+ok:   2 stories found
+ok:   AC-1 is covered by a story
+ok:   AC-2 is covered by a story
+ok:   AC-3 is covered by a story
+ok:   AC-4 is covered by a story
+ok:   AC-5 is covered by a story
+ok:   AC-6 is covered by a story
+ok:   AC-7 is covered by a story
+ok:   AC-8 is covered by a story
+ok:   AC-9 is covered by a story
+PLAN: OK
+APPROVAL: OK (workflow artifact approvals)
+PREFLIGHT: OK
+
+Run summary: no session record was found for the build agent since this run started.
+FAILED: Ralph runner evidence is from an earlier attempt

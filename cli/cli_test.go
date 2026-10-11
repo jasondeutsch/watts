@@ -119,7 +119,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	entries, _ := os.ReadDir(ta.Root)
 	for _, e := range entries {
 		switch e.Name() {
-		case ".git", "README.md", ".watts", "watts.yaml":
+		case ".git", "README.md", ".watts", "watts.yaml", "templates":
 		default:
 			assert.
 				Fail(t, fmt.Sprintf("init touched %s", e.Name()))
@@ -132,7 +132,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	}
 	{
 		code, out, _ := runCLI(t, ta.Root, "config", "show")
-		assert.False(t, code != 0 || !strings.Contains(out, `tasks_dir: tasks`),
+		assert.False(t, code != 0 || !strings.Contains(out, `templates: templates`),
 			"config --show: exit %d, %q", code, out)
 	}
 	{

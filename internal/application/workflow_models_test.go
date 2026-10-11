@@ -50,12 +50,7 @@ cp "$PI_CODING_AGENT_DIR/models.json" "$WATTS_TASK/$stage-models.json"`)
 func TestModelSelectionFieldsAreRejectedInProjectConfig(t *testing.T) {
 	project := newProject(t)
 	for _, field := range []string{"provider", "build_model", "review_model"} {
-		writeFile(t, project.ConfigPath(), `kind: Project
-schema_version: 1
-name: test
-spec:
-  version: 1
-`+"  "+field+`: obsolete`)
+		writeFile(t, project.ConfigPath(), "name: test\nversion: 0.1.0\ntemplates: templates\n"+field+": obsolete\n")
 		_, err := project.LoadConfig()
 		require.ErrorContains(t, err, field)
 	}

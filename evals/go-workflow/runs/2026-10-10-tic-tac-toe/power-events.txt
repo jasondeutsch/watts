@@ -1,0 +1,5 @@
+Relevant Mac power-log events (America/Chicago):
+2026-10-10 20:54:14 -0500: Idle Sleep, 109 seconds
+2026-10-10 20:56:03 -0500: Wake from Deep Idle
+2026-10-10 21:03:33 -0500: Clamshell Sleep, 364 seconds
+2026-10-10 21:09:37 -0500: Wake from Deep Idle due to lid open

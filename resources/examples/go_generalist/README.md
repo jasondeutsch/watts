@@ -1,21 +1,35 @@
-# Go generalist team workflow
+# Go generalist workflow package
 
-An example for teams developing Go business applications and web services. It composes [Watts Kinds](../../../docs/kinds.md) with shared model defaults, credential references, a builder skill, gopls MCP, and a deterministic golangci-lint gate. It is a starting point for team policy, not an evaluated benchmark.
+A configurable example for Go business applications and web services. The templates define resource envelopes, fields, and wiring, populated by configurable values. They contain no agent, model, MCP, check, or lint policy.
 
-## Contents
+## Configuration source
 
-| Path | Purpose |
-| --- | --- |
-| [values.yaml](values.yaml) | Agents, Procedures, Workflow routing/scaffolding, ConfigMap defaults, and Secret sources |
-| [templates/](templates/) | Templates for all five Kinds, following the [base package](../../../resource-templates/README.md) |
-| [workflows/go-generalist.yaml](workflows/go-generalist.yaml) | Rendered bundle supplied for inspection and immediate use |
-| [skills/go-builder/](skills/go-builder/SKILL.md) | Go implementation and verification guidance |
-| [scripts/lint.sh](scripts/lint.sh), [.golangci.yml](.golangci.yml) | Team lint command and golangci-lint v2 policy |
-| [mcp/](mcp/README.md) | Project gopls connection setup |
+[values.yaml](values.yaml) defines the complete example policy:
 
-## Adopt and customize
+- Workflow order, routes, approval gates, and task document scaffolding.
+- Agent identities, prompts, Pi runtime selection, and Ralph commands and configuration.
+- Model, provider, reasoning settings, and environment-backed credential references.
+- Agent checks, skills, and the builder's gopls MCP connection.
+- Deterministic Procedures, including the golangci-lint command.
 
-Initialize your Go project with Watts. Copy this directory to `resources/examples/go_generalist` within that project; script and skill paths depend on this layout. Edit the copied values or add a team override file:
+[templates/](templates/) explicitly renders Workflow placements and routes, Agent runtime and tool configuration, Procedure execution, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution still requires an adapter supporting the selected runtime; currently the supported Agent runtime is Pi.
+
+[watts.yaml](watts.yaml) identifies the package, selects its values and templates, and declares scripts, skills, and lint configuration as assets. It contains no agent or tool selection. Keep credential values outside the package.
+
+## Use from another project
+
+For a project next to the Watts checkout, create this project-root `watts.yaml`:
+
+```yaml
+name: my-go-team
+version: 0.1.0
+extends:
+  path: ../watts/resources/examples/go_generalist/watts.yaml
+values:
+  - values.yaml
+```
+
+Create a local `values.yaml` with team overrides:
 
 ```yaml
 config_maps:
@@ -27,48 +41,25 @@ agents:
     identity: my-team-builder
 ```
 
-From the target project root, render into a fresh directory:
+Render for inspection, then create a task:
 
 ```sh
-watts template ./resources/examples/go_generalist -f ./team-values.yaml -o ./workflows/go-team-v1
+watts template ./watts.yaml
+watts task new hello-world
 ```
 
-Omit `-f` to use the package defaults. Values files merge recursively; explicit resource fields override their ConfigMap defaults with a shallow merge. See [templating](../../../docs/templates.md) for details.
+Base values merge with team overrides; later scalars and lists replace earlier ones, while maps merge recursively. Changing workflow steps therefore replaces the step list. Use an empty mapping in a standalone package to omit a resource Kind; an empty override mapping does not delete inherited resources. Adding or replacing inherited resources through additional templates follows the explicit replacement rules in the [template reference](../../../docs/templates.md).
 
-Merge these settings into your existing `watts.yaml` Project specification:
+Task creation resolves templates and captures declared assets. Edit source values or templates, never generated task manifests. Changes apply to newly created tasks; existing tasks retain their resolved definitions. No copied example directory, manually rendered default workflow, or separate project MCP registration is needed.
 
-```yaml
-spec:
-  default_workflow: workflows/go-team-v1
-  mcps:
-    gopls:
-      command: gopls
-      args: [mcp]
-      cwd: .
-```
-
-Alternatively, select the supplied bundle at `resources/examples/go_generalist/workflows/go-generalist.yaml`. Changes to values do not update that file automatically.
-
-The Agent defaults select OpenRouter and declare its endpoint, model, reasoning setting, local runtime, and auth binding. The Secret declares `OPENROUTER_API_KEY` as a source name. Export its value before starting the worker. The build Agent declares its skill directory and `mcps: [gopls]`; these selections belong in the workflow bundle, not duplicate Project agent settings.
-
-Install golangci-lint v2 and gopls on the worker PATH. Pin releases compatible with the team's Go toolchain, and use the same lint version locally and in CI. See [golangci-lint installation](https://golangci-lint.run/docs/welcome/install/) and [gopls setup](mcp/README.md).
-
-Follow the [runbook](../../../docs/runbook.md) to install agent dependencies, start Watts, and create a new task. Its stages are:
+## Default example
 
 **Specification → human spec review → planning → human plan review → build → lint → agent review**
 
-Agents perform drafting, build, and review; Procedures implement human gates and lint. Review rework returns to build, so lint runs again. Existing submitted tasks retain their pinned configuration; create a new task to evaluate a changed bundle.
+The current values select Pi, Ralph for build/review, OpenRouter, a builder skill, gopls MCP, and golangci-lint v2. These are example choices, not template requirements. Review rework returns to build so lint runs again. Export `OPENROUTER_API_KEY` before starting the worker. The default lint script expects a Go module at the project root.
 
-## Team policies
+The current execution path needs the Pi/Ralph runtime dependencies, gopls, and golangci-lint on the worker PATH. See the [runbook](../../../docs/runbook.md) for execution and the [MCP guide](mcp/README.md) for the connection defined in values. Removing legacy project initialization and moving preparation into adapters is tracked in wiss-020.
 
-Run lint directly from the project root:
+The [lint script](scripts/lint.sh) explicitly uses [.golangci.yml](.golangci.yml), preserves diagnostics and exit status, and does not automatically fix files. The [builder skill](skills/go-builder/SKILL.md) includes attribution and the MIT notice for guidance derived from samber/cc-skills-golang.
 
-```sh
-bash resources/examples/go_generalist/scripts/lint.sh
-```
-
-The script explicitly selects [.golangci.yml](.golangci.yml), checks all packages including tests, preserves exit status and diagnostics, and does not automatically fix files. Planning includes this command in quality gates; the lint Procedure checks again between build and review. Failures block progress. Inspect findings and retry after correcting the cause. The script assumes one Go module at the project root.
-
-The [builder skill](skills/go-builder/SKILL.md) condenses Go style, error handling, service reliability, and testing guidance from samber/cc-skills-golang. Attribution and its MIT notice are retained. Build instructions direct the agent to read it; the review Agent does not select this skill directory.
-
-The [gopls setup guide](mcp/README.md) explains connection registration and verification. This example's model-backed MCP execution has not been verified. Lint and tool access supplement tests and independent review. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare team configurations over time.
+This example's model-backed MCP execution has not been verified, and the workflow is not an evaluated benchmark. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare configurations over time.

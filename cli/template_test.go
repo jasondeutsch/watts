@@ -21,6 +21,20 @@ func templatePackage(t *testing.T) string {
 	return directory
 }
 
+func TestTemplateNew(t *testing.T) {
+	work := t.TempDir()
+	code, output, diagnostic := runCLI(t, work, "template", "new", "go-team")
+	require.Equal(t, 0, code, diagnostic)
+	require.Contains(t, output, "Created go-team")
+	require.FileExists(t, filepath.Join(work, "go-team", "watts.yaml"))
+	code, output, diagnostic = runCLI(t, work, "template", "go-team")
+	require.Equal(t, 0, code, diagnostic)
+	require.Contains(t, output, "kind: Workflow")
+	code, _, diagnostic = runCLI(t, work, "template", "new", "go-team")
+	require.NotEqual(t, 0, code)
+	require.Contains(t, diagnostic, "existing directories are never overwritten")
+}
+
 func TestTemplateOutsideProjectAndOverrideOrder(t *testing.T) {
 	directory := templatePackage(t)
 	work := t.TempDir()
@@ -44,7 +58,7 @@ func TestTemplateOutsideProjectAndOverrideOrder(t *testing.T) {
 	require.Equal(t, []string{"project", "second", "third"}, names)
 }
 
-func TestTemplateOutputAndConflictRollback(t *testing.T) {
+func TestTemplateRegeneratesOutputAndRemovesStaleFiles(t *testing.T) {
 	directory := templatePackage(t)
 	work := t.TempDir()
 	output := filepath.Join(work, "rendered")
@@ -52,25 +66,48 @@ func TestTemplateOutputAndConflictRollback(t *testing.T) {
 	require.Equal(t, 0, code, diagnostic)
 	require.Empty(t, stdout)
 	require.FileExists(t, filepath.Join(output, "nested", "b.yaml"))
-	content, err := os.ReadFile(filepath.Join(output, "a.yaml"))
-	require.NoError(t, err)
-	require.Equal(t, "name: \"default\"\n", string(content))
+	require.NoError(t, os.WriteFile(filepath.Join(directory, "values.yaml"), []byte("name: updated\n"), 0644))
+	require.NoError(t, os.Remove(filepath.Join(directory, "templates", "nested", "b.yaml")))
 	code, _, diagnostic = runCLI(t, work, "template", directory, "-o", output)
-	require.Equal(t, 1, code)
-	require.Contains(t, diagnostic, "never overwritten")
+	require.Equal(t, 0, code, diagnostic)
 	after, err := os.ReadFile(filepath.Join(output, "a.yaml"))
 	require.NoError(t, err)
-	require.Equal(t, content, after)
+	require.Equal(t, "name: \"updated\"\n", string(after))
+	require.NoDirExists(t, filepath.Join(output, "nested"))
 
-	conflict := filepath.Join(work, "conflict")
-	require.NoError(t, os.MkdirAll(filepath.Join(conflict, "nested"), 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(conflict, "nested", "b.yaml"), []byte("existing"), 0644))
-	code, _, diagnostic = runCLI(t, work, "template", directory, "-o", conflict)
+	// A broken source cannot replace the last successful render.
+	require.NoError(t, os.WriteFile(filepath.Join(directory, "templates", "a.yaml.gotmpl"), []byte("name: {{.Values.missing}}"), 0644))
+	code, _, diagnostic = runCLI(t, work, "template", directory, "-o", output)
 	require.Equal(t, 1, code, diagnostic)
-	require.NoFileExists(t, filepath.Join(conflict, "a.yaml"))
-	after, err = os.ReadFile(filepath.Join(conflict, "nested", "b.yaml"))
+	preserved, err := os.ReadFile(filepath.Join(output, "a.yaml"))
 	require.NoError(t, err)
-	require.Equal(t, "existing", string(after))
+	require.Equal(t, after, preserved)
+}
+
+func TestTemplateRejectsOutputContainingUnrelatedFiles(t *testing.T) {
+	directory := templatePackage(t)
+	work := t.TempDir()
+	output := filepath.Join(work, "rendered")
+	require.NoError(t, os.MkdirAll(output, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(output, "notes.txt"), []byte("preserve"), 0644))
+	code, _, diagnostic := runCLI(t, work, "template", directory, "-o", output)
+	require.Equal(t, 1, code)
+	require.Contains(t, diagnostic, "non-YAML")
+	require.NoFileExists(t, filepath.Join(output, "a.yaml"))
+	content, err := os.ReadFile(filepath.Join(output, "notes.txt"))
+	require.NoError(t, err)
+	require.Equal(t, "preserve", string(content))
+}
+
+func TestTemplateRejectsOutputOverlappingSources(t *testing.T) {
+	directory := templatePackage(t)
+	work := t.TempDir()
+	for _, output := range []string{directory, filepath.Join(directory, "generated"), filepath.Dir(directory), work} {
+		code, _, diagnostic := runCLI(t, work, "template", directory, "-o", output)
+		require.Equal(t, 1, code, diagnostic)
+	}
+	require.FileExists(t, filepath.Join(directory, "values.yaml"))
+	require.FileExists(t, filepath.Join(directory, "templates", "a.yaml.gotmpl"))
 }
 
 func TestTemplateFailuresHaveNoOutput(t *testing.T) {
@@ -113,7 +150,7 @@ func TestTemplateRejectsPackageEscapeAndOutputSymlink(t *testing.T) {
 func TestTemplateHelp(t *testing.T) {
 	code, _, diagnostic := runCLI(t, t.TempDir(), "template", "-h")
 	require.Equal(t, 0, code)
-	require.Contains(t, diagnostic, "watts template <package-dir>")
+	require.Contains(t, diagnostic, "watts template <package>")
 	require.Contains(t, diagnostic, "-values")
 	require.Contains(t, diagnostic, "-output")
 }

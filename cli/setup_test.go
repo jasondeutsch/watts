@@ -126,7 +126,7 @@ func TestInitTargetsCurrentDirectoryInsideParentProject(t *testing.T) {
 			require.NoError(t, os.Mkdir(nested, 0755))
 			code, out, errors = runCLI(t, nested, "config", "show")
 			require.Equal(t, 0, code, errors)
-			require.Contains(t, out, `thinking: medium`)
+			require.Contains(t, out, `templates: templates`)
 			code, out, errors = runCLI(t, child, "task", "new", "project-root-check")
 			require.Equal(t, 0, code, out+errors)
 			tasks, err := os.ReadDir(filepath.Join(child, "tasks"))

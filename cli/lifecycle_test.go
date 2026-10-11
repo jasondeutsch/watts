@@ -60,7 +60,7 @@ func lifecycle(t *testing.T, dir string, a *terminal.Context) {
 	entries, _ := os.ReadDir(dir)
 	for _, e := range entries {
 		switch e.Name() {
-		case ".git", ".watts", "watts.yaml", "README.md", "wip.txt":
+		case ".git", ".watts", "watts.yaml", "README.md", "wip.txt", "templates":
 		default:
 			assert.
 				Fail(t, fmt.Sprintf("init created %s", e.Name()))
@@ -270,7 +270,7 @@ func TestProjectRootIsFoundFromSubfolders(t *testing.T) {
 	_ = os.MkdirAll(sub, 0o755)
 	{
 		code, out, _ := runCLI(t, sub, "config", "show")
-		assert.False(t, code != 0 || !strings.Contains(out, `tasks_dir: tasks`),
+		assert.False(t, code != 0 || !strings.Contains(out, `templates: templates`),
 			"the project root must be found from a subfolder: %d %s", code, out)
 	}
 }

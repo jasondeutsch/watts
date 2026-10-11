@@ -1,0 +1,19 @@
+{
+  "name": "tic-tac-toe-eval",
+  "version": "0.1.0",
+  "digest": "74e971684d91830fd1970956fb5173407f4aeaa05a32417f54b2c3155ff2b1a9",
+  "layers": [
+    {
+      "name": "go-generalist",
+      "version": "0.1.0",
+      "digest": "f3e80902dcdbad2520bb679945135271090e3f72df99467ff306fed2d1f0491f",
+      "source": "/Users/j/watts_project/watts/resources/examples/go_generalist/watts.yaml"
+    },
+    {
+      "name": "tic-tac-toe-eval",
+      "version": "0.1.0",
+      "digest": "812614169133cb099b08114f431960675f82696ba3f249f01b3c525ceca833da",
+      "source": "/Users/j/watts_project/test/watts.yaml"
+    }
+  ]
+}

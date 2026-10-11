@@ -9,9 +9,9 @@ import (
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/kit"
-	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestLocalIgnoresStayInsideWatts(t *testing.T) {
@@ -76,6 +76,8 @@ func TestAgentThinkingAndSharedProviderConnection(t *testing.T) {
 	cfg.Agents["build"] = projectconfig.AgentConfig{Thinking: "low"}
 	cfg.Agents["review"] = projectconfig.AgentConfig{Thinking: "high"}
 	setWorkflowModels(&cfg, "ollama", "local:7b", "local:7b")
+	cfg.Agents["build"] = projectconfig.AgentConfig{Thinking: "low"}
+	cfg.Agents["review"] = projectconfig.AgentConfig{Thinking: "high"}
 	cfg.Providers["ollama"] = projectconfig.Provider{BaseURL: "http://localhost:1234/v1", APIKeyEnv: "LOCAL_MODEL_KEY"}
 	require.NoError(t, app.SaveConfig(cfg))
 	require.NoError(t, app.ConfigAgents(cfg, true))
@@ -89,10 +91,11 @@ func TestAgentThinkingAndSharedProviderConnection(t *testing.T) {
 		require.Equal(t, "$LOCAL_MODEL_KEY", models.Providers["ollama"].APIKey)
 		require.NotEmpty(t, models.Providers["ollama"].Models)
 	}
-	saved, err := manifest.Decode([]byte(readFile(t, app.ConfigPath())), manifest.Project, map[string]any{})
+	var saved map[string]any
+	err = yaml.Unmarshal([]byte(readFile(t, app.ConfigPath())), &saved)
 	require.NoError(t, err)
 	for _, key := range []string{"thinking", "ollama_url", "pi_range", "ralph_version"} {
-		require.NotContains(t, saved.Spec, key)
+		require.NotContains(t, saved, key)
 	}
 }
 func TestConfigAgentsPreservesUserWork(t *testing.T) {

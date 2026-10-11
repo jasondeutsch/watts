@@ -5,15 +5,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/render"
+	"github.com/jasondeutsch/watts/internal/workflowpackage"
 	"gopkg.in/yaml.v3"
 )
 
@@ -29,15 +29,19 @@ func (files *valuesFiles) Set(name string) error {
 }
 
 func Template(a *terminal.Context, args []string) error {
+	if len(args) > 0 && args[0] == "new" {
+		return New(a, args[1:])
+	}
 	flags := arguments.NewFlags(a.ErrorOutput, "template")
 	var overrides valuesFiles
 	var output string
 	flags.Var(&overrides, "f", "values YAML file; repeat for additional overrides (later files win)")
 	flags.Var(&overrides, "values", "values YAML file; repeat for additional overrides (later files win)")
-	flags.StringVar(&output, "o", "", "output directory; existing files are never overwritten (default: stdout)")
-	flags.StringVar(&output, "output", "", "output directory; existing files are never overwritten (default: stdout)")
+	flags.StringVar(&output, "o", "", "generated output directory; replaced on each render (default: stdout)")
+	flags.StringVar(&output, "output", "", "generated output directory; replaced on each render (default: stdout)")
 	flags.Usage = func() {
-		fmt.Fprintln(a.ErrorOutput, "Usage: watts template <package-dir> [-f <values.yaml>]... [-o <output-dir>]")
+		fmt.Fprintln(a.ErrorOutput, "Usage: watts template <package> [-f <values.yaml>]... [-o <output-dir>]")
+		fmt.Fprintln(a.ErrorOutput, "       watts template new <name>")
 		flags.PrintDefaults()
 	}
 	positional, err := arguments.Parse(flags, args)
@@ -48,11 +52,6 @@ func Template(a *terminal.Context, args []string) error {
 	if err != nil {
 		return arguments.UsageError(err)
 	}
-	packageRoot, err := os.OpenRoot(directory)
-	if err != nil {
-		return fmt.Errorf("open package %s: %w", directory, err)
-	}
-	defer packageRoot.Close()
 	var sources []render.ValuesSource
 	for _, name := range overrides {
 		data, err := os.ReadFile(name)
@@ -61,7 +60,7 @@ func Template(a *terminal.Context, args []string) error {
 		}
 		sources = append(sources, render.ValuesSource{Name: name, Data: data})
 	}
-	result, err := render.Render(packageRoot.FS(), sources...)
+	result, inputs, err := renderInput(directory, sources)
 	if err != nil {
 		return err
 	}
@@ -69,9 +68,80 @@ func Template(a *terminal.Context, args []string) error {
 		return err
 	}
 	if output != "" {
+		source := directory
+		if len(inputs) > 0 {
+			source = inputs[0]
+		}
+		if err := validateOutputLocation(source, output, append(overrides, inputs...)); err != nil {
+			return err
+		}
 		return writeFiles(output, result.Files)
 	}
 	return printFiles(a.Output, result.Files)
+}
+
+// New scaffolds authoring files; rendering remains a separate operation.
+func New(a *terminal.Context, args []string) error {
+	flags := arguments.NewFlags(a.ErrorOutput, "template new")
+	flags.Usage = func() {
+		fmt.Fprintln(a.ErrorOutput, "Usage: watts template new <name>")
+	}
+	positional, err := arguments.Parse(flags, args)
+	if err != nil {
+		return arguments.UsageError(err)
+	}
+	directory, err := arguments.One(positional, "package name")
+	if err != nil {
+		return arguments.UsageError(err)
+	}
+	if err := workflowpackage.Scaffold(directory); err != nil {
+		return err
+	}
+	fmt.Fprintf(a.Output, "Created %s with watts.yaml, values.yaml, and templates for Workflow, Agent, Procedure, ConfigMap, and Secret.\n", directory)
+	return nil
+}
+
+// A file explicitly selects a descriptor; a directory uses its conventional
+// descriptor when present. Generic template directories remain valid inputs.
+func renderInput(input string, overrides []render.ValuesSource) (render.Result, []string, error) {
+	info, err := os.Stat(input)
+	if err != nil {
+		return render.Result{}, nil, err
+	}
+	descriptor := !info.IsDir()
+	if info.IsDir() {
+		_, err := os.Stat(filepath.Join(input, workflowpackage.Filename))
+		descriptor = err == nil
+	}
+	if descriptor {
+		pkg, err := workflowpackage.Load(input)
+		if err != nil {
+			return render.Result{}, nil, err
+		}
+		result, err := pkg.Render(overrides...)
+		if err != nil {
+			return render.Result{}, nil, err
+		}
+		var inputs []string
+		for _, layer := range pkg.Layers {
+			inputs = append(inputs, layer.Source)
+			root := filepath.Dir(layer.Source)
+			for _, name := range append(append([]string{}, layer.Descriptor.Values...), layer.Descriptor.Assets...) {
+				inputs = append(inputs, filepath.Join(root, name))
+			}
+			if layer.Descriptor.Templates != "" {
+				inputs = append(inputs, filepath.Join(root, layer.Descriptor.Templates))
+			}
+		}
+		return render.Result{Files: []render.File{{Name: "workflow.yaml", Data: result.Data}}, Values: result.Values}, inputs, nil
+	}
+	root, err := os.OpenRoot(input)
+	if err != nil {
+		return render.Result{}, nil, err
+	}
+	defer root.Close()
+	result, err := render.Render(root.FS(), overrides...)
+	return result, nil, err
 }
 
 func printFiles(output io.Writer, files []render.File) error {
@@ -92,51 +162,6 @@ func printFiles(output io.Writer, files []render.File) error {
 		}
 	}
 	return encoder.Close()
-}
-
-// Reserve every output before writing so conflicts cannot truncate existing
-// files or leave a subset of the rendered files behind. Root confines paths;
-// O_EXCL also protects against a file appearing after the preflight checks.
-func writeFiles(directory string, files []render.File) (err error) {
-	if err := os.MkdirAll(directory, 0755); err != nil {
-		return fmt.Errorf("output %s: %w", directory, err)
-	}
-	root, err := os.OpenRoot(directory)
-	if err != nil {
-		return fmt.Errorf("output %s: %w", directory, err)
-	}
-	defer root.Close()
-	var reserved []*os.File
-	defer func() {
-		for index, file := range reserved {
-			_ = file.Close()
-			if err != nil {
-				_ = root.Remove(files[index].Name)
-			}
-		}
-	}()
-	for _, file := range files {
-		if !fs.ValidPath(file.Name) || file.Name == "." {
-			return fmt.Errorf("invalid output path %q", file.Name)
-		}
-		if err := root.MkdirAll(path.Dir(file.Name), 0755); err != nil {
-			return fmt.Errorf("output %s: %w", file.Name, err)
-		}
-		handle, err := root.OpenFile(file.Name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
-		if err != nil {
-			return fmt.Errorf("output %s (existing files are never overwritten): %w", file.Name, err)
-		}
-		reserved = append(reserved, handle)
-	}
-	for index, file := range files {
-		if _, err := reserved[index].Write(file.Data); err != nil {
-			return fmt.Errorf("write %s: %w", file.Name, err)
-		}
-		if err := reserved[index].Close(); err != nil {
-			return fmt.Errorf("close %s: %w", file.Name, err)
-		}
-	}
-	return nil
 }
 
 // Generic YAML remains supported. When a package declares resource kinds,

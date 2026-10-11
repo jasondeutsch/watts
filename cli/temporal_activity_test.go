@@ -10,6 +10,7 @@ import (
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestTemporalConfigAndCommandsWithoutAApp(t *testing.T) {
@@ -39,7 +40,7 @@ func TestTemporalConfigAndCommandsWithoutAApp(t *testing.T) {
 	}
 
 	var decoded projectconfig.Config
-	data, _ := os.ReadFile(ta.ConfigPath())
+	data, _ := os.ReadFile(ta.ServiceSettingsPath())
 	{
 		err = decodeProjectConfig(data, &decoded)
 		require.False(t, err != nil || decoded.Temporal == nil,
@@ -73,7 +74,5 @@ func TestStatusWithoutTaskUsesOnlyTaskAndListsAmbiguousChoices(t *testing.T) {
 }
 
 func decodeProjectConfig(data []byte, cfg *projectconfig.Config) error {
-	doc, err := manifest.Decode(data, manifest.Project, projectconfig.Config{})
-	*cfg = doc.Spec
-	return err
+	return yaml.Unmarshal(data, cfg)
 }

@@ -18,6 +18,7 @@ func TestProjectDefaultWorkflowScaffoldsTask(t *testing.T) {
 	require.NoError(t, manifest.Write(filepath.Join(project.Root, "research.yaml"), manifest.Workflow, "test-workflow", definition))
 	cfg, err := project.LoadConfig()
 	require.NoError(t, err)
+	cfg.Workflow = nil
 	cfg.DefaultWorkflow = "research.yaml"
 	require.NoError(t, project.SaveConfig(cfg))
 	code, _, errors := runCLI(t, project.Root, "task", "new", "question")

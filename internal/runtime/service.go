@@ -59,7 +59,7 @@ func Start(ctx context.Context, app *application.Service, detached bool) error {
 	defer listener.Close()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	cfg, err := app.LoadConfig()
+	cfg, err := app.LoadServiceConfig()
 	if err != nil {
 		return err
 	}

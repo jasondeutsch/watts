@@ -75,6 +75,19 @@ func (c Config) WithWorkflowAgents(definition orchestration.Definition) Config {
 	for name, agent := range c.Agents {
 		agents[name] = agent
 	}
+	mcps := map[string]MCPServer{}
+	for name, server := range c.MCPs {
+		mcps[name] = server
+	}
+	capabilities := map[string]Capability{}
+	for name, capability := range c.Capabilities {
+		capabilities[name] = capability
+	}
+	for _, step := range definition.Steps {
+		if len(step.CapabilityCommand) > 0 {
+			capabilities[step.Capability] = Capability{Command: step.CapabilityCommand}
+		}
+	}
 	providers := map[string]Provider{}
 	for name, provider := range c.Providers {
 		providers[name] = provider
@@ -83,8 +96,14 @@ func (c Config) WithWorkflowAgents(definition orchestration.Definition) Config {
 		if step.Agent == "" {
 			continue
 		}
+		if _, exists := agents[step.Agent]; !exists && !Contains(BuiltinAgents, step.Agent) && step.AgentSettings == nil {
+			continue
+		}
 		agent := agents[step.Agent]
 		if settings := step.AgentSettings; settings != nil {
+			for name, server := range settings.MCPServers {
+				mcps[name] = server
+			}
 			if settings.Thinking != "" {
 				agent.Thinking = settings.Thinking
 			}
@@ -117,6 +136,8 @@ func (c Config) WithWorkflowAgents(definition orchestration.Definition) Config {
 	}
 	c.Agents = agents
 	c.Providers = providers
+	c.MCPs = mcps
+	c.Capabilities = capabilities
 	return c
 }
 
@@ -129,4 +150,52 @@ func (c Config) AgentWorkflow() orchestration.Definition {
 		return *c.Workflow
 	}
 	return DefaultWorkflow()
+}
+
+// WithResolvedWorkSettings captures local runtime defaults on work resources
+// when application callers explicitly author a workflow definition.
+func (c Config) WithResolvedWorkSettings(definition orchestration.Definition) orchestration.Definition {
+	definition.Steps = append([]orchestration.Step(nil), definition.Steps...)
+	for index := range definition.Steps {
+		step := &definition.Steps[index]
+		if step.Capability != "" {
+			step.CapabilityCommand = append([]string(nil), c.Capabilities[step.Capability].Command...)
+		}
+		if step.Agent == "" {
+			continue
+		}
+		settings := orchestration.AgentSettings{Sandbox: "local"}
+		if step.AgentSettings != nil {
+			settings = *step.AgentSettings
+		}
+		agent, _ := c.Agent(step.Agent)
+		settings.Thinking = agent.Thinking
+		settings.SkillsDirs = agent.SkillsDirs
+		provider := c.Providers[step.Provider]
+		settings.BaseURL = provider.BaseURL
+		settings.API = provider.API
+		if provider.APIKeyEnv != "" && settings.APIKeyEnv == "" {
+			settings.APIKeyEnv = provider.APIKeyEnv
+			bindings := map[string]string{}
+			for target, source := range step.SecretEnvironment {
+				bindings[target] = source
+			}
+			bindings[provider.APIKeyEnv] = provider.APIKeyEnv
+			step.SecretEnvironment = bindings
+		}
+		servers := map[string]orchestration.MCPServer{}
+		for name, server := range settings.MCPServers {
+			servers[name] = server
+		}
+		for _, name := range step.MCPs {
+			if server, ok := c.MCPs[name]; ok {
+				servers[name] = server
+			}
+		}
+		if len(servers) > 0 {
+			settings.MCPServers = servers
+		}
+		step.AgentSettings = &settings
+	}
+	return definition
 }

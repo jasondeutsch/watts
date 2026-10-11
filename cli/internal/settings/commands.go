@@ -77,7 +77,7 @@ func Set(a *terminal.Context, args []string) error {
 	if err := a.SaveConfig(cfg); err != nil {
 		return err
 	}
-	a.Say("saved %s. Run: watts config apply   to apply it to the agent directories", a.Rel(a.ConfigPath()))
+	a.Say("saved %s. Run: watts config apply   to apply it to the agent directories", a.Rel(a.ServiceSettingsPath()))
 	return nil
 }
 

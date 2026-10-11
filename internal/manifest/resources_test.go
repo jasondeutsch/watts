@@ -82,7 +82,7 @@ func TestAllKindsCompileAndRoundTrip(t *testing.T) {
 
 func TestResourceValidation(t *testing.T) {
 	for _, test := range []struct{ name, source, message string }{
-		{"unknown kind", strings.Replace(resourceBundle, "kind: Procedure", "kind: Model", 1), "unsupported resource kind"},
+		{"unknown kind", strings.Replace(resourceBundle, "---\nkind: Procedure", "---\nkind: Model", 1), "unsupported resource kind"},
 		{"unknown field", strings.Replace(resourceBundle, "identity: team-builder", "identity: team-builder\n  identty: typo", 1), "identty"},
 		{"missing ref", strings.Replace(resourceBundle, "name: builder}", "name: unknown}", 1), "references unknown"},
 		{"wrong ref kind", strings.Replace(resourceBundle, "kind: Agent, name: builder", "kind: Procedure, name: builder", 1), "references unknown"},

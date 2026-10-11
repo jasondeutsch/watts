@@ -10,6 +10,12 @@ func setWorkflowModels(cfg *projectconfig.Config, provider, build, review string
 			continue
 		}
 		if provider != "" {
+			if step.Provider != provider && step.AgentSettings != nil {
+				settings := *step.AgentSettings
+				settings.BaseURL, settings.API, settings.APIKeyEnv = "", "", ""
+				step.AgentSettings = &settings
+				step.SecretEnvironment = nil
+			}
 			step.Provider = provider
 		}
 		if step.Agent == "review" {

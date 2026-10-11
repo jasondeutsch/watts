@@ -12,6 +12,7 @@ import (
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/workflowpackage"
 	"github.com/jasondeutsch/watts/internal/workspace"
 	workflowtemplates "github.com/jasondeutsch/watts/workflow-templates"
 )
@@ -20,8 +21,9 @@ const builtinWorkflow = "sdlc"
 
 // WorkflowSelection identifies a reusable project template and its definition.
 type WorkflowSelection struct {
-	Name       string                   `json:"name"`
-	Definition orchestration.Definition `json:"definition"`
+	Name       string                    `json:"name"`
+	Definition orchestration.Definition  `json:"definition"`
+	Package    *workflowpackage.Metadata `json:"package,omitempty"`
 }
 
 func decodeWorkflow(data []byte, value *orchestration.Definition) error {
@@ -36,6 +38,9 @@ func decodeWorkflow(data []byte, value *orchestration.Definition) error {
 // ResolveWorkflow selects a bundled base template or a project-supplied YAML file.
 func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (WorkflowSelection, error) {
 	if name == "" && cfg.Workflow != nil {
+		if app.resolvedPackage != nil && definitionHash(*cfg.Workflow) == app.packageDefinitionHash {
+			return *app.resolvedPackage, nil
+		}
 		if err := cfg.ValidateWorkflow(*cfg.Workflow); err != nil {
 			return WorkflowSelection{}, err
 		}
@@ -45,7 +50,7 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 		name = cfg.DefaultWorkflow
 	}
 	if name == "" {
-		name = builtinWorkflow
+		return app.ResolvePackage(cfg)
 	}
 	var contents []byte
 	var err error
@@ -129,6 +134,9 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	taskDefinition := selected.Definition
 	taskDefinition.Templates = nil // Scaffolding has already created these artifacts.
 	if err := manifest.Write(app.TaskWorkflowPath(taskPath), manifest.Workflow, filepath.Base(taskPath), taskDefinition); err != nil {
+		return "", err
+	}
+	if err := app.WritePackageMetadata(taskPath, selected.Package); err != nil {
 		return "", err
 	}
 	app.say("Created %s. Customize workflow.yaml, then run: watts task run %s", taskPath, taskPath)

@@ -8,7 +8,7 @@ Bundled definitions are in [workflow-templates/](../workflow-templates/): `sdlc`
 
 ```yaml
 spec:
-  default_workflow: workflows/team-v1
+  default_workflow: workflows/team
 ```
 
 `watts task new <slug>` resolves that source, creates its declared artifacts, and writes a self-contained task `workflow.yaml`. Edit that file before first submission. Project-default changes affect future tasks; first submission pins the resolved task definition and runtime configuration. Retry uses the pinned settings. See the [runbook](runbook.md) for execution, approval, and recovery commands.
