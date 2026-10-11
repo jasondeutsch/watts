@@ -68,7 +68,7 @@ func newProject(t *testing.T) *testApp {
 	return ta
 }
 
-// initRepo runs `watts init --no-install` in the test repository.
+// initRepo runs `wctl init --no-install` in the test repository.
 func (ta *testApp) initRepo(t *testing.T, args ...string) {
 	t.Helper()
 	// Most tests use the classic tasks folder. Tests of the default pass their own flags, which come

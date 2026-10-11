@@ -44,8 +44,8 @@ agents:
 Render for inspection, then create a task:
 
 ```sh
-watts template ./watts.yaml
-watts task new hello-world
+wctl template ./watts.yaml
+wctl task new hello-world
 ```
 
 Base values merge with team overrides; later scalars and lists replace earlier ones, while maps merge recursively. Changing workflow steps therefore replaces the step list. Use an empty mapping in a standalone package to omit a resource Kind; an empty override mapping does not delete inherited resources. Adding or replacing inherited resources through additional templates follows the explicit replacement rules in the [template reference](../../../docs/templates.md).

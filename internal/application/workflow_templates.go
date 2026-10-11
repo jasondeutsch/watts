@@ -139,6 +139,6 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	if err := app.WritePackageMetadata(taskPath, selected.Package); err != nil {
 		return "", err
 	}
-	app.say("Created %s. Customize workflow.yaml, then run: watts task run %s", taskPath, taskPath)
+	app.say("Created %s. Customize workflow.yaml, then run: wctl task run %s", taskPath, taskPath)
 	return taskPath, nil
 }

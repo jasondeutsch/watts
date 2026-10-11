@@ -43,5 +43,5 @@ echo
 echo "Next:"
 echo "  1. describe the task in $dir/SPEC.md"
 echo "  2. customize $dir/workflow.yaml if needed"
-echo "  3. watts task run $dir"
-echo "  4. review drafts with watts task decide $dir <stage> [--reject --feedback 'changes needed']"
+echo "  3. wctl task run $dir"
+echo "  4. review drafts with wctl task decide $dir <stage> [--reject --feedback 'changes needed']"

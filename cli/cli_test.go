@@ -56,7 +56,7 @@ func TestHelpAndDispatch(t *testing.T) {
 
 			for _, c := range n.children {
 				assert.Contains(t, gout, "  "+c.name+" ",
-					"`watts %s` does not list %q", n.name, c.name)
+					"`wctl %s` does not list %q", n.name, c.name)
 			}
 		}
 	}
@@ -79,7 +79,7 @@ func TestHelpAndDispatch(t *testing.T) {
 	for _, v := range []string{"version", "--version"} {
 		{
 			code, out, _ := runCLI(t, dir, v)
-			assert.False(t, code != 0 || !strings.Contains(out, "watts "+version),
+			assert.False(t, code != 0 || !strings.Contains(out, "wctl "+version),
 				"%s: exit %d, %q", v, code, out)
 		}
 	}
@@ -88,13 +88,13 @@ func TestHelpAndDispatch(t *testing.T) {
 		fresh := t.TempDir()
 		{
 			code, _, errs := runCLI(t, fresh, c...)
-			assert.False(t, code != 1 || !strings.Contains(errs+"watts init", "watts init"),
+			assert.False(t, code != 1 || !strings.Contains(errs+"wctl init", "wctl init"),
 				"%v outside a project: exit %d, %q", c, code, errs)
 		}
 	}
 	{
 		code, _, errs := runCLI(t, t.TempDir(), "config", "show")
-		assert.False(t, code != 1 || !strings.Contains(errs, "watts init"),
+		assert.False(t, code != 1 || !strings.Contains(errs, "wctl init"),
 			"config show outside a project: exit %d, %q", code, errs)
 	}
 }
@@ -102,7 +102,7 @@ func TestInitConfigSetClean(t *testing.T) {
 	ta := newProject(t)
 	{
 		code, _, errs := runCLI(t, ta.Root, "config", "show")
-		require.False(t, code != 1 || !strings.Contains(errs, "watts init"),
+		require.False(t, code != 1 || !strings.Contains(errs, "wctl init"),
 			"config before init: exit %d, %q", code, errs)
 	}
 	{

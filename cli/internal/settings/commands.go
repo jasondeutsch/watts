@@ -65,7 +65,7 @@ func Show(a *terminal.Context, args []string) error {
 
 func Set(a *terminal.Context, args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("usage: watts config set <key> <value>   keys: %s", strings.Join(projectconfig.ConfigKeys, ", "))
+		return fmt.Errorf("usage: wctl config set <key> <value>   keys: %s", strings.Join(projectconfig.ConfigKeys, ", "))
 	}
 	cfg, err := a.LoadConfig()
 	if err != nil {
@@ -77,7 +77,7 @@ func Set(a *terminal.Context, args []string) error {
 	if err := a.SaveConfig(cfg); err != nil {
 		return err
 	}
-	a.Say("saved %s. Run: watts config apply   to apply it to the agent directories", a.Rel(a.ServiceSettingsPath()))
+	a.Say("saved %s. Run: wctl config apply   to apply it to the agent directories", a.Rel(a.ServiceSettingsPath()))
 	return nil
 }
 
@@ -114,7 +114,7 @@ func Env(a *terminal.Context, args []string) error {
 		return nil
 	}
 	if len(args) < 2 || (args[0] != "add" && args[0] != "remove") {
-		return errors.New("usage: watts config env [add|remove] NAME...")
+		return errors.New("usage: wctl config env [add|remove] NAME...")
 	}
 	names := append([]string(nil), cfg.EnvPassthrough...)
 	for _, v := range args[1:] {

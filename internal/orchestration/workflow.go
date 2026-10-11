@@ -195,7 +195,7 @@ func (execution *workflowExecution) executeStage(ctx workflow.Context, step Step
 			stage.Artifacts = result.Artifacts
 			stage.Status = "waiting_approval"
 			execution.state.Status = "waiting_approval"
-			workflow.GetLogger(ctx).Info("Waiting for approval", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", "Review the input artifacts, then watts task decide "+quotedTask(execution.input.Task)+" "+step.Name)
+			workflow.GetLogger(ctx).Info("Waiting for approval", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "next_action", "Review the input artifacts, then wctl task decide "+quotedTask(execution.input.Task)+" "+step.Name)
 			execution.decision = nil
 			stageErr = workflow.Await(ctx, func() bool { return execution.decision != nil })
 			if stageErr == nil {
@@ -232,4 +232,4 @@ func quotedTask(task string) string {
 	return "'" + strings.ReplaceAll(task, "'", "'\"'\"'") + "'"
 }
 
-func retryCommand(task string) string { return "watts task run " + quotedTask(task) }
+func retryCommand(task string) string { return "wctl task run " + quotedTask(task) }

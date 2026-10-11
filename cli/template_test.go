@@ -150,7 +150,7 @@ func TestTemplateRejectsPackageEscapeAndOutputSymlink(t *testing.T) {
 func TestTemplateHelp(t *testing.T) {
 	code, _, diagnostic := runCLI(t, t.TempDir(), "template", "-h")
 	require.Equal(t, 0, code)
-	require.Contains(t, diagnostic, "watts template <package>")
+	require.Contains(t, diagnostic, "wctl template <package>")
 	require.Contains(t, diagnostic, "-values")
 	require.Contains(t, diagnostic, "-output")
 }

@@ -15,8 +15,8 @@ func TestLoadConfigErrors(t *testing.T) {
 	ta := newProject(t)
 	{
 		_, err := ta.LoadConfig()
-		require.False(t, err == nil || !strings.Contains(err.Error(), "watts init"),
-			"missing config should point at watts init, got %v", err)
+		require.False(t, err == nil || !strings.Contains(err.Error(), "wctl init"),
+			"missing config should point at wctl init, got %v", err)
 	}
 
 	for _, field := range []string{"provder", "thinking", "temporal", "tasks_dir"} {

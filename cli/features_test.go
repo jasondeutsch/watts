@@ -310,7 +310,7 @@ func TestApprovalNeedsNothingStored(t *testing.T) {
 	writeFile(t, filepath.Join(ta.Root, task, "PLAN.md"), approvedPlan)
 	{
 		code, out, errs := runTaskScript(t, ta.Root, "preflight.sh", task)
-		require.False(t, code == 0 || !strings.Contains(out+errs, "watts task decide"),
+		require.False(t, code == 0 || !strings.Contains(out+errs, "wctl task decide"),
 			"before approval the check must say how to approve: %d\n%s%s", code, out, errs)
 	}
 	{

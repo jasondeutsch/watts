@@ -11,7 +11,7 @@ spec:
   default_workflow: workflows/team
 ```
 
-`watts task new <slug>` resolves that source, creates its declared artifacts, and writes a self-contained task `workflow.yaml`. Edit that file before first submission. Project-default changes affect future tasks; first submission pins the resolved task definition and runtime configuration. Retry uses the pinned settings. See the [runbook](runbook.md) for execution, approval, and recovery commands.
+`wctl task new <slug>` resolves that source, creates its declared artifacts, and writes a self-contained task `workflow.yaml`. Edit that file before first submission. Project-default changes affect future tasks; first submission pins the resolved task definition and runtime configuration. Retry uses the pinned settings. See the [runbook](runbook.md) for execution, approval, and recovery commands.
 
 The default SDLC runs specification, human spec review, planning, human plan review, build, and agent review. The human starts with rough intent in `SPEC.md`; the specification Agent refines it. `SPEC.md` describes what and why; `PLAN.md` describes implementation and verification. Custom workflows define their own artifacts and gates.
 

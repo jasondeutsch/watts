@@ -18,6 +18,8 @@ The goal is an auditable, portable process that teams can maintain over time: ch
 
 ## Current implementation
 
+The Watts CLI is named `wctl`. Package names, manifests such as `watts.yaml`, and `.watts` state directories retain the Watts name.
+
 Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. YAML resources compose Workflow, Procedure, Agent, ConfigMap, and Secret definitions; see [Kinds and usage](docs/kinds.md). Temporal manages durable workflow state; project workers execute stages using Pi and Ralph today.
 
 This is an MVP and proof of concept at **0.1.0**. Pinned definitions, attempt evidence, and an [eval scaffold](evals/go-workflow/README.md) exist, but complete token/cost accounting, reliable recovery, and portable isolated execution remain work in progress. See [known issues](issues.md), the [stage communication proposal](docs/stage-communication.md), and the [package/runtime layout proposal](docs/package-runtime-layout.md). Watts does not require Git.
@@ -33,32 +35,32 @@ make build
 docker compose up -d --wait
 ```
 
-The build produces `bin/watts`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](docs/temporal.md).
+The build produces `bin/wctl`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](docs/temporal.md).
 
 From the project directory where you want application work performed:
 
 ```sh
-watts init
-watts install
-watts doctor
-watts start -d
+wctl init
+wctl install
+wctl doctor
+wctl start -d
 ```
 
 The bundled workflows currently select `deepseek/deepseek-v4-flash` through OpenRouter. Export `OPENROUTER_API_KEY` in the shell **before starting Watts**. Configure another provider or model through [project configuration](docs/runbook.md#configure-the-project) and [workflow templates](docs/workflows.md).
 
-`watts start` starts the project's worker and web UI, opens your default browser, and stays in the foreground. Use `-d` to detach and `watts stop` to stop both. Detached logs are in `.watts/service.log`. Temporal is managed separately.
+`wctl start` starts the project's worker and web UI, opens your default browser, and stays in the foreground. Use `-d` to detach and `wctl stop` to stop both. Detached logs are in `.watts/service.log`. Temporal is managed separately.
 
 ## Complete a task
 
 ```sh
-watts task new hello-server
+wctl task new hello-server
 ```
 
 Use the task path printed by the command. Write the request or rough notes in its `SPEC.md`, and customize its `workflow.yaml` before submission.
 
 ```sh
-watts task run <task>
-watts task status <task>
+wctl task run <task>
+wctl task status <task>
 ```
 
 The default workflow is:
@@ -68,14 +70,14 @@ The default workflow is:
 When the workflow pauses for human review, inspect the document and approve it:
 
 ```sh
-watts task decide <task> spec-review
+wctl task decide <task> spec-review
 # Later, when planning is ready:
-watts task decide <task> plan-review
+wctl task decide <task> plan-review
 ```
 
 To request changes, add `--reject --feedback "Changes needed"`. Agent review can return work to build.
 
-Task submission returns before execution finishes. Follow progress in the web UI or with `task status`. If a stage fails, inspect its error and output, then use `watts task run <task>` or the UI's retry button. Submitted workflow definitions and runtime configuration are pinned; retry does not load subsequent edits.
+Task submission returns before execution finishes. Follow progress in the web UI or with `task status`. If a stage fails, inspect its error and output, then use `wctl task run <task>` or the UI's retry button. Submitted workflow definitions and runtime configuration are pinned; retry does not load subsequent edits.
 
 See the [task runbook](docs/runbook.md) for the full procedure, approval rules, cancellation, and recovery.
 

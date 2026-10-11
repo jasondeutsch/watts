@@ -34,7 +34,7 @@ func (n *node) child(name string) *node {
 	return nil
 }
 
-// tree is the command structure shown by `watts help`.
+// tree is the command structure shown by `wctl help`.
 var tree = []*node{
 	{name: "template", summary: "Render a YAML template package (-f values file, -o output directory)", run: templates.Template},
 	{name: "init", summary: "Set up Watts in this repository (run once): kit, watts.yaml, agent directories, extension", needsRepo: true, run: setup.Init},
@@ -46,22 +46,22 @@ var tree = []*node{
 	}},
 	{name: "config", summary: "Show and change watts.yaml", needsRepo: true, children: []*node{
 		{name: "show", summary: "Print the config (--resolved fills in every agent's defaults)", needsRepo: true, run: settings.Show},
-		{name: "set", summary: "Change a setting: watts config set <key> <value>", needsRepo: true, run: settings.Set},
+		{name: "set", summary: "Change a setting: wctl config set <key> <value>", needsRepo: true, run: settings.Set},
 		{name: "apply", summary: "Create or refresh the agent directories from the config (--force regenerates models.json)", needsRepo: true, run: settings.Apply},
-		{name: "env", summary: "List, add or remove the environment variables passed into agents: watts config env add NAME", needsRepo: true, run: settings.Env},
+		{name: "env", summary: "List, add or remove the environment variables passed into agents: wctl config env add NAME", needsRepo: true, run: settings.Env},
 	}},
 	{name: "agent", summary: "Work with the agents (build, review and your own)", needsRepo: true, children: []*node{
 		{name: "pi", summary: "Open Pi interactively as one agent, in its isolated environment (--agent build|review|name)", needsRepo: true, run: agents.Pi},
 		{name: "list", summary: "List the agents with their model, identity and directory", needsRepo: true, run: agents.List},
 		{name: "env", summary: "Show the environment variable names an agent receives (never values)", needsRepo: true, run: agents.Env},
-		{name: "new", summary: "Create a custom agent from the documented example: watts agent new <name>", needsRepo: true, run: agents.New},
+		{name: "new", summary: "Create a custom agent from the documented example: wctl agent new <name>", needsRepo: true, run: agents.New},
 		{name: "follow", summary: "Print a readable live feed of an agent's session", needsRepo: true, run: agents.Follow},
 		{name: "clean", summary: "Delete the private agent directories (logins, packages, sessions). Needs --force", needsRepo: true, run: agents.Clean},
 	}},
 	{name: "start", summary: "Start worker and web UI; -d runs detached", needsRepo: true, run: setup.Start},
 	{name: "stop", summary: "Stop this project's worker and web UI", needsRepo: true, run: setup.Stop},
 	{name: "task", summary: "Create and run tasks", needsRepo: true, children: []*node{
-		{name: "new", summary: "Create a task: watts task new <slug>", needsRepo: true, run: tasks.New},
+		{name: "new", summary: "Create a task: wctl task new <slug>", needsRepo: true, run: tasks.New},
 		{name: "decide", summary: "Approve or reject a pending Temporal human stage: task decide [task] [stage] [--reject] [--feedback text]", needsRepo: true, run: tasks.Decide},
 		{name: "run", summary: "Start or continue a task; retry its failed stage", needsRepo: true, run: tasks.Run},
 		{name: "status", summary: "Temporal workflow progress and attempt history (--json)", needsRepo: true, run: tasks.Status},
@@ -104,9 +104,9 @@ func resolve(args []string) resolved {
 	}
 	n, ok := findTop(args[0])
 	if !ok {
-		return resolved{code: 2, errText: fmt.Sprintf("watts: unknown command %q. Run `watts help` for the list.\n", args[0])}
+		return resolved{code: 2, errText: fmt.Sprintf("wctl: unknown command %q. Run `wctl help` for the list.\n", args[0])}
 	}
-	path, rest := "watts "+n.name, args[1:]
+	path, rest := "wctl "+n.name, args[1:]
 	for len(n.children) > 0 {
 		if len(rest) == 0 {
 			if n.runOnEmpty {
@@ -125,7 +125,7 @@ func resolve(args []string) resolved {
 		if strings.HasPrefix(first, "-") && n.runOnEmpty && n.run != nil {
 			return resolved{run: n.run, args: rest, needsRepo: n.needsRepo}
 		}
-		return resolved{code: 2, errText: fmt.Sprintf("watts: %s has no subcommand %q. Run `%s` for the list.\n", path, first, path)}
+		return resolved{code: 2, errText: fmt.Sprintf("wctl: %s has no subcommand %q. Run `%s` for the list.\n", path, first, path)}
 	}
 	return resolved{run: n.run, args: rest, needsRepo: n.needsRepo}
 }
@@ -142,9 +142,9 @@ func groupUsage(path string, n *node) string {
 
 func usage() string {
 	var b strings.Builder
-	b.WriteString("watts " + version + ": governed AI coding on Pi 1.0 with pi-ralph-loop\n\n")
-	b.WriteString("Usage: watts <command> [subcommand] [flags] [arguments]\n\n")
-	b.WriteString("Run `watts init` once in a project folder. Task arguments are folders such as tasks/2026-10-03-http-retry,\nor just the folder name.\n")
+	b.WriteString("wctl " + version + ": governed AI coding on Pi 1.0 with pi-ralph-loop\n\n")
+	b.WriteString("Usage: wctl <command> [subcommand] [flags] [arguments]\n\n")
+	b.WriteString("Run `wctl init` once in a project folder. Task arguments are folders such as tasks/2026-10-03-http-retry,\nor just the folder name.\n")
 	sections := []struct {
 		title string
 		names []string
@@ -168,6 +168,6 @@ func usage() string {
 			}
 		}
 	}
-	b.WriteString("\nRun `watts <command> -h` for a command's flags, or `watts <group>` for its subcommands.\n")
+	b.WriteString("\nRun `wctl <command> -h` for a command's flags, or `wctl <group>` for its subcommands.\n")
 	return b.String()
 }

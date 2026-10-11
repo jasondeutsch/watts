@@ -3,11 +3,11 @@
 Run from your project directory:
 
 ```sh
-watts start
+wctl start
 # Or run in the background:
-watts start -d
+wctl start -d
 # Stop the worker and UI:
-watts stop
+wctl stop
 ```
 
 Startup opens your default browser automatically. The UI binds to an available loopback port and prints its URL. Detached service logs are in `.watts/service.log`.

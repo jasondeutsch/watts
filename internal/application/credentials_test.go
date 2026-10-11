@@ -121,7 +121,7 @@ func TestCredentialCheck(t *testing.T) {
 		"both causes must be named: %+v", fs)
 	{
 		err := ta.RequireCredentials(cfg, "build", nil)
-		assert.False(t, err == nil || !strings.Contains(ta.Output.String(), "watts config env add EXAMPLE_GATEWAY_API_KEY"),
+		assert.False(t, err == nil || !strings.Contains(ta.Output.String(), "wctl config env add EXAMPLE_GATEWAY_API_KEY"),
 			"a run must be refused with the fix named: %v\n%s", err, ta.Output)
 	}
 

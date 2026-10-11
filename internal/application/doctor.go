@@ -14,7 +14,7 @@ import (
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 )
 
-// Check is one line of `watts doctor`. Level is ok, warn or fail.
+// Check is one line of `wctl doctor`. Level is ok, warn or fail.
 type Check struct {
 	Level  string `json:"level"`
 	Name   string `json:"name"`
@@ -58,27 +58,27 @@ func (a *Service) DoctorChecks(cfg projectconfig.Config, haveConfig, live bool) 
 	pv := PiVersion()
 	switch {
 	case pv == "":
-		bad("pi not found", "", "watts install pi")
+		bad("pi not found", "", "wctl install pi")
 	case VersionAtLeast(pv, PiMin):
 		ok("pi "+pv, "needs "+PiMin+" or later")
 	default:
-		bad("pi "+pv+" is too old", "needs "+PiMin+" or later", "watts install pi")
+		bad("pi "+pv+" is too old", "needs "+PiMin+" or later", "wctl install pi")
 	}
 
 	if _, err := os.Stat(filepath.Join(a.KitDir(), "scripts", "lib.sh")); err != nil {
-		bad("the kit is not installed in "+a.Rel(a.KitDir()), "", "watts init")
+		bad("the kit is not installed in "+a.Rel(a.KitDir()), "", "wctl init")
 	} else {
 		ok("project assets installed in "+a.Rel(a.KitDir()), "")
 	}
 	if !haveConfig {
-		bad(projectconfig.Filename+" is missing or invalid", "", "watts init")
+		bad(projectconfig.Filename+" is missing or invalid", "", "wctl init")
 		return out
 	}
 	ok(projectconfig.Filename+" is valid", "")
 	if st, err := os.Stat(a.TasksPath(cfg)); err == nil && st.IsDir() {
 		ok("tasks directory "+cfg.TasksDir+" exists", "")
 	} else {
-		warn("tasks directory "+cfg.TasksDir+" does not exist yet", "it is created by the first task", "watts task new <slug>")
+		warn("tasks directory "+cfg.TasksDir+" does not exist yet", "it is created by the first task", "wctl task new <slug>")
 	}
 
 	usesOllama := false
@@ -86,13 +86,13 @@ func (a *Service) DoctorChecks(cfg projectconfig.Config, haveConfig, live bool) 
 		agent, _ := cfg.Agent(name)
 		usesOllama = usesOllama || agent.Provider == "ollama"
 		if _, err := os.Stat(a.AgentDir(cfg, name)); err != nil {
-			bad("agent directory for the "+name+" agent is missing", "", "watts config apply")
+			bad("agent directory for the "+name+" agent is missing", "", "wctl config apply")
 			continue
 		}
 		ok("agent directory for the "+name+" agent exists", a.Rel(a.AgentDir(cfg, name)))
 		for _, f := range []string{"settings.json", "models.json"} {
 			if data, err := os.ReadFile(filepath.Join(a.AgentDir(cfg, name), f)); err == nil && !json.Valid(data) {
-				bad(a.AgentRel(cfg, name)+"/"+f+" is not valid JSON", "", "watts config apply --force")
+				bad(a.AgentRel(cfg, name)+"/"+f+" is not valid JSON", "", "wctl config apply --force")
 			}
 		}
 		for _, d := range agent.SkillsDirs {
@@ -105,7 +105,7 @@ func (a *Service) DoctorChecks(cfg projectconfig.Config, haveConfig, live bool) 
 			if err == nil && strings.Contains(outp, RalphPackage) {
 				ok(RalphPackage+" installed for the "+name+" agent", "")
 			} else {
-				bad(RalphPackage+" is not installed for the "+name+" agent", "", "watts install ralph")
+				bad(RalphPackage+" is not installed for the "+name+" agent", "", "wctl install ralph")
 			}
 		}
 		findings := a.CredentialCheck(cfg, name, nil)
@@ -145,7 +145,7 @@ func (a *Service) LiveCheck(cfg projectconfig.Config, name string) Check {
 		} `json:"providers"`
 	}
 	if err != nil || json.Unmarshal(data, &doc) != nil {
-		return Check{Level: "warn", Name: label, Detail: "no readable models.json, so there is no URL to call", Fix: "watts config apply"}
+		return Check{Level: "warn", Name: label, Detail: "no readable models.json, so there is no URL to call", Fix: "wctl config apply"}
 	}
 	p, found := doc.Providers[agent.Provider]
 	if !found || p.BaseURL == "" {

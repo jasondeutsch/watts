@@ -64,20 +64,20 @@ func Init(a *terminal.Context, args []string) error {
 	}
 
 	if *noInstall {
-		a.Say("\nSkipped the extension install. Run: watts install ralph")
+		a.Say("\nSkipped the extension install. Run: wctl install ralph")
 	} else if application.PiVersion() == "" {
-		a.Say("\npi is not installed yet. Run: watts install pi, then: watts install ralph")
+		a.Say("\npi is not installed yet. Run: wctl install pi, then: wctl install ralph")
 	} else if err := a.InstallRalph(cfg, nil); err != nil {
 		a.Warn("the extension install failed: %v", err)
-		a.Say("If you are behind a proxy that re-signs TLS, run: watts config env add NODE_EXTRA_CA_CERTS HTTPS_PROXY, then: watts install ralph")
+		a.Say("If you are behind a proxy that re-signs TLS, run: wctl config env add NODE_EXTRA_CA_CERTS HTTPS_PROXY, then: wctl install ralph")
 	}
 	a.Say(`
 Done. Tasks live in %s. Watts does not use git or any other version control, so it does not matter whether this project is tracked.
   1. Keep %s and project workflow template files; share them with your team.
      .watts and the tasks folder (%s) are optional: nothing in Watts depends on where they are
-     stored, and deleting .watts and running watts init rebuilds it.
-  2. watts doctor
-  3. watts task new <slug>      start a task`, cfg.TasksDir, projectconfig.Filename, cfg.TasksDir)
+     stored, and deleting .watts and running wctl init rebuilds it.
+  2. wctl doctor
+  3. wctl task new <slug>      start a task`, cfg.TasksDir, projectconfig.Filename, cfg.TasksDir)
 	return nil
 }
 
@@ -150,7 +150,7 @@ func Start(app *terminal.Context, args []string) error {
 		return err
 	}
 	if len(positional) > 0 {
-		return errors.New("usage: watts start [-d]")
+		return errors.New("usage: wctl start [-d]")
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
@@ -158,7 +158,7 @@ func Start(app *terminal.Context, args []string) error {
 }
 func Stop(app *terminal.Context, args []string) error {
 	if len(args) > 0 {
-		return errors.New("usage: watts stop")
+		return errors.New("usage: wctl stop")
 	}
 	return projectruntime.Stop(context.Background(), app.Service)
 }

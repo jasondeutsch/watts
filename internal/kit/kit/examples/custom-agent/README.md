@@ -1,6 +1,6 @@
 # Custom local agent directory
 
-This asset demonstrates local Pi runtime customization. `watts agent new <name>` creates a runtime role and registers its directory in Project `spec.agents`. A runtime directory is distinct from an [Agent resource](../../../../../docs/kinds.md#agent), which describes workflow work, including instructions, model, identity, and tools.
+This asset demonstrates local Pi runtime customization. `wctl agent new <name>` creates a runtime role and registers its directory in Project `spec.agents`. A runtime directory is distinct from an [Agent resource](../../../../../docs/kinds.md#agent), which describes workflow work, including instructions, model, identity, and tools.
 
 ## Files
 

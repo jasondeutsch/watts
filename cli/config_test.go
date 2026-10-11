@@ -24,6 +24,6 @@ func TestSameReviewModelIsAllowedWithoutWarnings(t *testing.T) {
 }
 func TestProofOfConceptRelease(t *testing.T) {
 	code, out, errs := runCLI(t, t.TempDir(), "version")
-	require.False(t, code != 0 || strings.TrimSpace(out) != "watts 0.1.0",
+	require.False(t, code != 0 || strings.TrimSpace(out) != "wctl 0.1.0",
 		"version: %d %q %s", code, out, errs)
 }

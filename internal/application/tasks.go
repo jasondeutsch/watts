@@ -55,7 +55,7 @@ func (a *Service) SelectTask(cfg projectconfig.Config, argument string) (string,
 	}
 	switch len(candidates) {
 	case 0:
-		return "", errors.New("no tasks found; create one with: watts task new <slug>")
+		return "", errors.New("no tasks found; create one with: wctl task new <slug>")
 	case 1:
 		return a.TaskArg(cfg, candidates[0])
 	default:
@@ -80,7 +80,7 @@ func (a *Service) RunTask(cfg projectconfig.Config, taskPath string, options *Ru
 	case "failed", "canceled", "terminated", "timed_out", "timedout":
 		return fmt.Errorf("task is %s; create a new task to start another execution", view.State.Status)
 	default:
-		a.say("Task %s is %s at %s. Use: watts task status %s", taskPath, view.State.Status, view.State.Current, taskPath)
+		a.say("Task %s is %s at %s. Use: wctl task status %s", taskPath, view.State.Status, view.State.Current, taskPath)
 		return nil
 	}
 }

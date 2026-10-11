@@ -35,7 +35,7 @@ type Service struct {
 }
 
 // Locate finds the project root: the nearest folder above the current one that holds watts.yaml
-// or .watts; failing that, the current folder, so `watts init` works anywhere. It never asks git.
+// or .watts; failing that, the current folder, so `wctl init` works anywhere. It never asks git.
 func (a *Service) Locate() error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -119,7 +119,7 @@ func (a *Service) ResolveTask(arg string) (string, error) {
 		}
 		return filepath.ToSlash(taskPath), nil
 	}
-	return "", fmt.Errorf("no such task folder: %s (create one with: watts task new <slug>)", arg)
+	return "", fmt.Errorf("no such task folder: %s (create one with: wctl task new <slug>)", arg)
 }
 
 // KitScript runs a bundled check with the project configuration.
@@ -145,7 +145,7 @@ func (a *Service) KitScriptEnv(cfg projectconfig.Config, w io.Writer, extraEnv [
 func (a *Service) KitCommand(cfg projectconfig.Config, w io.Writer, extraEnv []string, name string, args ...string) (*exec.Cmd, error) {
 	path := filepath.Join(a.KitDir(), "scripts", name)
 	if _, err := os.Stat(path); err != nil {
-		return nil, fmt.Errorf("kit script %s is missing. Run: watts init", a.Rel(path))
+		return nil, fmt.Errorf("kit script %s is missing. Run: wctl init", a.Rel(path))
 	}
 	bash, err := exec.LookPath("bash")
 	if err != nil {

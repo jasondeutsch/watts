@@ -53,7 +53,7 @@ func (app *Service) LoadConfig() (projectconfig.Config, error) {
 		return cfg, err
 	}
 	if _, err := os.Stat(app.PackagePath()); errors.Is(err, os.ErrNotExist) {
-		return cfg, errors.New("no package descriptor found; run watts init or select an explicit --package path")
+		return cfg, errors.New("no package descriptor found; run wctl init or select an explicit --package path")
 	} else if err != nil {
 		return cfg, err
 	}

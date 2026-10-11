@@ -90,7 +90,7 @@ func Decide(app *terminal.Context, args []string) error {
 		return arguments.UsageError(err)
 	}
 	if len(positionals) > 2 {
-		return fmt.Errorf("usage: watts task decide [task] [stage] [--reject] [--feedback text]")
+		return fmt.Errorf("usage: wctl task decide [task] [stage] [--reject] [--feedback text]")
 	}
 	task, stage := "", ""
 	if len(positionals) > 0 {
@@ -109,7 +109,7 @@ func Decide(app *terminal.Context, args []string) error {
 
 func selectTask(app *terminal.Context, positionals []string, command string) (projectconfig.Config, string, error) {
 	if len(positionals) > 1 {
-		return projectconfig.Config{}, "", fmt.Errorf("usage: watts task %s [task]", command)
+		return projectconfig.Config{}, "", fmt.Errorf("usage: wctl task %s [task]", command)
 	}
 	task := ""
 	if len(positionals) == 1 {

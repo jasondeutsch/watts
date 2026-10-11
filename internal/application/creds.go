@@ -79,13 +79,13 @@ func (a *Service) CredentialCheck(cfg projectconfig.Config, name string, extraPa
 	}
 	var doc ModelsDoc
 	if err != nil || json.Unmarshal(data, &doc) != nil {
-		add("fail", fmt.Sprintf("%s cannot be read as JSON", a.Rel(path)), "fix the file, or regenerate it with: watts config apply --force")
+		add("fail", fmt.Sprintf("%s cannot be read as JSON", a.Rel(path)), "fix the file, or regenerate it with: wctl config apply --force")
 		return out
 	}
 	p, found := doc.Providers[provider]
 	if !found {
 		if provider != "ollama" || declared {
-			add("warn", fmt.Sprintf("%s has no entry for provider %q", a.Rel(path), provider), "run: watts config apply")
+			add("warn", fmt.Sprintf("%s has no entry for provider %q", a.Rel(path), provider), "run: wctl config apply")
 		}
 		return out
 	}
@@ -118,7 +118,7 @@ func (a *Service) CredentialCheck(cfg projectconfig.Config, name string, extraPa
 	default:
 		if !projectconfig.Contains(cfg.PassthroughNames(agent, extraPass), varName) {
 			add("fail", fmt.Sprintf("%s uses %s for its API key, but %s is not in env_passthrough, so pi will not see it. Watts runs pi with a clean environment", provider, varName, varName),
-				"watts config env add "+varName)
+				"wctl config env add "+varName)
 		}
 		if v, Set := os.LookupEnv(varName); !Set || v == "" {
 			add("fail", fmt.Sprintf("%s is not set in your shell, so there is no key to give pi (pi would send the name %q as the key and the gateway would answer 401)", varName, varName),

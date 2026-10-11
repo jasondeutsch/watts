@@ -51,7 +51,7 @@ task_init() {
   TASK_DIR="$d"
   TASK_NAME="$(basename "$d")"
   if [ "${2:-}" = "creating" ]; then return; fi
-  [ -f "$TASK_DIR/BASE" ] || die "$TASK_DIR/BASE is missing. Create task folders with: watts task new <slug>"
+  [ -f "$TASK_DIR/BASE" ] || die "$TASK_DIR/BASE is missing. Create task folders with: wctl task new <slug>"
   BASE="$(tr -d '[:space:]' < "$TASK_DIR/BASE")"
   [ -f "$TASK_DIR/.watts-state/snapshots/$BASE" ] || die "the baseline snapshot $BASE is missing from $TASK_DIR/.watts-state (it is local state; create the task again if it was deleted)"
 }

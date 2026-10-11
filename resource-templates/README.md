@@ -3,9 +3,9 @@
 This package renders all five Watts [Kinds](../docs/kinds.md): Workflow, Agent, Procedure, ConfigMap, and Secret. Start from [values.yaml](values.yaml) and supply team overrides rather than editing the templates.
 
 ```sh
-watts template new team-workflow
-watts template ./team-workflow -f ./team-values.yaml
-watts task new my-task --package ./team-workflow/watts.yaml
+wctl template new team-workflow
+wctl template ./team-workflow -f ./team-values.yaml
+wctl task new my-task --package ./team-workflow/watts.yaml
 ```
 
 Scaffolding uses this package's descriptor, values, and templates as its source. It refuses to overwrite an existing directory. Edit the scaffolded source and values; rendered YAML is generated content. Task creation resolves the selected package and captures its workflow. Rendering does not install tools, start workers, or submit tasks.

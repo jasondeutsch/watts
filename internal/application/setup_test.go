@@ -123,7 +123,7 @@ func TestConfigAgentsPreservesUserWork(t *testing.T) {
 	require.NoError(t, ta.ConfigAgents(cfg, false))
 
 	require.Equal(t, mine, readFile(t, filepath.Join(agent, "models.json")),
-		"watts config overwrote a models.json the user wrote")
+		"wctl config overwrote a models.json the user wrote")
 	assert.Contains(t, ta.ErrorOutput.String(), "edited by you",
 		"expected a warning, got %q", ta.ErrorOutput.String())
 
@@ -297,7 +297,7 @@ func TestRunPiWithStub(t *testing.T) {
 
 	{
 		err := ta.RunPi(cfg, "build", nil, false, "-p", "x")
-		require.False(t, err == nil || !strings.Contains(err.Error(), "watts config apply"),
-			"expected a pointer to watts config, got %v", err)
+		require.False(t, err == nil || !strings.Contains(err.Error(), "wctl config apply"),
+			"expected a pointer to wctl config, got %v", err)
 	}
 }

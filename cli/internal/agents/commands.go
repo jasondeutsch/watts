@@ -68,7 +68,7 @@ func Env(a *terminal.Context, args []string) error {
 	}
 	name := "build"
 	if len(pos) > 1 {
-		return errors.New("usage: watts agent env [agent]")
+		return errors.New("usage: wctl agent env [agent]")
 	} else if len(pos) == 1 {
 		name = pos[0]
 	}
@@ -88,7 +88,7 @@ func Env(a *terminal.Context, args []string) error {
 	for _, e := range entries {
 		a.Say("  %-28s %s; %s", e.Name, e.Source, e.State)
 	}
-	a.Say("\nTo pass another variable: watts config env add NAME")
+	a.Say("\nTo pass another variable: wctl config env add NAME")
 	return nil
 }
 
@@ -102,7 +102,7 @@ func Follow(a *terminal.Context, args []string) error {
 	}
 	name := "build"
 	if len(pos) > 1 {
-		return errors.New("usage: watts agent follow [agent] [--once] [--tail N]")
+		return errors.New("usage: wctl agent follow [agent] [--once] [--tail N]")
 	} else if len(pos) == 1 {
 		name = pos[0]
 	}
@@ -140,7 +140,7 @@ func Clean(a *terminal.Context, args []string) error {
 	for _, path := range removed {
 		a.Say("removed %s", path)
 	}
-	a.Say("Run: watts config apply   to set them up again. Your skills and settings come back from %s.", projectconfig.Filename)
+	a.Say("Run: wctl config apply   to set them up again. Your skills and settings come back from %s.", projectconfig.Filename)
 	return nil
 }
 
@@ -169,6 +169,6 @@ func New(a *terminal.Context, args []string) error {
 	a.Say("Next:")
 	a.Say("  1. Edit %s/skills", target)
 	a.Say("  2. Add a workflow step that uses it and declares provider and model. See %s/README.md and the example in %s/examples/custom-agent/watts.example.yaml", target, a.Rel(a.KitDir()))
-	a.Say("  3. watts doctor")
+	a.Say("  3. wctl doctor")
 	return nil
 }

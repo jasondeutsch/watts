@@ -40,7 +40,7 @@ func TestLogsExplainFailedAttemptAndAuthorizedRetry(t *testing.T) {
 	env.ExecuteWorkflow(Run, Input{Task: "tasks/demo", Definition: Definition{Steps: []Step{{Name: "build", Command: "build", MaxAttempts: 1}}}})
 	require.NoError(t, env.GetWorkflowError())
 	text := output.String()
-	for _, value := range []string{`msg="Stage started" task=tasks/demo stage=build attempt=1`, `msg="Stage failed"`, "compiler: undefined symbol", `msg="Waiting for retry"`, "watts task run 'tasks/demo' --ignore-attempt-limit", `msg="Retry authorized"`, "attempt=2", `msg="Stage completed"`, `msg="Workflow completed"`} {
+	for _, value := range []string{`msg="Stage started" task=tasks/demo stage=build attempt=1`, `msg="Stage failed"`, "compiler: undefined symbol", `msg="Waiting for retry"`, "wctl task run 'tasks/demo' --ignore-attempt-limit", `msg="Retry authorized"`, "attempt=2", `msg="Stage completed"`, `msg="Workflow completed"`} {
 		require.Contains(t, text, value)
 	}
 }
@@ -63,7 +63,7 @@ func TestLogsExplainApprovalAndReworkRouting(t *testing.T) {
 	require.NoError(t, env.GetWorkflowError())
 	text := output.String()
 	require.Contains(t, text, `msg="Waiting for approval"`)
-	require.Contains(t, text, "watts task decide 'tasks/demo' approve")
+	require.Contains(t, text, "wctl task decide 'tasks/demo' approve")
 	require.Contains(t, text, "rejected=true")
 	require.Contains(t, text, "outcome=rejected next_stage=draft")
 	require.NotContains(t, text, "Waiting for retry")

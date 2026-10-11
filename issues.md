@@ -63,19 +63,19 @@ Allow one UI to display multiple projects and workers. Decouple the web server's
 
 ### wiss-020: Manifest-driven runtime preparation; remove legacy initialization
 
-Project setup still reflects Watts' origin as a Pi/Ralph wrapper. `watts init` mixes local runtime preparation with workflow package scaffolding, and `watts install` assumes Pi and Ralph are project-wide dependencies. Agents, models, tools, and execution settings now belong to manifests; setup must follow the selected resources rather than impose one agent stack on every project.
+Project setup still reflects Watts' origin as a Pi/Ralph wrapper. `wctl init` mixes local runtime preparation with workflow package scaffolding, and `wctl install` assumes Pi and Ralph are project-wide dependencies. Agents, models, tools, and execution settings now belong to manifests; setup must follow the selected resources rather than impose one agent stack on every project.
 
-Make `watts template new` the package scaffolding command and remove `watts init`. Create private Watts state automatically when an operation needs it. Projects may author a package or extend an existing package without first generating a default workflow or installing agent tools. Keep the project workspace distinct from the package source directory, including when the package is external.
+Make `wctl template new` the package scaffolding command and remove `wctl init`. Create private Watts state automatically when an operation needs it. Projects may author a package or extend an existing package without first generating a default workflow or installing agent tools. Keep the project workspace distinct from the package source directory, including when the package is external.
 
 Move runtime-specific configuration, dependency checks, and preparation behind execution adapters selected by resolved Agent or Procedure manifests. Pi/Ralph remains a supported adapter rather than the core execution model. Remove the unconditional project-wide Pi/Ralph installation command; define how an adapter obtains its dependencies before removing the only working setup path. Templates describe dependencies but do not install or supply executables by themselves.
 
 Acceptance criteria:
 
-- A project can create and run a task from its selected package without `watts init`; required private directories are created automatically without overwriting authoring files.
+- A project can create and run a task from its selected package without `wctl init`; required private directories are created automatically without overwriting authoring files.
 - A workflow containing only deterministic Procedures runs without Pi, Ralph, Node.js, model credentials, or unrelated agent dependencies.
 - A Pi/Ralph Agent prepares and validates only its own runtime requirements. Shared orchestration code does not generate Pi configuration or interpret Ralph-specific evidence.
 - Missing runtimes, tools, or credential sources produce actionable errors identifying the affected resource and dependency. Setup failures appear in CLI results and the web UI; they do not silently select another runtime.
-- Dependency installation policy is explicit: distinguish validation, preparing adapter-owned files, and downloading or installing software. Do not introduce an unconditional installation step in `watts start`.
+- Dependency installation policy is explicit: distinguish validation, preparing adapter-owned files, and downloading or installing software. Do not introduce an unconditional installation step in `wctl start`.
 - Update commands, documentation, examples, and coordinator guidance together. Test a fresh project, an external package, a Procedure-only workflow, and the supported Pi/Ralph execution path.
 
 Coordinate with wiss-007 for adapter interfaces and wiss-016 for portable packages and pinned runtime dependencies. Containerized execution remains a separate follow-on; removing initialization must not require completing it first.
@@ -242,7 +242,7 @@ Coordinate with wiss-006, wiss-007, wiss-011, wiss-013, wiss-014, wiss-016, wiss
 
 ### wiss-012: Approval and task readiness
 
-`watts task decide` is cumbersome. Explore a clearer way to express document readiness and workflow decisions. A ready `SPEC.md` should advance only according to the task's workflow; document readiness and human approval are separate concepts.
+`wctl task decide` is cumbersome. Explore a clearer way to express document readiness and workflow decisions. A ready `SPEC.md` should advance only according to the task's workflow; document readiness and human approval are separate concepts.
 
 Consider whether a generated JSON or YAML task manifest should record readiness and decisions alongside the documents. Avoid introducing a second source of truth that conflicts with Temporal history or the approved document hashes.
 

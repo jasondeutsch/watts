@@ -2,7 +2,7 @@ GO ?= go
 INSTALL_DIR ?= /usr/local/bin
 SUDO ?= sudo
 
-BINARY := bin/watts
+BINARY := bin/wctl
 
 .PHONY: build test install
 
@@ -15,4 +15,4 @@ test:
 
 install: build
 	$(SUDO) mkdir -p "$(INSTALL_DIR)"
-	$(SUDO) install -m 755 "$(BINARY)" "$(INSTALL_DIR)/watts"
+	$(SUDO) install -m 755 "$(BINARY)" "$(INSTALL_DIR)/wctl"

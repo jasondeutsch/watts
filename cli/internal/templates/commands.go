@@ -40,8 +40,8 @@ func Template(a *terminal.Context, args []string) error {
 	flags.StringVar(&output, "o", "", "generated output directory; replaced on each render (default: stdout)")
 	flags.StringVar(&output, "output", "", "generated output directory; replaced on each render (default: stdout)")
 	flags.Usage = func() {
-		fmt.Fprintln(a.ErrorOutput, "Usage: watts template <package> [-f <values.yaml>]... [-o <output-dir>]")
-		fmt.Fprintln(a.ErrorOutput, "       watts template new <name>")
+		fmt.Fprintln(a.ErrorOutput, "Usage: wctl template <package> [-f <values.yaml>]... [-o <output-dir>]")
+		fmt.Fprintln(a.ErrorOutput, "       wctl template new <name>")
 		flags.PrintDefaults()
 	}
 	positional, err := arguments.Parse(flags, args)
@@ -84,7 +84,7 @@ func Template(a *terminal.Context, args []string) error {
 func New(a *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(a.ErrorOutput, "template new")
 	flags.Usage = func() {
-		fmt.Fprintln(a.ErrorOutput, "Usage: watts template new <name>")
+		fmt.Fprintln(a.ErrorOutput, "Usage: wctl template new <name>")
 	}
 	positional, err := arguments.Parse(flags, args)
 	if err != nil {

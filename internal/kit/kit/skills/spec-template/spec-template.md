@@ -50,4 +50,4 @@ Ambiguity that has to be resolved by a human before PLAN.md gets written, not si
 
 ## Review
 
-An agent drafts this document. The human approves or rejects it at the spec-review workflow gate with `watts task decide <task> spec-review`, optionally using `--reject --feedback 'changes needed'`.
+An agent drafts this document. The human approves or rejects it at the spec-review workflow gate with `wctl task decide <task> spec-review`, optionally using `--reject --feedback 'changes needed'`.

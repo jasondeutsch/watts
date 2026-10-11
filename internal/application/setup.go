@@ -220,7 +220,7 @@ func (a *Service) configureAgents(cfg projectconfig.Config, names []string, forc
 			case kit.Digest(cur) == kit.Digest(want):
 				state[key] = kit.Digest(want)
 			default:
-				a.warn("%s was edited by you and is left unchanged. Use: watts config apply --force to regenerate it.", key)
+				a.warn("%s was edited by you and is left unchanged. Use: wctl config apply --force to regenerate it.", key)
 			}
 		}
 
@@ -232,7 +232,7 @@ func (a *Service) configureAgents(cfg projectconfig.Config, names []string, forc
 		for i, src := range sources {
 			if err := CopySkills(src, filepath.Join(dir, "skills")); err != nil {
 				if i == 0 {
-					return fmt.Errorf("cannot read %s: %w. Run: watts init", a.Rel(src), err)
+					return fmt.Errorf("cannot read %s: %w. Run: wctl init", a.Rel(src), err)
 				}
 				return fmt.Errorf("skills_dirs entry %s: %w", a.Rel(src), err)
 			}
@@ -289,7 +289,7 @@ func (a *Service) InstallPi(cfg projectconfig.Config) error {
 }
 
 // installRalph installs the pinned loop extension into each agent's private directory. These are
-// npm installs, so proxy and certificate variables must be passed (watts config set
+// npm installs, so proxy and certificate variables must be passed (wctl config set
 // env_passthrough ...).
 func (a *Service) InstallRalph(cfg projectconfig.Config, extraPass []string) error {
 	spec := "npm:" + RalphPackage + "@" + RalphVersion

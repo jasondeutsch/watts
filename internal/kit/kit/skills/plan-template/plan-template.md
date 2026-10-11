@@ -123,4 +123,4 @@ Anything ambiguous enough to come back as a question rather than get resolved by
 
 ## Review
 
-An agent drafts this document. The human approves or rejects it at the plan-review workflow gate with `watts task decide <task> plan-review`, optionally using `--reject --feedback 'changes needed'`.
+An agent drafts this document. The human approves or rejects it at the plan-review workflow gate with `wctl task decide <task> plan-review`, optionally using `--reject --feedback 'changes needed'`.

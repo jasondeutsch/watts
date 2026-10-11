@@ -50,7 +50,7 @@ func (app *Service) RunTemporalWorker(ctx context.Context) error {
 	defer func() {
 		logger.Info("Worker stopping", "next_action", "Active work is stopping; Temporal retains workflow history")
 		workflowWorker.Stop()
-		logger.Info("Worker stopped", "next_action", "Run watts start to resume processing")
+		logger.Info("Worker stopped", "next_action", "Run wctl start to resume processing")
 	}()
 	logger.Info("Worker ready", "address", settings.Address, "namespace", settings.Namespace, "queue", settings.TaskQueue)
 	<-ctx.Done()

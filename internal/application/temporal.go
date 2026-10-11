@@ -62,7 +62,7 @@ func (app *Service) StartTemporalWorkflow(config projectconfig.Config, taskPath 
 	defer cancel()
 	binding, err := app.LoadWorkflowBinding(taskPath)
 	if err == nil && binding.RunID != "" {
-		app.say("Temporal workflow already submitted: %s (run %s). Use: watts task status %s", binding.WorkflowID, binding.RunID, taskPath)
+		app.say("Temporal workflow already submitted: %s (run %s). Use: wctl task status %s", binding.WorkflowID, binding.RunID, taskPath)
 		return nil
 	}
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -97,8 +97,8 @@ func (app *Service) StartTemporalWorkflow(config projectconfig.Config, taskPath 
 		return fmt.Errorf("workflow started but recording its run ID failed: %w", err)
 	}
 	app.say("Started Temporal workflow %s (run %s).", binding.WorkflowID, binding.RunID)
-	app.say("Worker queue: %s. Start its worker with: watts start", binding.Settings.TaskQueue)
-	app.say("Inspect progress with: watts task status %s", taskPath)
+	app.say("Worker queue: %s. Start its worker with: wctl start", binding.Settings.TaskQueue)
+	app.say("Inspect progress with: wctl task status %s", taskPath)
 	return nil
 }
 
@@ -108,7 +108,7 @@ func (app *Service) retryFailedStage(taskPath string, flags *RunOptions) error {
 		return err
 	}
 	if binding.RunID == "" {
-		return errors.New("this task has not been submitted to Temporal; use watts task run")
+		return errors.New("this task has not been submitted to Temporal; use wctl task run")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -142,7 +142,7 @@ func (app *Service) retryFailedStage(taskPath string, flags *RunOptions) error {
 	if err = handle.Get(ctx, nil); err != nil {
 		return err
 	}
-	app.say("Requested retry of %s. Inspect progress with: watts task status %s", stage, taskPath)
+	app.say("Requested retry of %s. Inspect progress with: wctl task status %s", stage, taskPath)
 	return nil
 }
 
@@ -152,7 +152,7 @@ func (app *Service) CancelTemporalWorkflow(taskPath string) error {
 		return err
 	}
 	if binding.RunID == "" {
-		return errors.New("this task has not been submitted to Temporal; use watts task run")
+		return errors.New("this task has not been submitted to Temporal; use wctl task run")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

@@ -79,7 +79,7 @@ func Start(ctx context.Context, app *application.Service, detached bool) error {
 	defer func() {
 		logger.Info("Worker stopping", "next_action", "Active work is stopping; Temporal retains workflow history")
 		worker.Stop()
-		logger.Info("Worker stopped", "next_action", "Run watts start to resume processing")
+		logger.Info("Worker stopped", "next_action", "Run wctl start to resume processing")
 	}()
 	done := make(chan error, 1)
 	go func() { done <- web.Serve(ctx, app, listener) }()

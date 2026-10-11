@@ -23,13 +23,13 @@ func (s *StringList) Set(v string) error {
 }
 
 func NewFlags(errorOutput io.Writer, name string) *flag.FlagSet {
-	fs := flag.NewFlagSet("watts "+name, flag.ContinueOnError)
+	fs := flag.NewFlagSet("wctl "+name, flag.ContinueOnError)
 	fs.SetOutput(errorOutput)
 	return fs
 }
 
 // Parse lets flags appear before or after positional arguments. Everything after a bare "--"
-// is passed through untouched as positional arguments, so `watts agent pi -- mcp add x -- npx -y y`
+// is passed through untouched as positional arguments, so `wctl agent pi -- mcp add x -- npx -y y`
 // works.
 func Parse(fs *flag.FlagSet, args []string) ([]string, error) {
 	var verbatim []string

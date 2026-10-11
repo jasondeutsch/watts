@@ -127,14 +127,14 @@ func PiBinary() (string, error) {
 	}
 	p, err := exec.LookPath(name)
 	if err != nil {
-		return "", errors.New("pi is not installed. Run: watts install pi")
+		return "", errors.New("pi is not installed. Run: wctl install pi")
 	}
 	return p, nil
 }
 
 func (a *Service) RequireAgentDir(cfg projectconfig.Config, role string) error {
 	if _, err := os.Stat(a.AgentDir(cfg, role)); err != nil {
-		return fmt.Errorf("the %s agent directory is missing. Run: watts config apply", role)
+		return fmt.Errorf("the %s agent directory is missing. Run: wctl config apply", role)
 	}
 	return nil
 }
@@ -185,7 +185,7 @@ func (a *Service) RunPi(cfg projectconfig.Config, role string, extraPass []strin
 	if err != nil {
 		var ee workspace.ExitError
 		if errors.As(err, &ee) && ee.Code != 124 {
-			a.warn("pi exited with status %d. If it reported \"No API key found\" or a 401, run: watts doctor", ee.Code)
+			a.warn("pi exited with status %d. If it reported \"No API key found\" or a 401, run: wctl doctor", ee.Code)
 		}
 	}
 	return err

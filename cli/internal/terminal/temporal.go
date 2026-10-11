@@ -44,9 +44,9 @@ func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
 	}
 	switch state.Status {
 	case "not_started", "waiting_retry":
-		app.Say("Next: watts task run %s", taskPath)
+		app.Say("Next: wctl task run %s", taskPath)
 	case "waiting_approval":
-		app.Say("Next: inspect the stage inputs, then watts task decide %s (or --reject --feedback text)", taskPath)
+		app.Say("Next: inspect the stage inputs, then wctl task decide %s (or --reject --feedback text)", taskPath)
 	}
 	return failure
 }

@@ -137,7 +137,7 @@ spec:
 
       ## Review
 
-      An agent drafts this document. The human approves or rejects it at the plan-review workflow gate with `watts task decide <task> plan-review`, optionally using `--reject --feedback 'changes needed'`.
+      An agent drafts this document. The human approves or rejects it at the plan-review workflow gate with `wctl task decide <task> plan-review`, optionally using `--reject --feedback 'changes needed'`.
     RALPH.md: |
       ---
       commands:
@@ -300,7 +300,7 @@ spec:
 
       ## Review
 
-      An agent drafts this document. The human approves or rejects it at the spec-review workflow gate with `watts task decide <task> spec-review`, optionally using `--reject --feedback 'changes needed'`.
+      An agent drafts this document. The human approves or rejects it at the spec-review workflow gate with `wctl task decide <task> spec-review`, optionally using `--reject --feedback 'changes needed'`.
     review/RALPH.md: |
       ---
       commands:

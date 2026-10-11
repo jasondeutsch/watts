@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Deterministic approval check. Exit 0 when the approval record is valid for the task's tier.
-# An approval is a record of the SHA-256 of SPEC.md and PLAN.md, made by `watts task decide`
+# An approval is a record of the SHA-256 of SPEC.md and PLAN.md, made by `wctl task decide`
 # after a human has filled in the Approved by sections. Editing either file afterwards
 # invalidates it.
 # usage: check-approval.sh <task-dir>
@@ -22,7 +22,7 @@ if [ -f "$TASK_DIR/.watts-state/temporal.json" ]; then
       [ -f "$receipt" ] || continue
       if awk -v f="$f" -v h="$hash" '$1 == f && $2 == h { found=1 } END { exit !found }' "$receipt"; then found=1; break; fi
     done
-    [ "$found" -eq 1 ] || fail "$f has no matching workflow approval. Use watts task decide $TASK_DIR <review-stage>."
+    [ "$found" -eq 1 ] || fail "$f has no matching workflow approval. Use wctl task decide $TASK_DIR <review-stage>."
   done
   if [ "$PROBLEMS" -gt 0 ]; then echo "APPROVAL: FAILED ($PROBLEMS problems)"; exit 1; fi
   echo "APPROVAL: OK (workflow artifact approvals)"
@@ -70,16 +70,16 @@ fi
 
 REC="$TASK_DIR/APPROVAL"
 if [ "${WATTS_APPROVAL_SKIP_HASH:-0}" = "1" ]; then
-  : # `watts task decide` is about to record the hashes
+  : # `wctl task decide` is about to record the hashes
 elif [ ! -f "$REC" ]; then
-  fail "$REC is missing. A human must run: watts task decide $TASK_DIR"
+  fail "$REC is missing. A human must run: wctl task decide $TASK_DIR"
 else
   for f in SPEC.md PLAN.md; do
     want="$(awk -v f="$f" '$1 == f { print $2 }' "$REC")"
     if [ -z "$want" ]; then
       fail "$REC has no recorded hash for $f"
     elif [ "$want" != "$(sha256_of "$TASK_DIR/$f")" ]; then
-      fail "$TASK_DIR/$f has changed since it was approved. Approve it again with: watts task decide $TASK_DIR"
+      fail "$TASK_DIR/$f has changed since it was approved. Approve it again with: wctl task decide $TASK_DIR"
     else
       ok "$TASK_DIR/$f matches its recorded approval"
     fi

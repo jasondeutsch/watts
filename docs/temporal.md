@@ -38,7 +38,7 @@ Defaults are `localhost:7233`, namespace `default`, and a task queue derived fro
 
 ## Worker and recovery
 
-Start Watts from the project with `watts start` or `watts start -d`. Each project currently needs a worker with access to its files and dedicated task queue. A worker polls Temporal and executes scheduled activities; the Temporal server stores history and does not execute agent processes. Stopping a worker preserves workflow state, but work requires a worker to continue.
+Start Watts from the project with `wctl start` or `wctl start -d`. Each project currently needs a worker with access to its files and dedicated task queue. A worker polls Temporal and executes scheduled activities; the Temporal server stores history and does not execute agent processes. Stopping a worker preserves workflow state, but work requires a worker to continue.
 
 See the [runbook](runbook.md) for startup, credentials, approvals, retries, cancellation, and diagnosis. See [Kinds](kinds.md) and [workflow execution](workflows.md) for authoring. Activities have Temporal automatic retries disabled; workflow routing and explicit retries control rework.
 

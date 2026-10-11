@@ -53,7 +53,7 @@ func TestDoctor(t *testing.T) {
 
 	ta.reset()
 	err := ta.Doctor(cfg, true)
-	require.False(t, err == nil || !strings.Contains(ta.Output.String(), "watts install ralph"),
+	require.False(t, err == nil || !strings.Contains(ta.Output.String(), "wctl install ralph"),
 		"expected a failure naming install-ralph:\n%s", ta.Output)
 	assert.Contains(t, ta.Output.String(), "Ollama reachable",
 		"the Ollama check should pass against the test server:\n%s", ta.Output)
@@ -88,8 +88,8 @@ func TestDoctor(t *testing.T) {
 	ta.reset()
 	{
 		err := ta.Doctor(projectconfig.Config{}, false)
-		require.False(t, err == nil || !strings.Contains(ta.Output.String(), "watts init"),
-			"a missing config must fail and name watts init:\n%s", ta.Output)
+		require.False(t, err == nil || !strings.Contains(ta.Output.String(), "wctl init"),
+			"a missing config must fail and name wctl init:\n%s", ta.Output)
 	}
 }
 

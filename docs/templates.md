@@ -1,12 +1,12 @@
 # Template packages
 
-`watts template` renders YAML from a local package. It does not require an initialized project or Temporal and does not submit work.
+`wctl template` renders YAML from a local package. It does not require an initialized project or Temporal and does not submit work.
 
 ```sh
-watts template new team-workflow
-watts template ./team-workflow
-watts template ./team-workflow -f team.yaml --values project.yaml
-watts template ./team-workflow -f project.yaml -o ./workflows/team
+wctl template new team-workflow
+wctl template ./team-workflow
+wctl template ./team-workflow -f team.yaml --values project.yaml
+wctl template ./team-workflow -f project.yaml -o ./workflows/team
 ```
 
 Without `-o`/`--output`, the command prints a YAML document stream. Directory output is generated content: each render replaces the YAML directory, removing stale files. Use a dedicated output directory. Edit source templates or values, then rerun the same command; do not edit rendered manifests. Rendering and validation finish before the previous output is replaced. Input/output overlap, symlinks, and existing non-YAML files are rejected. Argument errors exit with status 2; loading, rendering, validation, and output failures exit with status 1.
@@ -47,8 +47,8 @@ The command validates YAML and an optional values schema before output. If rende
 ## Create a package
 
 ```sh
-watts template new go-team
-watts template ./go-team
+wctl template new go-team
+wctl template ./go-team
 ```
 
 The first command creates a new directory containing `watts.yaml`, `values.yaml`, and templates for Workflow, Agent, Procedure, ConfigMap, and Secret. The package and workflow names use the directory name. Use lowercase letters, digits, and hyphens, starting with a letter. Existing directories are never overwritten. No worker starts and no task is submitted.
@@ -82,10 +82,10 @@ The child must provide the replacement with the same Kind and name. The final bu
 Select the package when creating a task:
 
 ```sh
-watts task new hello-world --package ./go-team/watts.yaml
+wctl task new hello-world --package ./go-team/watts.yaml
 ```
 
-A project-root `watts.yaml` is the default selection. Task creation resolves the package, captures declared assets, and saves the task's workflow and package provenance. Existing tasks retain their resolved workflow. Rendering with `watts template` is useful for inspection and does not install assets. Operational preferences belong in `.watts/settings.yaml`, separate from the portable package descriptor.
+A project-root `watts.yaml` is the default selection. Task creation resolves the package, captures declared assets, and saves the task's workflow and package provenance. Existing tasks retain their resolved workflow. Rendering with `wctl template` is useful for inspection and does not install assets. Operational preferences belong in `.watts/settings.yaml`, separate from the portable package descriptor.
 
 The base values file contains `workflow: {name, spec}` and `agents`, `procedures`, `config_maps`, and `secrets` mappings keyed by resource name. Templates explicitly select and render the supported fields from each mapping; they do not insert whole specifications. The shipped `values.schema.json` rejects unsupported fields and invalid value types before rendering. Common inputs, outputs, checks, limits, and environment bindings use a shared `_contract.tpl` helper. Omit unused resource mappings or supply empty mappings. ConfigMap data and workflow parameters intentionally remain open mappings because those Kinds support user-defined data. See the [Go team example](../resources/examples/go_generalist/README.md) for a complete setup.
 
