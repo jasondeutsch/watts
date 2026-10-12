@@ -12,7 +12,6 @@ import (
 	"time"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/kit"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workspace"
@@ -50,7 +49,7 @@ func (app *Service) prepareActivity(ctx context.Context, request orchestration.A
 	if err != nil {
 		return nil, err
 	}
-	if kit.Digest(data) != request.Input.ConfigSHA256 {
+	if storage.Digest(data) != request.Input.ConfigSHA256 {
 		return nil, errors.New("the pinned runtime config was modified; restore it before retrying")
 	}
 	var config projectconfig.Config
@@ -60,7 +59,6 @@ func (app *Service) prepareActivity(ctx context.Context, request orchestration.A
 	if err = config.Validate(); err != nil {
 		return nil, err
 	}
-	config = config.WithWorkflowAgents(orchestration.Definition{Steps: []orchestration.Step{request.Step}})
 	return &activityRuntime{project: app, config: config, request: request, context: ctx, output: app.Output, errorOutput: app.ErrorOutput}, nil
 }
 
@@ -127,6 +125,10 @@ func (app *Service) ValidateApprovalArtifacts(ctx context.Context, request orche
 		}
 		var receipt strings.Builder
 		fmt.Fprintf(&receipt, "approved_by %s\napproved_at %s\n", strings.ReplaceAll(request.Decision.By, "\n", " "), time.Now().UTC().Format(time.RFC3339))
+		fmt.Fprintf(&receipt, "stage %s\nattempt %d\n", request.Step.Name, request.Attempt)
+		if request.Decision.AuthorizedBy != "" {
+			fmt.Fprintf(&receipt, "authorized_by %s\n", strings.ReplaceAll(request.Decision.AuthorizedBy, "\n", " "))
+		}
 		for _, artifact := range hashes {
 			fmt.Fprintf(&receipt, "%s %s\n", artifact.Path, artifact.SHA256)
 		}
@@ -158,6 +160,8 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 		return result, err
 	}
 	runtime.logger = logger
+	info := activity.GetInfo(ctx)
+	runtime.execution = info.WorkflowExecution.ID + "/" + info.WorkflowExecution.RunID
 	unlock, err := workspace.LockWorkflowWorkspace(app.Wd())
 	if err != nil {
 		return result, err
@@ -178,10 +182,7 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 	logger.Info("Attempt output", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "log", app.Rel(logPath))
 	runtime.output = io.MultiWriter(app.Output, logFile)
 	runtime.errorOutput = io.MultiWriter(app.ErrorOutput, logFile)
-	protectedPaths := append([]string(nil), projectconfig.DefaultForbidden...)
-	if agent, ok := runtime.config.Agent(request.Step.Agent); ok {
-		protectedPaths = append(protectedPaths, agent.Forbidden...)
-	}
+	protectedPaths := append([]string(nil), []string{"watts.yaml", ".watts/packages"}...)
 	protectedPaths = append(protectedPaths, filepath.Join(request.Input.Task, "workflow.yaml"), filepath.Join(request.Input.Task, ".watts-state", "approvals"))
 	for _, input := range request.Step.Inputs {
 		if !projectconfig.Contains(request.Step.Outputs, input) {

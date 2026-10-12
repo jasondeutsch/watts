@@ -29,7 +29,7 @@ func TestQAOutcomeLoopsBackWithFeedbackAndRetainsHistory(t *testing.T) {
 			return Result{Outcome: "passed"}, nil
 		}
 	})
-	definition := Definition{Steps: []Step{{Name: "coding", Command: "code"}, {Name: "qa", Capability: "test-suite", Transitions: map[string]string{"changes-required": "coding", "passed": "end"}}}}
+	definition := Definition{Steps: []Step{{Name: "coding", Container: fixtureContainer("code")}, {Name: "qa", Container: fixtureContainer("test-suite"), Transitions: map[string]string{"changes-required": "coding", "passed": "end"}}}}
 	environment.ExecuteWorkflow(Run, Input{Definition: definition})
 	state := resultState(t, environment)
 	require.False(t, state.Status != "completed" || codingCalls != 2 || qaCalls != 2 || len(state.History) != 4,
@@ -67,7 +67,7 @@ func TestExternalEventsValidateAttemptOutcomeAndUniqueID(t *testing.T) {
 		reject(Event{ID: "ci-run-1", Step: "ci", Attempt: 2, Outcome: "passed"})
 		environment.UpdateWorkflowNoRejection(EventUpdate, "ci-2", t, Event{ID: "ci-run-2", Step: "ci", Attempt: 2, Outcome: "passed", Data: map[string]any{"url": "https://ci.example/run/2"}})
 	}, 2*time.Second)
-	definition := Definition{Steps: []Step{{Name: "coding", Command: "code"}, {Name: "ci", Event: true, Transitions: map[string]string{"changes-required": "coding", "passed": "end"}}}}
+	definition := Definition{Steps: []Step{{Name: "coding", Container: fixtureContainer("code")}, {Name: "ci", Event: true, Transitions: map[string]string{"changes-required": "coding", "passed": "end"}}}}
 	environment.ExecuteWorkflow(Run, Input{Definition: definition})
 	state := resultState(t, environment)
 	require.False(t, rejected != 4 || codingCalls != 2 || len(state.History) != 4 || state.History[3].Data["url"] == nil,
@@ -90,7 +90,7 @@ func TestUndeclaredOutcomeWaitsForExplicitRetry(t *testing.T) {
 
 		environment.UpdateWorkflowNoRejection(RetryUpdate, "retry", t, Retry{Step: "qa", Attempt: 1})
 	}, time.Second)
-	environment.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "qa", Capability: "test-suite", Transitions: map[string]string{"passed": "end"}}}}})
+	environment.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "qa", Container: fixtureContainer("test-suite"), Transitions: map[string]string{"passed": "end"}}}}})
 	{
 		state := resultState(t, environment)
 		require.False(t, calls != 2 || len(state.History) != 2 || state.History[0].Error == "",
@@ -100,20 +100,20 @@ func TestUndeclaredOutcomeWaitsForExplicitRetry(t *testing.T) {
 
 func TestOutcomeLoopHonorsTotalTransitionBudget(t *testing.T) {
 	environment := environment(func(context.Context, ActivityInput) (Result, error) { return Result{Outcome: "again"}, nil })
-	environment.ExecuteWorkflow(Run, Input{Definition: Definition{MaxTransitions: 2, Steps: []Step{{Name: "qa", Capability: "test-suite", Transitions: map[string]string{"again": "qa"}}}}})
+	environment.ExecuteWorkflow(Run, Input{Definition: Definition{MaxTransitions: 2, Steps: []Step{{Name: "qa", Container: fixtureContainer("test-suite"), Transitions: map[string]string{"again": "qa"}}}}})
 	require.NotEqual(t, nil, environment.GetWorkflowError(),
 		"an endless loop escaped its transition budget")
 }
 
 func TestRejectInvalidOutcomeDefinitions(t *testing.T) {
 	for _, definition := range []Definition{
-		{Steps: []Step{{Name: "qa", Capability: "test-suite", Command: "true"}}},
-		{Steps: []Step{{Name: "qa", Capability: "test-suite", Transitions: map[string]string{"passed": "missing"}}}},
+		{Steps: []Step{{Name: "qa", Container: fixtureContainer("qa"), Human: true}}},
+		{Steps: []Step{{Name: "qa", Container: fixtureContainer("test-suite"), Transitions: map[string]string{"passed": "missing"}}}},
 		{Steps: []Step{{Name: "qa", Event: true}}},
 		{Steps: []Step{{Name: "qa", Event: true, Human: true, Inputs: []string{"x"}, Transitions: map[string]string{"passed": "end"}}}},
-		{Steps: []Step{{Name: "qa", Command: "true", ResultFile: "../result.json"}}},
-		{Templates: map[string]string{"../outside": "bad"}, Steps: []Step{{Name: "work", Command: "true"}}},
-		{Steps: []Step{{Name: "qa", Capability: "test-suite", Transitions: map[string]string{"passed": "end"}}, {Name: "unused", Command: "true"}}},
+		{Steps: []Step{{Name: "qa", Container: fixtureContainer("true"), Outputs: []string{"../result.json"}}}},
+		{Templates: map[string]string{"../outside": "bad"}, Steps: []Step{{Name: "work", Container: fixtureContainer("true")}}},
+		{Steps: []Step{{Name: "qa", Container: fixtureContainer("test-suite"), Transitions: map[string]string{"passed": "end"}}, {Name: "unused", Container: fixtureContainer("true")}}},
 	} {
 		{
 			err := definition.Validate()

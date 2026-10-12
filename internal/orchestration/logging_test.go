@@ -37,7 +37,7 @@ func TestLogsExplainFailedAttemptAndAuthorizedRetry(t *testing.T) {
 	env.RegisterDelayedCallback(func() {
 		env.UpdateWorkflowNoRejection(RetryUpdate, "retry", t, Retry{Step: "build", Attempt: 1, Force: true})
 	}, time.Second)
-	env.ExecuteWorkflow(Run, Input{Task: "tasks/demo", Definition: Definition{Steps: []Step{{Name: "build", Command: "build", MaxAttempts: 1}}}})
+	env.ExecuteWorkflow(Run, Input{Task: "tasks/demo", Definition: Definition{Steps: []Step{{Name: "build", Container: fixtureContainer("build"), MaxAttempts: 1}}}})
 	require.NoError(t, env.GetWorkflowError())
 	text := output.String()
 	for _, value := range []string{`msg="Stage started" task=tasks/demo stage=build attempt=1`, `msg="Stage failed"`, "compiler: undefined symbol", `msg="Waiting for retry"`, "wctl task run 'tasks/demo' --ignore-attempt-limit", `msg="Retry authorized"`, "attempt=2", `msg="Stage completed"`, `msg="Workflow completed"`} {
@@ -57,7 +57,7 @@ func TestLogsExplainApprovalAndReworkRouting(t *testing.T) {
 		env.UpdateWorkflowNoRejection(DecisionUpdate, "approve", t, Decision{Step: "approve", Attempt: 2, By: "Human", Artifacts: state.Stages[1].Artifacts})
 	}, 2*time.Second)
 	env.ExecuteWorkflow(Run, Input{Task: "tasks/demo", Definition: Definition{Steps: []Step{
-		{Name: "draft", Command: "draft"},
+		{Name: "draft", Container: fixtureContainer("draft")},
 		{Name: "approve", Human: true, Inputs: []string{"SPEC.md"}, Transitions: map[string]string{"approved": "end", "rejected": "draft"}},
 	}}})
 	require.NoError(t, env.GetWorkflowError())

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jasondeutsch/watts/cli/internal/agents"
 	"github.com/jasondeutsch/watts/cli/internal/devtools"
 	"github.com/jasondeutsch/watts/cli/internal/settings"
 	"github.com/jasondeutsch/watts/cli/internal/setup"
@@ -37,35 +36,19 @@ func (n *node) child(name string) *node {
 // tree is the command structure shown by `wctl help`.
 var tree = []*node{
 	{name: "template", summary: "Render a YAML template package (-f values file, -o output directory)", run: templates.Template},
-	{name: "init", summary: "Set up Watts in this repository (run once): kit, watts.yaml, agent directories, extension", needsRepo: true, run: setup.Init},
-	{name: "doctor", summary: "Check prerequisites, the kit, agents and credentials (--live also calls each gateway)", needsRepo: true, run: setup.Doctor},
-	{name: "install", summary: "Install Pi and the loop extension", needsRepo: false, runOnEmpty: true, run: setup.InstallAll, children: []*node{
-		{name: "all", summary: "Install Pi, apply the config, install the extension and run doctor", needsRepo: true, run: setup.InstallAll},
-		{name: "pi", summary: "Install Pi 1.x globally with npm (skipped if 1.x is present)", run: setup.InstallPi},
-		{name: "ralph", summary: "Install the pinned pi-ralph-loop into every agent directory", needsRepo: true, run: setup.InstallRalph},
-	}},
-	{name: "config", summary: "Show and change watts.yaml", needsRepo: true, children: []*node{
-		{name: "show", summary: "Print the config (--resolved fills in every agent's defaults)", needsRepo: true, run: settings.Show},
+	{name: "doctor", summary: "Validate selected manifests, Docker images, and required secret sources", needsRepo: true, run: setup.Doctor},
+	{name: "config", summary: "Inspect packages and manage local worker preferences", needsRepo: true, children: []*node{
+		{name: "show", summary: "Print worker preferences and the selected workflow", needsRepo: true, run: settings.Show},
 		{name: "set", summary: "Change a setting: wctl config set <key> <value>", needsRepo: true, run: settings.Set},
-		{name: "apply", summary: "Create or refresh the agent directories from the config (--force regenerates models.json)", needsRepo: true, run: settings.Apply},
-		{name: "env", summary: "List, add or remove the environment variables passed into agents: wctl config env add NAME", needsRepo: true, run: settings.Env},
-	}},
-	{name: "agent", summary: "Work with the agents (build, review and your own)", needsRepo: true, children: []*node{
-		{name: "pi", summary: "Open Pi interactively as one agent, in its isolated environment (--agent build|review|name)", needsRepo: true, run: agents.Pi},
-		{name: "list", summary: "List the agents with their model, identity and directory", needsRepo: true, run: agents.List},
-		{name: "env", summary: "Show the environment variable names an agent receives (never values)", needsRepo: true, run: agents.Env},
-		{name: "new", summary: "Create a custom agent from the documented example: wctl agent new <name>", needsRepo: true, run: agents.New},
-		{name: "follow", summary: "Print a readable live feed of an agent's session", needsRepo: true, run: agents.Follow},
-		{name: "clean", summary: "Delete the private agent directories (logins, packages, sessions). Needs --force", needsRepo: true, run: agents.Clean},
 	}},
 	{name: "start", summary: "Start worker and web UI; -d runs detached", needsRepo: true, run: setup.Start},
 	{name: "stop", summary: "Stop this project's worker and web UI", needsRepo: true, run: setup.Stop},
 	{name: "task", summary: "Create and run tasks", needsRepo: true, children: []*node{
 		{name: "new", summary: "Create a task: wctl task new <slug>", needsRepo: true, run: tasks.New},
-		{name: "decide", summary: "Approve or reject a pending Temporal human stage: task decide [task] [stage] [--reject] [--feedback text]", needsRepo: true, run: tasks.Decide},
+		{name: "decide", summary: "Approve or reject a pending Temporal human stage: task decide [task] [stage] [--reject] [--feedback text]; delegation: --actor, --authorized-by, --reviewed-status", needsRepo: true, run: tasks.Decide},
 		{name: "run", summary: "Start or continue a task; retry its failed stage", needsRepo: true, run: tasks.Run},
 		{name: "status", summary: "Temporal workflow progress and attempt history (--json)", needsRepo: true, run: tasks.Status},
-		{name: "cancel", summary: "Cancel the workflow and stop its active subprocesses", needsRepo: true, run: tasks.Cancel},
+		{name: "cancel", summary: "Cancel the workflow and stop its active containers", needsRepo: true, run: tasks.Cancel},
 	}},
 	{name: "dev", summary: "Tools for developing and testing Watts itself", children: []*node{
 		{name: "mock-server", summary: "Run a fake OpenAI-style gateway that returns canned replies (--status 401 to test failures)", run: devtools.MockServer},
@@ -142,15 +125,14 @@ func groupUsage(path string, n *node) string {
 
 func usage() string {
 	var b strings.Builder
-	b.WriteString("wctl " + version + ": governed AI coding on Pi 1.0 with pi-ralph-loop\n\n")
+	b.WriteString("wctl " + version + ": declarative agent workflows\n\n")
 	b.WriteString("Usage: wctl <command> [subcommand] [flags] [arguments]\n\n")
-	b.WriteString("Run `wctl init` once in a project folder. Task arguments are folders such as tasks/2026-10-03-http-retry,\nor just the folder name.\n")
+	b.WriteString("Create a package with `wctl template new <name>` and select its watts.yaml. Task arguments are folders such as tasks/2026-10-03-http-retry,\nor just the folder name.\n")
 	sections := []struct {
 		title string
 		names []string
 	}{
-		{"Setup", []string{"init", "doctor", "install", "config"}},
-		{"Agents", []string{"agent"}},
+		{"Setup", []string{"doctor", "config"}},
 		{"Tasks", []string{"task", "start", "stop"}},
 		{"Other", []string{"template", "dev", "version"}},
 	}

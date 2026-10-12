@@ -1,26 +1,47 @@
-# Pi with Ralph runtime image
+# Pi/Ralph workload image
 
-Base image for an Agent using Pi with Ralph as a tool. Includes Node.js 22.22.1, Pi 1.0.3, Ralph 2.1.0, CA certificates, and ripgrep. Runs as the unprivileged `node` user with `/workspace` as its working directory. No model, provider, credentials, workflow, or team skills are baked into it.
-
-Build from the Watts repository:
+This image implements the [common workload interface](../../docs/container-workloads.md)
+with Pi 1.0.3 and Ralph 2.1.0. Watts core has no Pi adapter or host-install logic.
+Teams may extend this image or provide a different image implementing the contract.
 
 ```sh
 docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
 ```
 
-Inspect the installed runtime without calling a model:
+An Agent selects `command: [node, /opt/watts/launcher.mjs]` and `network: bridge`
+when using a hosted provider. The launcher reads `/inputs/input.json`, creates
+private Pi settings, resolves its declared auth environment, configures selected
+MCPs/skills, and runs from `/workspace`. Task documents are copied to
+`/runtime/task`; only declared outputs are copied to `/outputs/task`.
 
-```sh
-docker run --rm watts/pi-ralph:0.1.0 --version
-docker run --rm watts/pi-ralph:0.1.0 list
+Optional `/inputs/config/launcher.json` is image-specific configuration:
+
+```json
+{"ralph":true,"verdict":"review/VERDICT.md"}
 ```
 
-Pi loads Ralph from its installed local package path; runtime startup does not need to download the extension. `PI_CODING_AGENT_DIR` defaults to `/home/node/.pi/agent`. A future adapter that replaces this directory or its settings must retain the local Ralph package binding from `settings.json`. Private state must be writable by the container user and isolated per attempt.
+`ralph: true` requires a declared `/inputs/config/ralph.md`, copied into the private
+task environment. `verdict` maps a valid final `VERDICT: REJECT` to
+`changes-required`; a pass becomes `success`. `model_config` can override the
+custom provider model's context window, token limit, reasoning, and optional
+explicit prices. Unconfigured cost is reported as unknown.
 
-The entrypoint is `pi`; arguments are passed directly to it. This is a runtime image, not a Watts worker. Container orchestration, adapter configuration, credentials, workspace isolation, usage capture, cancellation, and durable output publication remain proposed integration work. Running this image alone does not establish the Watts execution contract or prevent Ralph from creating workspace-relative registries.
+The image owns exact, version-checked upstream patches that keep Ralph's registry
+in `/runtime` and load usage/error telemetry in nested RPC agents. A successful
+process must provide assistant-turn evidence; Ralph must also complete its loop.
+Provider errors are explicit error events even when Pi exits zero. No project
+`.ralph-runner`, Pi settings, or extension installation is needed.
 
-## Team dependencies
+Tests in `protocol.test.mjs` check telemetry mapping. The application image tests
+exercise plain Pi, Ralph tool execution, and provider failures with a fake gateway.
+The [Go team image](../go_generalist/README.md) adds Go, gopls, and golangci-lint.
+Upstream dependencies retain their licenses; Watts-owned source follows the
+repository license.
 
-Extend this image to supply the workload's required tools. It does not contain Go, golangci-lint, or gopls and therefore is not yet the complete Go generalist image. Skills, instructions, provider/model configuration, and credential references come from resolved Agent manifests at launch.
+## Declared tools and gates
 
-Use existing image build tools outside Watts. Version arguments permit deliberate upgrades; validate compatible Pi/Ralph versions together. Direct software versions are pinned, but the Node base image is pinned by digest; apt packages and npm transitive dependencies are not fully locked. Publish and reference a tested image digest for immutable execution. No image has been published to a remote registry by adding these files.
+The launcher loads named skill sources and exposes fixed command tools using an image-owned Pi extension, including nested Ralph agents. MCP tool references select native server configurations. Commands return bounded structured output and retained evidence; timeouts/cancellation terminate their process group.
+
+After the Agent finishes, the launcher runs required gates against the final candidate. Failure returns detailed feedback to a new bounded repair pass in the same container/workspace. Every pass reruns all gates; exhaustion fails without publishing application changes. The final gate report binds checks to candidate hashes/modes and is validated by Watts before publication. `gate_policy.max_repairs` defaults to two. Ralph helper metadata is prepared privately; repair loop history remains under `/runtime/ralph-history`.
+
+Declared command tools/gates use the image's original PATH, excluding Pi's private binary overrides. This does not prohibit all installations or constrain native shell access; stronger workload policy remains separate work. The image implements the generic [Agent capability contract](../../docs/container-workloads.md#agent-capabilities-and-gate-evidence).

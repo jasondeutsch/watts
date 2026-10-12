@@ -1,6 +1,6 @@
 # Template packages
 
-`wctl template` renders YAML from a local package. It does not require an initialized project or Temporal and does not submit work.
+`wctl template` renders YAML from a local package. It does not require runtime setup or Temporal and does not submit work.
 
 ```sh
 wctl template new team-workflow

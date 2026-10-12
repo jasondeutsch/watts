@@ -1,7 +1,6 @@
 package application
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +13,6 @@ import (
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/workflowpackage"
 	"github.com/jasondeutsch/watts/internal/workspace"
-	workflowtemplates "github.com/jasondeutsch/watts/workflow-templates"
 )
 
 const builtinWorkflow = "sdlc"
@@ -47,9 +45,6 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 		return WorkflowSelection{Definition: *cfg.Workflow}, nil
 	}
 	if name == "" {
-		name = cfg.DefaultWorkflow
-	}
-	if name == "" {
 		return app.ResolvePackage(cfg)
 	}
 	var contents []byte
@@ -60,11 +55,9 @@ func (app *Service) ResolveWorkflow(cfg projectconfig.Config, name string) (Work
 		}
 		contents, err = manifest.ReadWorkflowSource(filepath.Join(app.Root, filepath.FromSlash(name)))
 	} else {
-		if !orchestration.ValidName(name) {
-			return WorkflowSelection{}, fmt.Errorf("invalid workflow template %q", name)
-		}
-		contents, err = workflowtemplates.Files.ReadFile(name + ".yaml")
+		return WorkflowSelection{}, fmt.Errorf("workflow source must be an explicit YAML path")
 	}
+
 	if err != nil {
 		return WorkflowSelection{}, fmt.Errorf("workflow %s: %w", name, err)
 	}
@@ -105,6 +98,11 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	if err != nil {
 		return "", err
 	}
+	// A private state marker keeps later commands rooted in this workspace even
+	// when its descriptor is external and an ancestor is another Watts project.
+	if err := os.MkdirAll(app.Wd(), 0700); err != nil {
+		return "", err
+	}
 	taskPath := filepath.ToSlash(filepath.Join(cfg.TasksDir, time.Now().Format("2006-01-02")+"-"+slug))
 	if err := os.MkdirAll(app.TasksPath(cfg), 0755); err != nil {
 		return "", err
@@ -112,22 +110,13 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	if err := os.Mkdir(filepath.Join(app.Root, taskPath), 0755); err != nil {
 		return "", err
 	}
-	replacer := strings.NewReplacer("__NAME__", filepath.Base(taskPath), "__TASKS__", cfg.TasksDir, "__KIT__", ".watts/kit", "__AGENT__", selected.Definition.AgentIdentity("build"), "__REVIEWER__", selected.Definition.AgentIdentity("review"), "tasks/<date>-<slug>/", taskPath+"/")
+	replacer := strings.NewReplacer("__NAME__", filepath.Base(taskPath), "__TASKS__", cfg.TasksDir, "tasks/<date>-<slug>/", taskPath+"/")
 	for artifact, contents := range selected.Definition.Templates {
 		target, err := workspace.TaskArtifactOutput(app.Root, taskPath, artifact)
 		if err != nil {
 			return "", err
 		}
 		if err := os.WriteFile(target, []byte(replacer.Replace(contents)), 0644); err != nil {
-			return "", err
-		}
-	}
-	if selected.Definition.CaptureBaseline {
-		var snapshot bytes.Buffer
-		if err := app.KitScriptTo(cfg, &snapshot, "snapshot.sh", taskPath, "base"); err != nil {
-			return "", err
-		}
-		if err := os.WriteFile(filepath.Join(app.Root, taskPath, "BASE"), snapshot.Bytes(), 0644); err != nil {
 			return "", err
 		}
 	}
@@ -139,6 +128,6 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	if err := app.WritePackageMetadata(taskPath, selected.Package); err != nil {
 		return "", err
 	}
-	app.say("Created %s. Customize workflow.yaml, then run: wctl task run %s", taskPath, taskPath)
+	app.say("Created %s. Draft SPEC.md, then run: wctl task run %s", taskPath, taskPath)
 	return taskPath, nil
 }

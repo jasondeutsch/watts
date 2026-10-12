@@ -7,12 +7,6 @@ spec:
 {{ if hasKey $settings "config_ref" }}
   config_ref: {{ $settings.config_ref | quote }}
 {{ end }}
-{{ if hasKey $settings "runtime_agent" }}
-  runtime_agent: {{ $settings.runtime_agent | quote }}
-{{ end }}
-{{ if hasKey $settings "runtime" }}
-  runtime: {{ $settings.runtime | quote }}
-{{ end }}
 {{ if hasKey $settings "identity" }}
   identity: {{ $settings.identity | quote }}
 {{ end }}
@@ -39,10 +33,6 @@ spec:
 {{ end }}
 {{ if hasKey $settings "mcps" }}
   mcps: {{ $settings.mcps | toYaml | nindent 4 }}
-{{ end }}
-{{ with (get $settings "sandbox") }}
-  sandbox:
-    mode: {{ .mode | quote }}
 {{ end }}
 {{ with (get $settings "auth") }}
   auth:
@@ -81,5 +71,6 @@ spec:
 {{ end }}
 {{ end }}
 {{ end }}
+{{ template "watts.agent-capabilities" $settings }}
 {{ template "watts.contract" $settings }}
 {{ end }}

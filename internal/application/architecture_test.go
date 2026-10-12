@@ -29,6 +29,13 @@ func TestPackageBoundaries(t *testing.T) {
 		}
 		for _, dependency := range file.Imports {
 			name, _ := strconv.Unquote(dependency.Path.Value)
+			relative, _ := filepath.Rel(filepath.Join(projectRoot, "internal"), path)
+			owner := strings.Split(filepath.ToSlash(relative), "/")[0]
+			if owner == "workload" || owner == "orchestration" || owner == "manifest" || owner == "config" {
+				assert.False(t, strings.HasPrefix(name, "github.com/docker/"), "data/compiler package %s imports Docker infrastructure", path)
+			}
+			assert.NotContains(t, name, "/agentpi", "core imports a runtime-specific adapter")
+			assert.NotContains(t, name, "/kit", "core imports runtime-specific assets")
 			assert.False(t, name == "flag" || (name == "github.com/jasondeutsch/watts/cli" || strings.HasPrefix(name, "github.com/jasondeutsch/watts/cli/")),
 				"internal package %s depends on UI package %s", path, name)
 		}

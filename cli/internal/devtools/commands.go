@@ -12,10 +12,9 @@ import (
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
-	projectconfig "github.com/jasondeutsch/watts/internal/config"
 )
 
-// GatewayHandler answers OpenAI-style requests with a canned reply, so Watts and Pi can be exercised
+// GatewayHandler answers OpenAI-style requests with a canned reply, so provider-facing workload images can be exercised
 // without a real model or a real key. status lets a test provoke a failure such as 401.
 func GatewayHandler(reply string, status int) http.Handler {
 	mux := http.NewServeMux()
@@ -55,7 +54,8 @@ func MockServer(a *terminal.Context, args []string) error {
 	}
 	srv := &http.Server{Addr: *addr, Handler: GatewayHandler(*reply, *status), ReadHeaderTimeout: 5 * time.Second}
 	a.Say("Mock gateway on http://%s/v1 (status %d). Press Ctrl-C to stop.", *addr, *status)
-	a.Say("Declare it as a provider in %s with base_url http://%s/v1 and no key.", projectconfig.Filename, *addr)
+	a.Say("Configure provider, model, and base_url in the Agent manifest through source values/templates; select a workload image that supports this gateway.")
+	a.Say("Host gateway URL: http://%s/v1. Use an address reachable from the workload container (for local Docker, host.docker.internal rather than localhost).", *addr)
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigc)

@@ -20,19 +20,21 @@ The goal is an auditable, portable process that teams can maintain over time: ch
 
 The Watts CLI is named `wctl`. Package names, manifests such as `watts.yaml`, and `.watts` state directories retain the Watts name.
 
-Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. YAML resources compose Workflow, Procedure, Agent, ConfigMap, and Secret definitions; see [Kinds and usage](docs/kinds.md). Temporal manages durable workflow state; project workers execute stages using Pi and Ralph today.
+Watts runs configurable coding workflows with AI agents, human review gates, and automated checks. YAML resources compose Workflow, Procedure, Agent, ConfigMap, and Secret definitions; see [Kinds and usage](docs/kinds.md). Temporal manages durable workflow state; project workers execute Agent and Procedure workloads in a container execution environment. The currently supported backend is a local Docker Engine; Podman and Kubernetes are potential future backends, not supported integrations. Pi/Ralph is an example workload image.
 
-This is an MVP and proof of concept at **0.1.0**. Pinned definitions, attempt evidence, and an [eval scaffold](evals/go-workflow/README.md) exist, but complete token/cost accounting, reliable recovery, and portable isolated execution remain work in progress. See [known issues](issues.md), the [stage communication proposal](docs/stage-communication.md), and the [package/runtime layout proposal](docs/package-runtime-layout.md). Watts does not require Git.
+This is an MVP and proof of concept at **0.1.0**. Pinned definitions, attempt evidence, and an [eval scaffold](evals/go-workflow/README.md) exist, but complete token/cost accounting, distributed execution, and hardened multi-tenant isolation remain work in progress. Local container execution, reattachment, and conflict-aware publication are implemented. See [known issues](issues.md), the [stage communication proposal](docs/stage-communication.md), and the [package/runtime layout proposal](docs/package-runtime-layout.md). Watts does not require Git.
 
 ## Get started
 
-You need Go 1.27 or later to build Watts, Node.js for Pi, and a running Temporal server. See the [runbook](docs/runbook.md) for prerequisites and provider setup.
+You need Go 1.27 or later to build Watts and a running Temporal server. Build or pull the images selected by your manifests on the worker's local Docker engine. See the [runbook](docs/runbook.md) for prerequisites and provider setup.
 
 From this checkout, build Watts and start local Temporal with Docker Compose:
 
 ```sh
 make build
 docker compose up -d --wait
+docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
+docker build -t watts/go-generalist:0.1.0 registry/go_generalist
 ```
 
 The build produces `bin/wctl`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](docs/temporal.md).
@@ -40,9 +42,9 @@ The build produces `bin/wctl`; `make install` installs it to `/usr/local/bin`. E
 From the project directory where you want application work performed:
 
 ```sh
-wctl init
-wctl install
-wctl doctor
+wctl template new team-workflow
+# Customize team-workflow/values.yaml and build its declared images.
+wctl doctor --package ./team-workflow/watts.yaml
 wctl start -d
 ```
 
@@ -53,19 +55,17 @@ The bundled workflows currently select `deepseek/deepseek-v4-flash` through Open
 ## Complete a task
 
 ```sh
-wctl task new hello-server
+wctl task new hello-server --package ./team-workflow/watts.yaml
 ```
 
-Use the task path printed by the command. Write the request or rough notes in its `SPEC.md`, and customize its `workflow.yaml` before submission.
+Use the task path printed by the command. Write the request or rough notes in its `SPEC.md`. The task's `workflow.yaml` is a resolved snapshot: customize source values/templates before creating the task, rather than editing rendered output.
 
 ```sh
 wctl task run <task>
 wctl task status <task>
 ```
 
-The default workflow is:
-
-**Specification → human spec review → planning → human plan review → build → agent review**
+The scaffolded package is a small build/check example. For the full specification, planning, approval, build, and review process with Agent quality gates, use the [Go generalist package](resources/examples/go_generalist/README.md).
 
 When the workflow pauses for human review, inspect the document and approve it:
 
@@ -83,13 +83,13 @@ See the [task runbook](docs/runbook.md) for the full procedure, approval rules, 
 
 ## Current project layout
 
-The directory containing `watts.yaml` is the project root. Application source, tests, dependencies, and build files belong there or in its normal source directories.
+The application workspace stays separate from package authoring. With `--package`, task creation uses the invocation directory as the project root, even when the package is external. Without it, a root `watts.yaml` selects the package.
 
-- `watts.yaml`: project infrastructure, local runtime defaults, tool connections, task location, and default workflow selection.
-- `.watts/`: local agent state, generated assets, and service files.
-- `tasks/<task>/`: `SPEC.md`, `PLAN.md`, `workflow.yaml`, review documents, logs, and execution evidence.
+- Package descriptor, values, templates, and assets: authored workflow configuration.
+- `.watts/`: local worker state and captured package assets; operational preferences are in `.watts/settings.yaml`.
+- `tasks/<task>/`: `SPEC.md`, `PLAN.md`, resolved `workflow.yaml`, review documents, logs, and execution evidence.
 
-A project can contain multiple tasks. Each task receives its own workflow definition. Bundled templates live in [workflow-templates/](workflow-templates/); projects can supply a default using `default_workflow` in `watts.yaml`.
+Workload-private settings and tool state live under `~/.watts/runtime/`, outside the application workspace. There is no initialization or host agent installation command. The [runbook](docs/runbook.md) explains explicit dependency provisioning. The proposed consolidated `watts/` package and home-directory runtime layout remain tracked in [wiss-028](issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime).
 
 ## Documentation
 
@@ -99,7 +99,7 @@ The [documentation index](docs/README.md) groups guides by task.
 | --- | --- |
 | [Runbook](docs/runbook.md) | Setup, configuration, task execution, and recovery |
 | [Kinds](docs/kinds.md) | Resource definitions, references, shared defaults, and credentials |
-| [Workflow execution](docs/workflows.md) | Routing, results, plugins, events, and MCP tools |
+| [Workflow execution](docs/workflows.md) | Routing, results, events, and MCP tools |
 | [Templating](docs/templates.md) | Values-driven packages and rendering |
 | [Go team example](resources/examples/go_generalist/README.md) | Custom workflow, skills, gopls, and lint |
 | [Temporal](docs/temporal.md) | Infrastructure, workers, durable execution, and recovery |

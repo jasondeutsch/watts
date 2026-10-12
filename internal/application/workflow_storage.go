@@ -1,14 +1,16 @@
 package application
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/jasondeutsch/watts/internal/containerengine"
 	"os"
 	"path/filepath"
+	"time"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/kit"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
 )
@@ -55,6 +57,9 @@ func (app *Service) CreateWorkflowBinding(config projectconfig.Config, taskPath 
 		return WorkflowBinding{}, err
 	}
 	definition := selected.Definition
+	if err := app.protectPackageSources(taskPath, &config); err != nil {
+		return WorkflowBinding{}, err
+	}
 	if err := definition.Validate(); err != nil {
 		return WorkflowBinding{}, err
 	}
@@ -64,6 +69,26 @@ func (app *Service) CreateWorkflowBinding(config projectconfig.Config, taskPath 
 		}
 		if definition.Steps[i].TimeoutSeconds == 0 && config.Limits.MaxMinutes > 0 {
 			definition.Steps[i].TimeoutSeconds = config.Limits.MaxMinutes * 60
+		}
+	}
+	engine, err := containerengine.Connect()
+	if err != nil {
+		return WorkflowBinding{}, err
+	}
+	defer engine.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	for i := range definition.Steps {
+		if definition.Steps[i].Container != nil {
+			copy := *definition.Steps[i].Container
+			if err = app.captureContainerResources(taskPath, definition.Steps[i].Name, &copy); err != nil {
+				return WorkflowBinding{}, err
+			}
+			copy.Image, err = engine.Pin(ctx, copy.Image)
+			if err != nil {
+				return WorkflowBinding{}, fmt.Errorf("stage %s: %w", definition.Steps[i].Name, err)
+			}
+			definition.Steps[i].Container = &copy
 		}
 	}
 	data, err := json.MarshalIndent(config, "", "  ")
@@ -76,14 +101,12 @@ func (app *Service) CreateWorkflowBinding(config projectconfig.Config, taskPath 
 		return WorkflowBinding{}, err
 	}
 	binding := WorkflowBinding{
-		WorkflowID: "watts-" + kit.Digest([]byte(app.Root + "\x00" + taskPath))[:32],
+		WorkflowID: "watts-" + storage.Digest([]byte(app.Root + "\x00" + taskPath))[:32],
 		Settings:   app.ResolvedTemporalSettings(config),
 		Input: orchestration.Input{
 			Task:         taskPath,
 			Definition:   definition,
-			ConfigSHA256: kit.Digest(append(data, '\n')),
-			Offline:      flags.Offline,
-			Pass:         flags.Pass,
+			ConfigSHA256: storage.Digest(append(data, '\n')),
 		},
 	}
 	if err = storage.WriteJSONAtomically(app.WorkflowBindingPath(taskPath), binding); err != nil {

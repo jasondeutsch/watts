@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/workload"
 	"gopkg.in/yaml.v3"
 )
 
@@ -33,11 +34,10 @@ type Placement struct {
 }
 
 type WorkflowSpec struct {
-	Version         int               `yaml:"version,omitempty"`
-	CaptureBaseline bool              `yaml:"capture_baseline,omitempty"`
-	Templates       map[string]string `yaml:"templates,omitempty"`
-	MaxTransitions  int               `yaml:"max_transitions,omitempty"`
-	Steps           []Placement       `yaml:"steps"`
+	Version        int               `yaml:"version,omitempty"`
+	Templates      map[string]string `yaml:"templates,omitempty"`
+	MaxTransitions int               `yaml:"max_transitions,omitempty"`
+	Steps          []Placement       `yaml:"steps"`
 }
 
 type SecretKeyRef struct {
@@ -47,24 +47,19 @@ type SecretKeyRef struct {
 
 // Contract is shared by Agent and Procedure. It does not contain routing or model configuration.
 type Contract struct {
+	Container      *workload.Spec          `yaml:"container,omitempty"`
 	Inputs         []string                `yaml:"inputs,omitempty"`
 	Outputs        []string                `yaml:"outputs,omitempty"`
 	PreChecks      []orchestration.Check   `yaml:"pre_checks,omitempty"`
 	Checks         []orchestration.Check   `yaml:"checks,omitempty"`
 	TimeoutSeconds int                     `yaml:"timeout_seconds,omitempty"`
 	MaxAttempts    int                     `yaml:"max_attempts,omitempty"`
-	ResultFile     string                  `yaml:"result_file,omitempty"`
 	Environment    map[string]string       `yaml:"environment,omitempty"`
 	Secrets        map[string]SecretKeyRef `yaml:"secrets,omitempty"`
 }
 
 type Execution struct {
-	Type       string   `yaml:"type"`
-	Command    string   `yaml:"command,omitempty"`
-	Check      string   `yaml:"check,omitempty"`
-	Args       []string `yaml:"args,omitempty"`
-	Capability string   `yaml:"capability,omitempty"`
-	Argv       []string `yaml:"argv,omitempty"`
+	Type string `yaml:"type"`
 }
 
 type ProcedureSpec struct {
@@ -73,31 +68,29 @@ type ProcedureSpec struct {
 	ConfigRef string    `yaml:"config_ref,omitempty"`
 }
 
-type Sandbox struct {
-	Mode string `yaml:"mode"`
-}
 type Auth struct {
 	Secret SecretKeyRef `yaml:"secret"`
 	Env    string       `yaml:"env"`
 }
 
 type AgentSpec struct {
-	RuntimeAgent string `yaml:"runtime_agent,omitempty"`
-	Contract     `yaml:",inline"`
-	Runtime      string                             `yaml:"runtime"`
-	Identity     string                             `yaml:"identity"`
-	Provider     string                             `yaml:"provider"`
-	Model        string                             `yaml:"model"`
-	Prompt       string                             `yaml:"prompt"`
-	Sandbox      Sandbox                            `yaml:"sandbox"`
-	Auth         *Auth                              `yaml:"auth,omitempty"`
-	BaseURL      string                             `yaml:"base_url,omitempty"`
-	API          string                             `yaml:"api,omitempty"`
-	Thinking     string                             `yaml:"thinking,omitempty"`
-	SkillsDirs   []string                           `yaml:"skills_dirs,omitempty"`
-	MCPs         []string                           `yaml:"mcps,omitempty"`
-	MCPServers   map[string]orchestration.MCPServer `yaml:"mcp_servers,omitempty"`
-	ConfigRef    string                             `yaml:"config_ref,omitempty"`
+	Tools      []workload.Tool      `yaml:"tools,omitempty"`
+	Gates      []workload.Gate      `yaml:"gates,omitempty"`
+	Skills     []workload.Skill     `yaml:"skills,omitempty"`
+	GatePolicy *workload.GatePolicy `yaml:"gate_policy,omitempty"`
+	Contract   `yaml:",inline"`
+	Identity   string                             `yaml:"identity"`
+	Provider   string                             `yaml:"provider"`
+	Model      string                             `yaml:"model"`
+	Prompt     string                             `yaml:"prompt"`
+	Auth       *Auth                              `yaml:"auth,omitempty"`
+	BaseURL    string                             `yaml:"base_url,omitempty"`
+	API        string                             `yaml:"api,omitempty"`
+	Thinking   string                             `yaml:"thinking,omitempty"`
+	SkillsDirs []string                           `yaml:"skills_dirs,omitempty"`
+	MCPs       []string                           `yaml:"mcps,omitempty"`
+	MCPServers map[string]orchestration.MCPServer `yaml:"mcp_servers,omitempty"`
+	ConfigRef  string                             `yaml:"config_ref,omitempty"`
 }
 
 type ConfigMapSpec struct {
@@ -214,7 +207,7 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 				return orchestration.Definition{}, fmt.Errorf("Secret %s requires env sources", resource.Name)
 			}
 			for key, source := range spec.Env {
-				if key == "" || !validEnvironment(source) {
+				if key == "" || !workload.EnvironmentSource(source) {
 					return orchestration.Definition{}, fmt.Errorf("Secret %s has invalid environment source", resource.Name)
 				}
 			}
@@ -250,13 +243,16 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 		}
 		return orchestration.Definition{}, fmt.Errorf("bundle requires one Workflow")
 	}
-	definition := orchestration.Definition{Version: workflow.Version, CaptureBaseline: workflow.CaptureBaseline, Templates: workflow.Templates, MaxTransitions: workflow.MaxTransitions}
+	definition := orchestration.Definition{Version: workflow.Version, Templates: workflow.Templates, MaxTransitions: workflow.MaxTransitions}
 	for _, placement := range workflow.Steps {
 		step, ok := work[placement.Use]
 		if !ok {
 			return definition, fmt.Errorf("step %s references unknown %s %s", placement.Name, placement.Use.Kind, placement.Use.Name)
 		}
 		step.Name = placement.Name
+		if step.Agent != "" {
+			step.Agent = placement.Name
+		}
 		step.Parameters = placement.Parameters
 		step.Transitions = placement.Transitions
 		step.Next = placement.Next
@@ -305,22 +301,14 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		if err := decodeSpec(resource, &spec); err != nil {
 			return step, err
 		}
-		if spec.Runtime != "pi" {
-			return step, fmt.Errorf("Agent %s: unsupported runtime %q", resource.Name, spec.Runtime)
-		}
-		if spec.Sandbox.Mode != "local" {
-			return step, fmt.Errorf("Agent %s: sandbox mode %q cannot be enforced; only explicit local mode is supported", resource.Name, spec.Sandbox.Mode)
-		}
 		if strings.TrimSpace(spec.Identity) == "" || strings.TrimSpace(spec.Provider) == "" || strings.TrimSpace(spec.Model) == "" {
 			return step, fmt.Errorf("Agent %s requires identity, provider and model", resource.Name)
 		}
 		step.Agent = resource.Name
-		if spec.RuntimeAgent != "" {
-			step.Agent = spec.RuntimeAgent
-		}
+		step.Tools, step.Gates, step.Skills, step.GatePolicy = spec.Tools, spec.Gates, spec.Skills, spec.GatePolicy
 		step.Identity = spec.Identity
 		step.Provider, step.Model, step.Prompt, step.MCPs = spec.Provider, spec.Model, spec.Prompt, spec.MCPs
-		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API, Sandbox: spec.Sandbox.Mode, MCPServers: spec.MCPServers}
+		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API, MCPServers: spec.MCPServers}
 		contract = spec.Contract
 		if spec.Auth != nil {
 			if contract.Secrets == nil {
@@ -340,16 +328,8 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		contract = spec.Contract
 		execution := spec.Execution
 		switch execution.Type {
-		case "command":
-			step.Command = execution.Command
-		case "check":
-			step.Check, step.Args = execution.Check, execution.Args
-		case "capability":
-			step.Capability = execution.Capability
-			if step.Capability == "" && len(execution.Argv) > 0 {
-				step.Capability = resource.Name
-			}
-			step.CapabilityCommand = execution.Argv
+		case "container":
+			// Container supplies the executable contract.
 		case "approval":
 			step.Human = true
 		case "event":
@@ -357,13 +337,15 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		default:
 			return step, fmt.Errorf("Procedure %s: unsupported execution type %q", resource.Name, execution.Type)
 		}
-		if execution.Type != "command" && execution.Command != "" || execution.Type != "check" && (execution.Check != "" || len(execution.Args) > 0) || execution.Type != "capability" && (execution.Capability != "" || len(execution.Argv) > 0) {
-			return step, fmt.Errorf("Procedure %s: execution fields do not match type", resource.Name)
-		}
+
+	}
+	step.Container = contract.Container
+	if !step.Human && !step.Event && step.Container == nil {
+		return step, fmt.Errorf("%s %s needs a container specification", resource.Kind, resource.Name)
 	}
 	step.Inputs, step.Outputs = contract.Inputs, contract.Outputs
 	step.PreChecks, step.Checks = contract.PreChecks, contract.Checks
-	step.TimeoutSeconds, step.MaxAttempts, step.ResultFile = contract.TimeoutSeconds, contract.MaxAttempts, contract.ResultFile
+	step.TimeoutSeconds, step.MaxAttempts = contract.TimeoutSeconds, contract.MaxAttempts
 	step.Environment = contract.Environment
 	if len(contract.Secrets) > 0 {
 		step.SecretEnvironment = map[string]string{}
@@ -392,8 +374,18 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 	if step.Agent != "" && strings.TrimSpace(step.Prompt) == "" {
 		return step, fmt.Errorf("Agent %s requires a prompt", resource.Name)
 	}
-	if step.Command == "" && step.Check == "" && step.Capability == "" && !step.Human && !step.Event && step.Agent == "" {
-		return step, fmt.Errorf("Procedure %s requires its execution command, check or capability", resource.Name)
+	if step.Container == nil && !step.Human && !step.Event && step.Agent == "" {
+		return step, fmt.Errorf("Procedure %s requires a container", resource.Name)
+	}
+
+	if step.Agent != "" {
+		mcps := map[string]bool{}
+		for name := range step.AgentSettings.MCPServers {
+			mcps[name] = true
+		}
+		if err := workload.ValidateAgentCapabilities(step.Tools, step.Gates, step.Skills, step.GatePolicy, step.Container.Resources, mcps); err != nil {
+			return step, fmt.Errorf("Agent %s: %w", resource.Name, err)
+		}
 	}
 	return step, nil
 }

@@ -6,7 +6,6 @@ import (
 )
 
 type DoctorOptions struct {
-	Live bool
 	JSON bool
 }
 
@@ -16,7 +15,7 @@ func (a *Context) Doctor(cfg projectconfig.Config, haveConfig bool) error {
 }
 
 func (a *Context) DoctorWith(cfg projectconfig.Config, haveConfig bool, opt DoctorOptions) error {
-	checks := a.DoctorChecks(cfg, haveConfig, opt.Live)
+	checks := a.DoctorChecks(cfg, haveConfig)
 	failed := false
 	for _, c := range checks {
 		if c.Level == "fail" {

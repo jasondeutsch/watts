@@ -1,0 +1,163 @@
+{
+  "task": "tasks/2026-10-12-tic-tac-toe-eval",
+  "workflow_id": "watts-62caf69653b0e9dc8d38e28f1152d74b",
+  "run_id": "01a13084-5ea2-782e-ab76-4db6a5f8ae59",
+  "state": {
+    "status": "waiting_retry",
+    "current": "lint",
+    "stages": [
+      {
+        "name": "specification",
+        "status": "completed",
+        "attempts": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "name": "spec-review",
+        "status": "completed",
+        "attempts": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          }
+        ],
+        "approved_by": "j",
+        "outcome": "approved"
+      },
+      {
+        "name": "planning",
+        "status": "completed",
+        "attempts": 1,
+        "artifacts": [
+          {
+            "path": "PLAN.md",
+            "sha256": "6b6a82c553f6a435ce52fee9778f41167ed413b3479351b0e093f200fa5718d3"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "name": "plan-review",
+        "status": "completed",
+        "attempts": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          },
+          {
+            "path": "PLAN.md",
+            "sha256": "6b6a82c553f6a435ce52fee9778f41167ed413b3479351b0e093f200fa5718d3"
+          }
+        ],
+        "approved_by": "j",
+        "outcome": "approved"
+      },
+      {
+        "name": "build",
+        "status": "completed",
+        "attempts": 1,
+        "artifacts": [
+          {
+            "path": "STORY_LOG.md",
+            "sha256": "bd920749e6dc1c09eb0f975f7ed94789d97796a1c8ee017e026e05063f8d6e2e"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "name": "lint",
+        "status": "failed",
+        "attempts": 1,
+        "last_error": "container main exited 1: main.go:6:2: could not import io (/usr/local/go/src/io/io.go:16:2: could not import errors (/usr/local/go/src/errors/wrap.go:8:2: could not import internal/reflectlite (/usr/local/go/src/internal/reflectlite/swapper.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing \"internal/goarch\" (cannot decode \"internal/goarch\", export data version 4 is greater than maximum supported version 2); please report an issue)))) (typecheck)\n\t\"io\"\n\t^\nmain.go:7:2: could not import os (/usr/local/go/src/os/dir.go:8:2: could not import internal/bytealg (/usr/local/go/src/internal/bytealg/bytealg.go:8:2: could not import internal/cpu (-: could not load export data: internal error in importing \"internal/cpu\" (cannot decode \"internal/cpu\", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)\n\t\"os\"\n\t^\nmain.go:8:2: could not import strings (/usr/local/go/src/strings/builder.go:8:2: could not import internal/abi (/usr/local/go/src/internal/abi/abi.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing \"internal/goarch\" (cannot decode \"internal/goarch\", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)\n\t\"strings\"\n\t^\n3 issues:\n* typecheck: 3",
+        "outcome": "failure"
+      },
+      {
+        "name": "review",
+        "status": "pending",
+        "attempts": 0
+      }
+    ],
+    "transitions": 6,
+    "history": [
+      {
+        "step": "specification",
+        "attempt": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "step": "spec-review",
+        "attempt": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          }
+        ],
+        "outcome": "approved",
+        "data": {
+          "approved_by": "j"
+        }
+      },
+      {
+        "step": "planning",
+        "attempt": 1,
+        "artifacts": [
+          {
+            "path": "PLAN.md",
+            "sha256": "6b6a82c553f6a435ce52fee9778f41167ed413b3479351b0e093f200fa5718d3"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "step": "plan-review",
+        "attempt": 1,
+        "artifacts": [
+          {
+            "path": "SPEC.md",
+            "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+          },
+          {
+            "path": "PLAN.md",
+            "sha256": "6b6a82c553f6a435ce52fee9778f41167ed413b3479351b0e093f200fa5718d3"
+          }
+        ],
+        "outcome": "approved",
+        "data": {
+          "approved_by": "j"
+        }
+      },
+      {
+        "step": "build",
+        "attempt": 1,
+        "artifacts": [
+          {
+            "path": "STORY_LOG.md",
+            "sha256": "bd920749e6dc1c09eb0f975f7ed94789d97796a1c8ee017e026e05063f8d6e2e"
+          }
+        ],
+        "outcome": "success"
+      },
+      {
+        "step": "lint",
+        "attempt": 1,
+        "outcome": "failure",
+        "error": "container main exited 1: main.go:6:2: could not import io (/usr/local/go/src/io/io.go:16:2: could not import errors (/usr/local/go/src/errors/wrap.go:8:2: could not import internal/reflectlite (/usr/local/go/src/internal/reflectlite/swapper.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing \"internal/goarch\" (cannot decode \"internal/goarch\", export data version 4 is greater than maximum supported version 2); please report an issue)))) (typecheck)\n\t\"io\"\n\t^\nmain.go:7:2: could not import os (/usr/local/go/src/os/dir.go:8:2: could not import internal/bytealg (/usr/local/go/src/internal/bytealg/bytealg.go:8:2: could not import internal/cpu (-: could not load export data: internal error in importing \"internal/cpu\" (cannot decode \"internal/cpu\", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)\n\t\"os\"\n\t^\nmain.go:8:2: could not import strings (/usr/local/go/src/strings/builder.go:8:2: could not import internal/abi (/usr/local/go/src/internal/abi/abi.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing \"internal/goarch\" (cannot decode \"internal/goarch\", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)\n\t\"strings\"\n\t^\n3 issues:\n* typecheck: 3"
+      }
+    ]
+  }
+}

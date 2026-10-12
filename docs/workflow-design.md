@@ -1,44 +1,51 @@
 # Workflow architecture
 
-Watts is a 0.1.0 proof of concept. Schema versions identify formats independently of the application release number. No operation requires Git.
+Watts separates authoring, durable orchestration, generic execution, and image-owned
+agent behavior. The CLI and web UI call the application layer; neither owns a runner.
 
-## Current authoring to execution
-
-1. Users author [Workflow, Procedure, Agent, ConfigMap, and Secret resources](kinds.md), optionally through [templates](templates.md). Project settings select a default bundle and configure infrastructure, local runtime state, MCP connections, and plugins.
-2. Task creation resolves references and defaults, scaffolds artifacts, and writes an editable task bundle. First submission pins the resolved definition and runtime configuration as JSON with integrity hashes.
-3. A common deterministic Temporal interpreter executes the ordered graph, routes outcomes, waits for approvals/events, and records attempts. It does not generate Temporal code for each workflow.
-4. Worker activities read pinned settings, launch local executors, validate results and artifacts, and record evidence. Secret source names are pinned; values are resolved at launch.
-
-An Agent is a specialized unit of work with model/runtime fields. A Procedure handles model-free work. A Workflow step places either resource and owns routing; resource definitions are distinct from running attempts. Project defaults and task customization are described in the [workflow guide](workflows.md).
-
-Temporal history is authoritative for progress and completion. Task files hold artifacts, snapshots, executor requests/results, logs, and provenance. Approvals bind to artifact hashes. Workspace locks serialize mutating activities, and heartbeats propagate cancellation. Local execution uses a shared project workspace and does not roll back edits.
-
-## Package responsibilities
+1. A local package captures descriptors, values, templates, schemas, and assets.
+2. Rendering produces typed Workflow, Agent, Procedure, ConfigMap, and Secret resources.
+3. Compilation resolves references/defaults into a graph and workload contracts.
+4. Submission freezes image identities, resources, and worker preferences.
+5. Temporal schedules activities and retains routes, waits, attempts, and outcomes.
+6. The worker captures an isolated candidate and launches its image with the common interface.
+7. Results, checks, and conflict detection control publication; durable receipts prevent duplicate execution.
 
 | Package | Responsibility |
 | --- | --- |
-| `cmd/cli`, `cli`, `cli/internal` | Entry point, arguments, terminal presentation, and application calls |
-| `web` | Task monitor and controls over application services |
-| `internal/render` | Generic template/values processing, independent of Watts resource semantics |
-| `internal/manifest` | Typed YAML decoding, bundle resolution, and authoring serialization |
-| `internal/config` | Project settings, defaults, runtime role resolution, and validation |
-| `internal/application` | Task lifecycle, pinned bindings, executor activities, and Temporal SDK integration |
-| `internal/orchestration` | Runtime definition/result protocol, graph validation, and deterministic interpreter |
-| `internal/kit` | Embedded checks, templates, skills, and asset setup |
-| `internal/storage`, `internal/workspace` | Persistence, artifacts, workspace locking, and process lifecycle |
+| `cli`, `web` | User interfaces |
+| `internal/render` | Go templates, Sprig, values merging, and schema validation |
+| `internal/workflowpackage` | Local package capture, composition, and scaffolding |
+| `internal/manifest` | Typed YAML resources, strict validation, and compilation |
+| `internal/config` | Local operational preferences |
+| `internal/orchestration` | Serializable graph/result protocol and deterministic Temporal interpreter |
+| `internal/application` | Task lifecycle, submission, activities, evidence, and publication |
+| `internal/workload` | Runtime-neutral container specification, file publication, and events |
+| `internal/containerengine` | Official Docker SDK lifecycle and reattachment |
+| `internal/storage`, `internal/workspace` | Persistence, artifact paths, and workspace locking |
+| `registry/` | Image source and runtime-specific launchers/tool integration |
 
-[Architecture tests](../internal/application/architecture_test.go) enforce the CLI dependency boundary. Tests live beside implementations; [evals](../evals/go-workflow/README.md) compare a configured workflow's outcomes over time.
+The compiler and orchestration data types do not import the Docker SDK. Core
+execution does not import Pi/Ralph code, install software, or interpret their
+private state. An Agent image translates descriptive configuration into its own
+runtime. A deterministic Procedure can run an ordinary OCI image without a wrapper.
 
-## Proposed next boundary
+A workload is the execution primitive, analogous to a Pod. Agent and executable
+Procedure attempts specialize it. ConfigMap/Secret supply inputs; Workflow and
+approval/event waits remain orchestration resources. Workloads require a container
+execution environment; currently only the local Docker Engine backend is supported.
+Podman would require compatibility testing or an adapter. Kubernetes would require
+a scheduling and artifact-delivery backend while Temporal continues to manage
+durable workflow state.
 
-Resource resolution exists today; self-contained execution packages, immutable cross-node artifact delivery, explicit upstream bindings, isolated workspaces, and containers do not. Those contracts are described in the [stage communication proposal](stage-communication.md). Parallel scheduling and expression conditions also remain future work.
+The current Docker backend requires a shared local filesystem. Immutable artifact
+transport, distinct-node execution, stronger identities, network controls, and
+full retention remain future work. The [container interface](container-workloads.md)
+describes current behavior; [stage communication](stage-communication.md) and
+[package/runtime layout](package-runtime-layout.md) describe the broader proposal.
 
-## Proposed execution and storage model
-
-An isolated workload is the basic execution primitive, analogous to a Kubernetes Pod. Agent and executable Procedure attempts specialize it; Workflow orchestrates them through Temporal, while ConfigMap and Secret supply scoped inputs. Approval/event waits are orchestration states and do not require idle containers. This is a proposed execution boundary, not a new implemented Kind.
-
-Executor adapters own runtime/tool setup, isolation, lifecycle, and output publication. Pi and its Ralph tool belong inside an Agent environment; core orchestration should not interpret their private directory structures. Kubernetes may provide execution capacity later, while Temporal remains responsible for durable routing and waits.
-
-The proposed project `watts/` directory is the authored Watts package and may define multiple named Workflows. Task/evidence storage is separate and its location remains undecided. Machine-level settings belong in `~/.watts/config/settings.json`; host runtime files belong in `~/.watts/runtime/`, retaining the latest execution per task by default while preserving active/recovery state and durable evidence.
-
-See [stage communication](stage-communication.md#isolated-workload-primitive), [package/runtime layout](package-runtime-layout.md), and [Temporal integration issues](../issues.md#temporal-integration-completion). These proposals do not change current setup commands or filesystem paths.
+Architecture tests protect the UI dependency boundary. Testify-based tests cover
+compilation, routing, CLI/package lifecycle, workload safety, ordinary images,
+Pi/Ralph against a fake provider, and opt-in persistent Temporal lifecycle tests.
+[Workflow evals](../evals/go-workflow/README.md) separately compare configured
+process outcomes over time.

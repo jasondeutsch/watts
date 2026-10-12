@@ -10,8 +10,8 @@ import (
 	temporallog "go.temporal.io/sdk/log"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
-	"github.com/jasondeutsch/watts/internal/kit"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/storage"
 )
 
 func (app *Service) ResolvedTemporalSettings(config projectconfig.Config) projectconfig.TemporalSettings {
@@ -26,7 +26,7 @@ func (app *Service) ResolvedTemporalSettings(config projectconfig.Config) projec
 		settings.Namespace = "default"
 	}
 	if settings.TaskQueue == "" {
-		settings.TaskQueue = "watts-" + kit.Digest([]byte(app.Root))[:16]
+		settings.TaskQueue = "watts-" + storage.Digest([]byte(app.Root))[:16]
 	}
 	return settings
 }
@@ -59,6 +59,11 @@ func QueryTemporalWorkflowState(ctx context.Context, temporalClient client.Clien
 		err = temporalClient.GetWorkflow(ctx, binding.WorkflowID, binding.RunID).Get(ctx, &state)
 		if err != nil {
 			state.Status = strings.ToLower(strings.TrimPrefix(execution.WorkflowExecutionInfo.Status.String(), "WORKFLOW_EXECUTION_STATUS_"))
+			if execution.WorkflowExecutionInfo.Status == enumspb.WORKFLOW_EXECUTION_STATUS_CANCELED {
+				state.Status = "cancelled"
+			} else if execution.WorkflowExecutionInfo.Status == enumspb.WORKFLOW_EXECUTION_STATUS_TIMED_OUT {
+				state.Status = "timed_out"
+			}
 			return state, nil
 		}
 		return state, nil

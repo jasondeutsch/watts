@@ -2,205 +2,352 @@ package application
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/jasondeutsch/watts/internal/containerengine"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/jasondeutsch/watts/internal/workspace"
 )
 
-// execute dispatches each executable step through the same result contract.
-func (runtime *activityRuntime) execute() (orchestration.Result, error) {
-	request := runtime.request
-	var err error
-	for _, check := range request.Step.PreChecks {
-		runtime.logProgress("Precondition check", "check", check.Script)
-		if err := runtime.runCheck(check.Script, append([]string{request.Input.Task}, check.Args...)...); err != nil {
-			return orchestration.Result{}, fmt.Errorf("precondition check %s: %w", check.Script, err)
-		}
-	}
-	switch {
-	case request.Step.Capability != "":
-		runtime.logProgress("Capability starting", "capability", request.Step.Capability)
-		return runtime.runCapability()
-	case request.Step.Agent != "":
-		runtime.logProgress("Agent starting", "agent", request.Step.Agent, "provider", request.Step.Provider, "model", request.Step.Model)
-		err = runtime.runAgent()
-	case request.Step.Command != "":
-		runtime.logProgress("Command starting")
-		command := exec.Command("bash", "-c", request.Step.Command)
-		command.Dir = runtime.project.Root
-		command.Env = append(os.Environ(), runtime.environment...)
-		command.Env = append(command.Env, "WATTS_REPO="+runtime.project.Root, "WATTS_TASK="+request.Input.Task, "WATTS_ROLE="+request.Step.Name)
-		command.Stdin = EmptyWorkerInput()
-		var output, diagnostics checkOutput
-		command.Stdout = io.MultiWriter(runtime.output, &output)
-		command.Stderr = io.MultiWriter(runtime.errorOutput, &diagnostics)
-		err = runtime.runProcess(command, 0)
-		if err != nil {
-			detail := strings.TrimSpace(string(diagnostics.tail))
-			if detail == "" {
-				detail = strings.TrimSpace(string(output.tail))
-			}
-			if detail != "" {
-				err = fmt.Errorf("command: %s (%w)", detail, err)
-			}
-		}
-	case request.Step.Check != "":
-		runtime.logProgress("Check starting", "check", request.Step.Check)
-		err = runtime.runCheck(request.Step.Check, append([]string{request.Input.Task}, request.Step.Args...)...)
-	default:
-		err = errors.New("this step must be handled by the workflow, not an execution activity")
-	}
-	if err != nil {
-		return orchestration.Result{}, err
-	}
-	return runtime.project.readStepResult(request)
+type attemptPreparation struct {
+	InputHash string                   `json:"input_sha256"`
+	Baseline  map[string]workload.File `json:"baseline"`
+	Image     string                   `json:"image"`
+}
+type acceptedAttempt struct {
+	Execution string               `json:"execution"`
+	InputHash string               `json:"input_sha256"`
+	Result    orchestration.Result `json:"result"`
+}
+type attemptWorkspace struct {
+	root, input, output, private, candidate, evidence string
+	preparation                                       attemptPreparation
 }
 
-// validateResult applies routing, completion checks and evidence validation once,
-// regardless of the executor that produced the result. Watts supplies artifact hashes.
-func (runtime *activityRuntime) validateResult(result orchestration.Result) (orchestration.Result, error) {
-	request := runtime.request
-	runtime.logProgress("Validating stage result")
-	if _, err := request.Input.Definition.Target(stepIndex(request), result.Outcome); err != nil {
+func (runtime *activityRuntime) attemptRoot() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".watts", "runtime", storage.Digest([]byte(runtime.project.Root))[:16], storage.Digest([]byte(runtime.request.Input.Task))[:16], storage.Digest([]byte(runtime.executionIdentity()))[:24]), nil
+}
+
+func (runtime *activityRuntime) execute() (result orchestration.Result, runErr error) {
+	step := runtime.request.Step
+	if step.Container == nil {
+		return result, fmt.Errorf("stage %s requires a container", step.Name)
+	}
+	root, err := runtime.attemptRoot()
+	if err != nil {
 		return result, err
 	}
-	for _, check := range request.Step.Checks {
-		runtime.logProgress("Completion check", "check", check.Script)
-		if err := runtime.runCheck(check.Script, append([]string{request.Input.Task}, check.Args...)...); err != nil {
-			return result, fmt.Errorf("completion check %s: %w", check.Script, err)
+	attempt := attemptWorkspace{root: root, input: filepath.Join(root, "inputs"), output: filepath.Join(root, "outputs"), private: filepath.Join(root, "private"), candidate: filepath.Join(root, "workspace"), evidence: filepath.Dir(runtime.project.stepInputPath(runtime.request))}
+	input, err := os.ReadFile(runtime.project.stepInputPath(runtime.request))
+	if err != nil {
+		return result, err
+	}
+	contract, err := json.Marshal(step)
+	if err != nil {
+		return result, err
+	}
+	inputHash := storage.Digest(append(input, contract...))
+	// The durable receipt outlives disposable containers and candidate directories.
+	if data, err := os.ReadFile(filepath.Join(attempt.evidence, "accepted.json")); err == nil {
+		var receipt acceptedAttempt
+		if err = json.Unmarshal(data, &receipt); err != nil {
+			return result, err
+		}
+		if receipt.Execution == runtime.executionIdentity() {
+			if receipt.InputHash != inputHash {
+				return result, fmt.Errorf("accepted attempt contract changed")
+			}
+			hashes, err := workspace.HashTaskArtifacts(runtime.project.Root, runtime.request.Input.Task, step.Outputs)
+			if err != nil {
+				return result, err
+			}
+			if !equalArtifacts(hashes, receipt.Result.Artifacts) {
+				return result, fmt.Errorf("accepted attempt outputs changed; refusing to repeat execution")
+			}
+			return receipt.Result, nil
+		}
+	} else if !os.IsNotExist(err) {
+		return result, err
+	}
+	engine, err := containerengine.Connect()
+	if err != nil {
+		return result, err
+	}
+	defer engine.Close()
+	if err = runtime.prepareWorkspace(engine, &attempt, input, inputHash); err != nil {
+		return result, err
+	}
+	defer func() {
+		if runErr != nil {
+			_, err := attempt.preserveEvidence()
+			runErr = errors.Join(runErr, err)
+		}
+	}()
+	environment, err := runtime.containerEnvironment()
+	if err != nil {
+		return result, err
+	}
+	phases := []struct {
+		name    string
+		command []string
+	}{}
+	for i, check := range step.PreChecks {
+		phases = append(phases, struct {
+			name    string
+			command []string
+		}{fmt.Sprintf("pre-%d", i), check.Command})
+	}
+	phases = append(phases, struct {
+		name    string
+		command []string
+	}{"main", step.Container.Command})
+	for i, check := range step.Checks {
+		phases = append(phases, struct {
+			name    string
+			command []string
+		}{fmt.Sprintf("post-%d", i), check.Command})
+	}
+	var containers []string
+	for _, phase := range phases {
+		spec := *step.Container
+		spec.Image = attempt.preparation.Image
+		spec.Command = phase.command
+		var tail checkOutput
+		runtime.logProgress("Container executing", "phase", phase.name, "image", spec.Image)
+		exit, err := engine.Run(runtime.context, containerengine.Request{Identity: runtime.executionIdentity() + "/" + phase.name, Spec: spec, InputDir: attempt.input, OutputDir: attempt.output, RuntimeDir: attempt.private, WorkspaceDir: attempt.candidate, Environment: environment, Stdout: io.MultiWriter(runtime.output, &tail), Stderr: io.MultiWriter(runtime.errorOutput, &tail)})
+		containers = append(containers, exit.ContainerID)
+		if saveErr := storage.WriteJSONAtomically(filepath.Join(attempt.evidence, phase.name+"-container.json"), exit); saveErr != nil {
+			return result, errors.Join(err, saveErr)
+		}
+		if err != nil {
+			return result, err
+		}
+		if exit.Code == nil {
+			return result, fmt.Errorf("container %s returned no exit status", phase.name)
+		}
+		if *exit.Code != 0 {
+			return result, fmt.Errorf("container %s exited %d: %s", phase.name, *exit.Code, strings.TrimSpace(string(tail.tail)))
 		}
 	}
-	paths := map[string]bool{}
-	for _, path := range request.Step.Outputs {
-		paths[path] = true
+	events, err := attempt.preserveEvidence()
+	if err != nil {
+		return result, err
+	}
+	for _, event := range events {
+		if event.Type == "error" {
+			return result, fmt.Errorf("workload error: %s", event.Message)
+		}
+	}
+	if step.Container.Result == "exit-code" {
+		result.Outcome = "success"
+	} else {
+		data, _, err := workload.ReadFile(attempt.output, "result.json", maximumWorkloadResult)
+		if err != nil {
+			return result, fmt.Errorf("workload must publish result.json: %w", err)
+		}
+		result, err = parseStepResult(data)
+		if err != nil {
+			return result, err
+		}
+	}
+	if _, err = runtime.request.Input.Definition.Target(stepIndex(runtime.request), result.Outcome); err != nil {
+		return result, err
+	}
+	if err = runtime.validateOutputs(attempt, result); err != nil {
+		return result, err
+	}
+	if err = runtime.validateAgentGates(attempt); err != nil {
+		return result, err
+	}
+	if err = runtime.context.Err(); err != nil {
+		return result, err
+	}
+	if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "publication.json"), result); err != nil {
+		return result, err
+	}
+	if step.Container.Workspace == "write" {
+		if err = workload.Publish(runtime.project.Root, attempt.candidate, attempt.preparation.Baseline, runtime.exclusions()); err != nil {
+			return result, err
+		}
+	}
+	for _, name := range step.Outputs {
+		data, mode, err := workload.ReadFile(attempt.output, "task/"+name, workload.MaximumFileBytes)
+		if err != nil {
+			return result, err
+		}
+		if _, err = workspace.TaskArtifactOutput(runtime.project.Root, runtime.request.Input.Task, name); err != nil {
+			return result, err
+		}
+		if err = workload.WriteFile(runtime.project.Root, filepath.Join(runtime.request.Input.Task, name), data, mode); err != nil {
+			return result, err
+		}
+	}
+	result.Artifacts, err = workspace.HashTaskArtifacts(runtime.project.Root, runtime.request.Input.Task, step.Outputs)
+	if err != nil {
+		return result, err
+	}
+	receipt := acceptedAttempt{Execution: runtime.executionIdentity(), InputHash: inputHash, Result: result}
+	if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "accepted.json"), receipt); err != nil {
+		return result, err
+	}
+	for _, id := range containers {
+		if id == "" {
+			continue
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err = engine.Remove(ctx, id)
+		cancel()
+		if err != nil {
+			runtime.logProgress("Container cleanup pending", "container", id, "error", err)
+		}
+	}
+	return result, nil
+}
+
+func (runtime *activityRuntime) containerEnvironment() ([]string, error) {
+	environment := []string{"HOME=/runtime/home", "TMPDIR=/runtime/tmp", "WATTS_INPUT=/inputs/input.json", "WATTS_OUTPUTS=/outputs", "WATTS_RESULT=/outputs/result.json", "WATTS_EVENTS=/outputs/events.jsonl", "WATTS_WORKSPACE=/workspace"}
+	for name, value := range runtime.request.Step.Environment {
+		environment = append(environment, name+"="+value)
+	}
+	for target, source := range runtime.request.Step.SecretEnvironment {
+		value, exists := os.LookupEnv(source)
+		if !exists || strings.TrimSpace(value) == "" {
+			return nil, fmt.Errorf("stage %s: required secret source %s is missing", runtime.request.Step.Name, source)
+		}
+		environment = append(environment, target+"="+value)
+	}
+	sort.Strings(environment)
+	return environment, nil
+}
+
+func (runtime *activityRuntime) validateOutputs(attempt attemptWorkspace, result orchestration.Result) error {
+	step := runtime.request.Step
+	for _, name := range step.Inputs {
+		if contains(step.Outputs, name) {
+			continue
+		}
+		before, _, err := workload.ReadFile(attempt.input, "task/"+name, workload.MaximumFileBytes)
+		if err != nil {
+			return err
+		}
+		after, _, err := workload.ReadFile(attempt.output, "task/"+name, workload.MaximumFileBytes)
+		if err != nil || !bytes.Equal(before, after) {
+			return fmt.Errorf("workload changed protected input %s", name)
+		}
+	}
+	for _, name := range step.Outputs {
+		if _, _, err := workload.ReadFile(attempt.output, "task/"+name, workload.MaximumFileBytes); err != nil {
+			return fmt.Errorf("missing or unsafe declared output %s: %w", name, err)
+		}
 	}
 	for _, artifact := range result.Artifacts {
-		paths[artifact.Path] = true
-	}
-	if request.Step.ResultFile != "" {
-		paths[request.Step.ResultFile] = true
-	}
-	sorted := make([]string, 0, len(paths))
-	for path := range paths {
-		sorted = append(sorted, path)
-	}
-	sort.Strings(sorted)
-	artifacts, err := workspace.HashTaskArtifacts(runtime.project.Root, request.Input.Task, sorted)
-	result.Artifacts = artifacts
-	return result, err
-}
-
-const maximumCapabilityResult = 1024 * 1024
-
-type boundedResult struct{ bytes.Buffer }
-
-func (output *boundedResult) Write(data []byte) (int, error) {
-	if output.Len()+len(data) > maximumCapabilityResult {
-		return 0, errors.New("capability result exceeds 1 MiB")
-	}
-	return output.Buffer.Write(data)
-}
-
-func (runtime *activityRuntime) runCapability() (orchestration.Result, error) {
-	app, cfg, request := runtime.project, runtime.config, runtime.request
-	capability, ok := cfg.Capabilities[request.Step.Capability]
-	if !ok || len(capability.Command) == 0 {
-		return orchestration.Result{}, fmt.Errorf("unknown capability %q", request.Step.Capability)
-	}
-	data, err := os.ReadFile(app.stepInputPath(request))
-	if err != nil {
-		return orchestration.Result{}, err
-	}
-	process := exec.Command(capability.Command[0], capability.Command[1:]...)
-	process.Dir = app.Root
-	process.Env = append(os.Environ(), runtime.environment...)
-	process.Env = append(process.Env, "WATTS_REPO="+app.Root, "WATTS_TASK="+request.Input.Task, "WATTS_ROLE="+request.Step.Name)
-	process.Stdin = bytes.NewReader(data)
-	var output boundedResult
-	var diagnostics checkOutput
-	process.Stdout, process.Stderr = &output, io.MultiWriter(runtime.errorOutput, &diagnostics)
-	if err := runtime.runProcess(process, 0); err != nil {
-		if detail := strings.TrimSpace(string(diagnostics.tail)); detail != "" {
-			err = fmt.Errorf("capability %s: %s (%w)", request.Step.Capability, detail, err)
+		if !contains(step.Outputs, artifact.Path) {
+			return fmt.Errorf("undeclared output artifact %s", artifact.Path)
 		}
-		return orchestration.Result{}, err
 	}
-	return parseStepResult(output.Bytes())
+	return nil
 }
+
+func (attempt attemptWorkspace) preserveEvidence() ([]workload.Event, error) {
+	if candidate, err := workload.Snapshot(attempt.candidate, nil); err != nil {
+		return nil, err
+	} else {
+		if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "workspace.json"), struct {
+			Baseline  map[string]workload.File `json:"baseline"`
+			Candidate map[string]workload.File `json:"candidate"`
+		}{attempt.preparation.Baseline, candidate}); err != nil {
+			return nil, err
+		}
+	}
+	for _, name := range []string{"result.json", "events.jsonl", "gates.json"} {
+		data, mode, err := workload.ReadFile(attempt.output, name, workload.MaximumFileBytes)
+		if os.IsNotExist(err) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		if err = workload.WriteFile(attempt.evidence, "workload-"+name, data, mode); err != nil {
+			return nil, err
+		}
+	}
+	if _, err := os.Lstat(filepath.Join(attempt.output, "tools")); err == nil {
+		if err = preserveToolEvidence(attempt); err != nil {
+			return nil, err
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, err
+	}
+	events, err := workload.ReadEvents(filepath.Join(attempt.output, "events.jsonl"))
+	if err != nil {
+		return events, err
+	}
+	if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "events.json"), events); err != nil {
+		return events, err
+	}
+	err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "usage.json"), workload.Summarize(events))
+	return events, err
+}
+
+func contains(values []string, value string) bool {
+	for _, entry := range values {
+		if entry == value {
+			return true
+		}
+	}
+	return false
+}
+func equalArtifacts(left, right []orchestration.Artifact) bool {
+	a, _ := json.Marshal(left)
+	b, _ := json.Marshal(right)
+	return bytes.Equal(a, b)
+}
+
+const maximumWorkloadResult = 1 << 20
 
 func parseStepResult(data []byte) (orchestration.Result, error) {
+	var result orchestration.Result
 	var wire struct {
 		Outcome   string         `json:"outcome"`
 		Feedback  string         `json:"feedback,omitempty"`
 		Data      map[string]any `json:"data,omitempty"`
 		Artifacts []string       `json:"artifacts,omitempty"`
 	}
-	var result orchestration.Result
-	if len(data) > maximumCapabilityResult {
-		return result, errors.New("capability result exceeds 1 MiB")
+	if len(data) > maximumWorkloadResult {
+		return result, fmt.Errorf("workload result exceeds 1 MiB")
 	}
-	if err := decodeExecutorJSON(data, &wire); err != nil {
-		return result, fmt.Errorf("invalid capability result: %w", err)
-	}
-	result.Outcome, result.Feedback, result.Data = wire.Outcome, wire.Feedback, wire.Data
-	if !orchestration.ValidName(result.Outcome) {
-		return result, fmt.Errorf("invalid capability outcome %q", result.Outcome)
-	}
-	for _, artifact := range wire.Artifacts {
-		if !orchestration.ValidArtifact(artifact) {
-			return result, fmt.Errorf("invalid capability artifact %q", artifact)
-		}
-		result.Artifacts = append(result.Artifacts, orchestration.Artifact{Path: artifact})
-	}
-	return result, nil
-}
-
-func (app *Service) readStepResult(request orchestration.ActivityInput) (orchestration.Result, error) {
-	if request.Step.ResultFile == "" {
-		return orchestration.Result{Outcome: "success"}, nil
-	}
-	// Hashing validates the declared result file's containment and regular-file type before reading.
-	if _, err := workspace.HashTaskArtifacts(app.Root, request.Input.Task, []string{request.Step.ResultFile}); err != nil {
-		return orchestration.Result{}, err
-	}
-	file, err := os.Open(filepath.Join(app.Root, request.Input.Task, request.Step.ResultFile))
-	if err != nil {
-		return orchestration.Result{}, err
-	}
-	defer file.Close()
-	data, err := io.ReadAll(io.LimitReader(file, maximumCapabilityResult+1))
-	if err != nil {
-		return orchestration.Result{}, err
-	}
-	return parseStepResult(data)
-}
-
-func stepIndex(request orchestration.ActivityInput) int {
-	for index, step := range request.Input.Definition.Steps {
-		if step.Name == request.Step.Name {
-			return index
-		}
-	}
-	return 0 // prepareActivity requires membership in the pinned definition.
-}
-
-func decodeExecutorJSON(data []byte, value any) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(value); err != nil {
-		return err
+	if err := decoder.Decode(&wire); err != nil {
+		return result, err
 	}
 	if err := decoder.Decode(new(any)); err != io.EOF {
-		return errors.New("expected exactly one JSON document")
+		return result, fmt.Errorf("expected exactly one result document")
 	}
-	return nil
+	if !orchestration.ValidName(wire.Outcome) {
+		return result, fmt.Errorf("invalid workload outcome %q", wire.Outcome)
+	}
+	result.Outcome, result.Feedback, result.Data = wire.Outcome, wire.Feedback, wire.Data
+	for _, name := range wire.Artifacts {
+		if !orchestration.ValidArtifact(name) {
+			return result, fmt.Errorf("invalid artifact %q", name)
+		}
+		result.Artifacts = append(result.Artifacts, orchestration.Artifact{Path: name})
+	}
+	return result, nil
 }

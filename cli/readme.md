@@ -4,7 +4,7 @@
 
 | Package | Responsibility |
 | --- | --- |
-| `setup` | Initialization, worker startup, installation and diagnostics commands |
+| `setup` | Worker startup/shutdown and manifest-scoped diagnostics commands |
 | `settings` | Configuration display, edits, application and environment settings |
 | `agents` | Interactive Pi, agent discovery, creation, cleanup and session feeds |
 | `tasks` | Task lifecycle, execution, status and human decisions |

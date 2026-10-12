@@ -41,7 +41,7 @@ Run the lint command declared by the task workflow from the project root along w
 
 Do not weaken lint configuration or add broad suppressions to make a change pass. Explain any narrowly scoped suppression. Formatting and lint success supplement tests and independent review; neither proves the acceptance criteria.
 
-Follow the task's Ralph instructions for snapshots and story evidence. Report actual command results, not assumed success. Bring contradictions in approved documents back to the human gate instead of inventing requirements or approving documents yourself.
+Follow the task's Ralph instructions for story evidence and checks. Application work belongs in /workspace; task documents belong in the private task path supplied by the launcher. Report actual command results, not assumed success. Bring contradictions in approved documents back to the human gate instead of inventing requirements or approving documents yourself.
 
 ## Source and team customization
 

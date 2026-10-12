@@ -20,10 +20,6 @@ func New(root, release string, input io.Reader, output, errorOutput io.Writer) *
 	service := &application.Service{Release: release, Root: root, WorkingDirectory: root, Input: input, Output: output, ErrorOutput: errorOutput}
 	app := &Context{Service: service}
 	service.Report = func(event application.Event) {
-		if len(event.Findings) > 0 {
-			app.PrintFindings(event.Findings)
-			return
-		}
 		if event.Warning {
 			app.Warn("%s", event.Message)
 		} else {

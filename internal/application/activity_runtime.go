@@ -2,221 +2,91 @@ package application
 
 import (
 	"context"
-	"errors"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"sort"
-	"strings"
-	"time"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/jasondeutsch/watts/internal/workspace"
 	temporallog "go.temporal.io/sdk/log"
 )
 
-// activityRuntime holds dependencies scoped to one Temporal activity. Project services
-// remain shared; cancellation, environment and log streams never mutate the project.
 type activityRuntime struct {
-	project     *Service
-	config      projectconfig.Config
-	request     orchestration.ActivityInput
-	context     context.Context
-	output      io.Writer
-	errorOutput io.Writer
-	environment []string
-	logger      temporallog.Logger
+	project             *Service
+	config              projectconfig.Config
+	request             orchestration.ActivityInput
+	context             context.Context
+	output, errorOutput io.Writer
+	logger              temporallog.Logger
+	execution           string
 }
-
-func (runtime *activityRuntime) runProcess(command *exec.Cmd, limit time.Duration) error {
-	stopProgress := runtime.reportProcessProgress()
-	defer stopProgress()
-	return workspace.RunProcess(runtime.context, runtime.project.Wd("workflow-active-process.json"), command, limit)
-}
-
-func (runtime *activityRuntime) runCheck(script string, args ...string) error {
-	if !strings.HasSuffix(script, ".sh") {
-		script += ".sh"
-	}
-	var output, diagnostics checkOutput
-	command, err := runtime.project.KitCommand(runtime.config, io.MultiWriter(runtime.output, &output), runtime.environment, script, args...)
-	if err != nil {
-		return err
-	}
-	command.Stderr = io.MultiWriter(runtime.errorOutput, &diagnostics)
-	command.Stdin = EmptyWorkerInput()
-	if err := runtime.runProcess(command, 0); err != nil {
-		detail := strings.TrimSpace(string(diagnostics.tail))
-		if stdout := strings.TrimSpace(string(output.tail)); stdout != "" {
-			if detail != "" {
-				detail += "\n"
-			}
-			detail += stdout
-		}
-		if detail != "" {
-			return fmt.Errorf("%s (%w)", detail, err)
-		}
-		return err
-	}
-	return nil
-}
-
-// checkOutput keeps a bounded tail for the failure message; complete output still goes to the stage log.
-type checkOutput struct{ tail []byte }
-
-func (output *checkOutput) Write(data []byte) (int, error) {
-	const limit = 4096
-	count := len(data)
-	if count >= limit {
-		output.tail = append(output.tail[:0], data[count-limit:]...)
-	} else {
-		excess := len(output.tail) + count - limit
-		if excess > 0 {
-			output.tail = output.tail[excess:]
-		}
-		output.tail = append(output.tail, data...)
-	}
-	return count, nil
-}
-
-func (runtime *activityRuntime) runAgent() (err error) {
-	project, request := runtime.project, runtime.request
-	if err := project.configureAgents(runtime.config, []string{request.Step.Agent}, false); err != nil {
-		return err
-	}
-	restoreMCPs, err := project.configureStageMCPs(runtime.config, request.Step)
-	if err != nil {
-		return err
-	}
-	defer func() { err = errors.Join(err, restoreMCPs()) }()
-	provider := runtime.config.Providers[request.Step.Provider]
-	if _, bound := request.Step.SecretEnvironment[provider.APIKeyEnv]; !bound {
-		if err := project.RequireCredentials(runtime.config, request.Step.Agent, request.Input.Pass); err != nil {
-			return err
-		}
-	}
-	prompt := project.stagePrompt(strings.ReplaceAll(request.Step.Prompt, "{task}", request.Input.Task), request)
-	agent, _ := runtime.config.Agent(request.Step.Agent)
-	args := []string{"-p", prompt, "--provider", agent.Provider, "--model", agent.Model}
-	evidence, err := runtime.beginAgentEvidence(args)
-	if err != nil {
-		return err
-	}
-	defer func() { err = evidence.finish(err) }()
-	command, err := project.NewPiCmd(runtime.config, request.Step.Agent, request.Input.Pass, request.Input.Offline, args...)
-	if err != nil {
-		return err
-	}
-	command.Env = append(command.Env, runtime.environment...)
-	command.Stdout, command.Stderr = runtime.output, runtime.errorOutput
-	return runtime.runProcess(command, project.RunLimit(runtime.config))
-}
-
-// StepInput is the language-independent input contract shared by all executors.
 type StepInput struct {
 	Version    int                        `json:"version"`
-	Project    string                     `json:"project"`
+	Execution  string                     `json:"execution"`
 	Task       string                     `json:"task"`
 	Step       string                     `json:"step"`
 	Attempt    int                        `json:"attempt"`
 	Parameters map[string]any             `json:"parameters,omitempty"`
+	Outputs    []string                   `json:"outputs,omitempty"`
 	Inputs     []orchestration.Artifact   `json:"inputs,omitempty"`
 	Previous   *orchestration.StageResult `json:"previous,omitempty"`
+	Agent      *AgentInput                `json:"agent,omitempty"`
+}
+
+// AgentInput is descriptive configuration. Only the workload image interprets it.
+type AgentInput struct {
+	Tools      []workload.Tool              `json:"tools,omitempty"`
+	Gates      []workload.Gate              `json:"gates,omitempty"`
+	Skills     []workload.Skill             `json:"skills,omitempty"`
+	GatePolicy *workload.GatePolicy         `json:"gate_policy,omitempty"`
+	Name       string                       `json:"name"`
+	Identity   string                       `json:"identity"`
+	Provider   string                       `json:"provider"`
+	Model      string                       `json:"model"`
+	Prompt     string                       `json:"prompt"`
+	MCPs       []string                     `json:"mcps,omitempty"`
+	Settings   *orchestration.AgentSettings `json:"settings,omitempty"`
 }
 
 func (app *Service) stepInputPath(request orchestration.ActivityInput) string {
 	return filepath.Join(app.StateDir(request.Input.Task), "steps", fmt.Sprintf("%s-%d", request.Step.Name, request.Attempt), "input.json")
 }
-
 func (runtime *activityRuntime) prepareInput() (StepInput, error) {
-	app, request := runtime.project, runtime.request
-	artifacts, err := workspace.HashTaskArtifacts(app.Root, request.Input.Task, request.Step.Inputs)
+	request := runtime.request
+	existing, readErr := os.ReadFile(runtime.project.stepInputPath(request))
+	if readErr == nil {
+		var input StepInput
+		if err := json.Unmarshal(existing, &input); err != nil {
+			return input, err
+		}
+		if input.Execution == runtime.executionIdentity() {
+			return input, nil
+		}
+	} else if !os.IsNotExist(readErr) {
+		return StepInput{}, readErr
+	}
+	artifacts, err := workspace.HashTaskArtifacts(runtime.project.Root, request.Input.Task, request.Step.Inputs)
 	if err != nil {
 		return StepInput{}, err
 	}
-	input := StepInput{Version: 1, Project: app.Root, Task: request.Input.Task, Step: request.Step.Name, Attempt: request.Attempt, Parameters: request.Step.Parameters, Inputs: artifacts, Previous: request.Previous}
-	inputPath := app.stepInputPath(request)
-	resultPath := filepath.Join(filepath.Dir(inputPath), "result.json")
-	if request.Step.ResultFile != "" {
-		resultPath, err = workspace.TaskArtifactOutput(app.Root, request.Input.Task, request.Step.ResultFile)
-		if err != nil {
-			return input, err
-		}
+	input := StepInput{Version: 1, Execution: runtime.executionIdentity(), Task: request.Input.Task, Step: request.Step.Name, Attempt: request.Attempt, Parameters: request.Step.Parameters, Inputs: artifacts, Outputs: request.Step.Outputs, Previous: request.Previous}
+	if request.Step.Agent != "" {
+		input.Agent = &AgentInput{Tools: request.Step.Tools, Gates: request.Step.Gates, Skills: request.Step.Skills, GatePolicy: request.Step.GatePolicy, Name: request.Step.Agent, Identity: request.Step.Identity, Provider: request.Step.Provider, Model: request.Step.Model, Prompt: request.Step.Prompt, MCPs: request.Step.MCPs, Settings: request.Step.AgentSettings}
 	}
-	if err := storage.WriteJSONAtomically(inputPath, input); err != nil {
-		return input, err
-	}
-	// Every attempt must produce its own result, never consume a prior attempt's outcome.
-	if err := os.Remove(resultPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return input, err
-	}
-	runtime.environment = []string{"WATTS_STEP_INPUT=" + inputPath, "WATTS_STEP_RESULT=" + resultPath, "WATTS_REPO=" + app.Root, "WATTS_TASK=" + request.Input.Task, "WATTS_AGENT_NAME=" + request.Input.Definition.AgentIdentity("build"), "WATTS_REVIEWER_NAME=" + request.Input.Definition.AgentIdentity("review")}
-	for name, value := range request.Step.Environment {
-		runtime.environment = append(runtime.environment, name+"="+value)
-	}
-	for target, source := range request.Step.SecretEnvironment {
-		value, exists := os.LookupEnv(source)
-		if !exists || strings.TrimSpace(value) == "" {
-			return input, fmt.Errorf("step %s: required secret source environment variable %s is missing", request.Step.Name, source)
-		}
-		runtime.environment = append(runtime.environment, target+"="+value)
-	}
-	return input, nil
+	return input, storage.WriteJSONAtomically(runtime.project.stepInputPath(request), input)
 }
-
-func (app *Service) stagePrompt(prompt string, request orchestration.ActivityInput) string {
-	// Extension commands have their own argument grammar. Appending agent
-	// instructions changes the command arguments instead of supplying context.
-	if strings.HasPrefix(strings.TrimSpace(prompt), "/") {
-		return prompt
+func (runtime *activityRuntime) executionIdentity() string {
+	if runtime.execution != "" {
+		return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + runtime.execution + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
 	}
-	contextPath := app.stepInputPath(request)
-	resultPath := filepath.Join(app.Root, request.Input.Task, filepath.FromSlash(request.Step.ResultFile))
-	if request.Previous != nil {
-		prompt += "\nRead the previous workflow result and feedback in " + contextPath + " before starting."
-	}
-	if request.Step.ResultFile != "" {
-		prompt += "\nWrite a JSON result to " + resultPath + " containing outcome, optional feedback, data and task-relative artifact paths. Declared outcomes: " + strings.Join(sortedOutcomes(request.Step.Transitions), ", ")
-	}
-	return prompt
+	binding, _ := runtime.project.LoadWorkflowBinding(runtime.request.Input.Task)
+	return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + binding.WorkflowID + "/" + binding.RunID + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
 }
-
-func sortedOutcomes(transitions map[string]string) []string {
-	var outcomes []string
-	for outcome := range transitions {
-		outcomes = append(outcomes, outcome)
-	}
-	sort.Strings(outcomes)
-	return outcomes
-}
-
-// Elapsed time indicates a live activity, not evidence of executor progress.
-func (runtime *activityRuntime) reportProcessProgress() func() {
-	stop := make(chan struct{})
-	done := make(chan struct{})
-	started := time.Now()
-	go func() {
-		defer close(done)
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				runtime.logProgress("Executor still running", "elapsed", time.Since(started).Round(time.Second).String())
-			case <-stop:
-				return
-			case <-runtime.context.Done():
-				return
-			}
-		}
-	}()
-	return func() { close(stop); <-done }
-}
-
 func (runtime *activityRuntime) logProgress(message string, fields ...any) {
 	fields = append([]any{"task", runtime.request.Input.Task, "stage", runtime.request.Step.Name, "attempt", runtime.request.Attempt}, fields...)
 	logger := runtime.logger
@@ -224,4 +94,44 @@ func (runtime *activityRuntime) logProgress(message string, fields ...any) {
 		logger = runtime.project.WorkerLogger()
 	}
 	logger.Info(message, fields...)
+}
+
+// A bounded diagnostic tail supplements the full durable attempt log.
+type checkOutput struct{ tail []byte }
+
+func (output *checkOutput) Write(data []byte) (int, error) {
+	const limit = 4096
+	n := len(data)
+	output.tail = append(output.tail, data...)
+	if len(output.tail) > limit {
+		output.tail = output.tail[len(output.tail)-limit:]
+	}
+	return n, nil
+}
+
+func (runtime *activityRuntime) exclusions() []string {
+	return append([]string{".git", ".watts", runtime.config.TasksDir, "watts.yaml"}, runtime.config.SnapshotExclude...)
+}
+func (runtime *activityRuntime) validateResult(result orchestration.Result) (orchestration.Result, error) {
+	request := runtime.request
+	if _, err := request.Input.Definition.Target(stepIndex(request), result.Outcome); err != nil {
+		return result, err
+	}
+	names := append([]string{}, request.Step.Outputs...)
+	for _, artifact := range result.Artifacts {
+		if !projectconfig.Contains(names, artifact.Path) {
+			names = append(names, artifact.Path)
+		}
+	}
+	artifacts, err := workspace.HashTaskArtifacts(runtime.project.Root, request.Input.Task, names)
+	result.Artifacts = artifacts
+	return result, err
+}
+func stepIndex(request orchestration.ActivityInput) int {
+	for i, step := range request.Input.Definition.Steps {
+		if step.Name == request.Step.Name {
+			return i
+		}
+	}
+	return 0
 }

@@ -1,0 +1,11 @@
+main.go:6:2: could not import io (/usr/local/go/src/io/io.go:16:2: could not import errors (/usr/local/go/src/errors/wrap.go:8:2: could not import internal/reflectlite (/usr/local/go/src/internal/reflectlite/swapper.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing "internal/goarch" (cannot decode "internal/goarch", export data version 4 is greater than maximum supported version 2); please report an issue)))) (typecheck)
+	"io"
+	^
+main.go:7:2: could not import os (/usr/local/go/src/os/dir.go:8:2: could not import internal/bytealg (/usr/local/go/src/internal/bytealg/bytealg.go:8:2: could not import internal/cpu (-: could not load export data: internal error in importing "internal/cpu" (cannot decode "internal/cpu", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)
+	"os"
+	^
+main.go:8:2: could not import strings (/usr/local/go/src/strings/builder.go:8:2: could not import internal/abi (/usr/local/go/src/internal/abi/abi.go:8:2: could not import internal/goarch (-: could not load export data: internal error in importing "internal/goarch" (cannot decode "internal/goarch", export data version 4 is greater than maximum supported version 2); please report an issue))) (typecheck)
+	"strings"
+	^
+3 issues:
+* typecheck: 3

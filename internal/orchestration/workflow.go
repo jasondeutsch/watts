@@ -80,6 +80,7 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 		stage.Attempts++
 		stage.LastError = ""
 		stage.ApprovedBy = ""
+		stage.AuthorizedBy = ""
 		stage.Artifacts = nil
 		stage.Outcome = ""
 		execution.state.Transitions++
@@ -201,6 +202,9 @@ func (execution *workflowExecution) executeStage(ctx workflow.Context, step Step
 			if stageErr == nil {
 				result.Feedback = execution.decision.Feedback
 				result.Data = map[string]any{"approved_by": execution.decision.By}
+				if execution.decision.AuthorizedBy != "" {
+					result.Data["authorized_by"] = execution.decision.AuthorizedBy
+				}
 				if execution.decision.Reject {
 					result.Outcome = "rejected"
 					if _, routed := step.Transitions["rejected"]; !routed {
@@ -208,6 +212,7 @@ func (execution *workflowExecution) executeStage(ctx workflow.Context, step Step
 					}
 				} else {
 					stage.ApprovedBy = execution.decision.By
+					stage.AuthorizedBy = execution.decision.AuthorizedBy
 					result.Outcome = "approved"
 				}
 			}

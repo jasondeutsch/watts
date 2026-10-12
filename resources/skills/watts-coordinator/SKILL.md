@@ -1,61 +1,33 @@
 ---
 name: watts-coordinator
-description: Guide a user through creating, drafting, running, monitoring, and recovering a Watts task using the CLI and task files. Use when asked to coordinate work through Watts.
+description: "Coordinate a Watts task through an external agent using the CLI: draft the request, monitor execution, explain findings, handle authorized decisions, and recover failures. Use when the user wants work performed through Watts."
 ---
 
 # Coordinate a Watts task
 
-Use the `wctl` executable for Watts commands. The product, `watts.yaml` manifest, and `.watts` state directory retain their names.
+Watts owns workflow execution and state. The coordinator prepares the request, explains recorded progress, brings decisions to the user, and acts within delegated authority. These instructions apply to any agent with command and file access. Use `wctl`; Watts does not launch or configure the supervising agent. Context gathering, including fetching a ticket, uses the user's existing capabilities.
 
-Use Watts to execute the user's task through its declared workflow. You coordinate the task; Watts and its worker execute the stages. This skill applies to an interactive agent with filesystem and command access, regardless of its model or agent application.
+The current interface is the CLI. MCP and wait-for-change are proposed, not available operations. Read [CLI lifecycle](../../../docs/coordinators.md) when running, monitoring, deciding, or recovering a task. If installed without the checkout, use the self-contained instructions below and `wctl help`; do not invent missing tools.
 
-Start from the user's request, such as “create a hello-world server in Go.” Additional context is optional. Gathering that context is handled by the user or their agent's existing capabilities.
+## Select the project and package
 
-## Locate files before reading them
+- Verify the user's intended application directory with `pwd` and a listing. Set that absolute directory explicitly for every command; a previous `cd` may not persist. If needed, use `cd '/verified/project' && wctl ...` in the same invocation.
+- The application project and package/source checkout can be different locations. Select an external descriptor with `--package /verified/package/watts.yaml`. Do not infer the project from this skill's location or rely on ancestor discovery.
+- Resolve documentation links relative to this skill. After a missing-file error, list the nearest known existing directory instead of guessing alternative paths. There is no required `resources/docs` directory.
+- Configure agents, models, tools, skills, and workflow policy in source values/templates **before task creation**. `watts.yaml` describes the package; task `workflow.yaml` is resolved output. Do not edit rendered templates or pinned records to change policy.
 
-The target project and the Watts source repository are different locations. The target project contains `watts.yaml` and the task files; it need not contain the Watts repository or its resource directory.
+## Create the request
 
-- Use the supplied project path and confirm its directory contents. Do not derive it from an assumed home directory or from the location of this skill.
-- Resolve relative resource links against the directory containing this `SKILL.md`, not the shell's working directory.
-- Use directory listings and exact returned filenames to discover files. Preserve spelling, case, underscores, and absolute-path prefixes.
-- After a missing-file error, list the nearest known existing directory. Do not retry guessed spellings or add invented directories. If the file is absent, explain that once and continue with the available task context when possible.
+1. If the user names an existing task, inspect it. Otherwise run `wctl task new <slug> --package <descriptor>` from the application directory, retain the exact returned task path, and verify it exists beneath the configured task directory before writing.
+2. Read the entire task `workflow.yaml` bundle, following Workflow `use` references to Agent/Procedure resources. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Go generalist or fixed names.
+3. Preserve existing human content in `SPEC.md`. Draft the requested behavior, scope, constraints, observable acceptance criteria, and unresolved questions using project evidence. A rough request is sufficient; ask only for missing intent. A verified team spec skill or [bundled spec guidance](../../../registry/pi_ralph/kit/skills/spec-template/SKILL.md) may help when available.
+4. SPEC.md describes what and why; PLAN.md describes approach and sequence. Do not create REQUIREMENTS.md, implement the application yourself, or bypass workflow-owned refinement/planning. Application changes belong in the project root; task directories hold documents and evidence.
 
-When reading this skill from a Watts source checkout, these paths are relative to this skill's directory:
+If the user only requested a draft, stop after drafting. A workflow configuration change requires a new task from updated source, with authorization for that additional execution.
 
-| Resource | Exact relative path |
-| --- | --- |
-| Toolbox index | [../../readme.md](../../readme.md) |
-| Spec drafting skill | [../../../internal/kit/kit/skills/spec-template/SKILL.md](../../../internal/kit/kit/skills/spec-template/SKILL.md) |
-| Task runbook | [../../../docs/runbook.md](../../../docs/runbook.md) |
-| Workflow documentation | [../../../docs/workflows.md](../../../docs/workflows.md) |
-| Resource Kinds | [../../../docs/kinds.md](../../../docs/kinds.md) |
+## Submit and follow progress
 
-There is no `resources/docs/README.md`. The toolbox index is `resources/readme.md` in the Watts checkout. Reading that index is optional, not a prerequisite for creating a task.
-
-If this skill was installed separately, checkout-relative links may be unavailable. For an initialized project, use `wctl config show --resolved` to discover agent directory paths; an installed spec skill is at `<agent-path>/skills/spec-template/SKILL.md`, relative to the project root. Confirm that file exists before reading it. If no spec skill is available, use the scaffolded `SPEC.md` and the drafting guidance below instead of searching repeatedly for repository docs.
-
-## Keep the task explicit
-
-- Work from the intended project root containing `watts.yaml`.
-- Record its verified absolute path as the target project. Give every command invocation that directory explicitly through the execution tool's working-directory option. A `cd` in a previous tool call may not persist.
-- If the execution tool cannot set a working directory, use `cd '/absolute/project/path' && wctl ...` in the same command invocation. Do not run `cd ..` to locate documentation; read documentation by its absolute path instead.
-- Before creating a task, confirm `pwd` matches the intended project and read that directory's `watts.yaml`. Watts searches ancestors for a project, so running from the wrong directory can select a different project. Do not rely on that search to select the target.
-- Keep the exact task path returned by task creation throughout the session. Pass it explicitly to every task command.
-- Read the task's entire `workflow.yaml` bundle. Follow Workflow step `use` references to Agent or Procedure definitions; execution fields and artifacts live on those resources, while routing lives on the placements. Do not assume the default stages or artifact names.
-- Use the public CLI. Do not edit `.watts-state` or send ad hoc Temporal updates to advance stages.
-- Never claim execution, approval, or completion from an agent's narrative alone. Confirm with task status and evidence.
-
-## Create and draft
-
-1. Confirm that the user's request identifies the intended behavior. A rough request is sufficient; ask for missing intent rather than inventing a task.
-2. Run `wctl task new <slug>` with the target project as the explicit working directory and retain the reported path. Verify that the task folder and `workflow.yaml` exist beneath the target project's configured `tasks_dir` before writing anything. Resolve reported relative paths against the target project, never against the Watts source checkout or an unrelated current directory. If the task was created elsewhere, stop and report the mismatch; do not create more tasks or move files silently. If the user names an existing task, inspect it instead of creating another.
-3. Read the scaffolded `SPEC.md` and preserve any existing human content. Use the spec skill located by the instructions above when available. Draft from the request and relevant project evidence: state the intent, scope, non-goals, constraints, numbered observable acceptance criteria (`- AC-1: ...`), and unresolved questions. Separate facts from assumptions; do not invent requirements. Use the scaffold as a structure reference, never as a replacement for existing human input.
-4. Keep what and why in `SPEC.md`; implementation approach and sequencing belong in `PLAN.md`. Record assumptions and unresolved questions explicitly. Do not create a separate requirements document.
-5. If the user requested a different workflow, customize the task's `workflow.yaml` before submission. Do not change workflow policy merely to bypass a failure or approval gate.
-
-Do not start execution when the user asked only for a draft. When execution is authorized, continue below.
-
-## Start and monitor
+Use `wctl doctor --package <descriptor>` for container/image/secret checks; it does not establish Temporal or worker health. A configured Temporal server and a project worker are needed. `wctl start -d` runs the worker/UI; start it only within the user's authorization and avoid duplicate workers. Export required credential sources before starting; a detached worker does not inherit later shell changes.
 
 ```sh
 wctl task run <task> --dry-run
@@ -63,58 +35,35 @@ wctl task run <task>
 wctl task status <task> --json
 ```
 
-The dry run previews submission. A successful `task run` submits or requests a retry and returns; it does not mean the work has completed. A configured Temporal server and a project worker must be available. If the worker is absent, explain that `wctl start` must run from the project root in a separate long-lived session; do not launch duplicate workers or change infrastructure without authorization.
+Submission success is not completion. Parse status JSON even if the command returns nonzero: `waiting_retry` and failed/cancelled/terminated workflows still print state. Infrastructure errors can instead produce no JSON; report that uncertainty separately.
 
-Read `state.status`, `state.current`, `state.stages`, and `state.history` from status JSON. Use each stage's `last_error`, attempt count, result feedback, and artifacts to explain progress. Workflow and run IDs identify the execution.
+Track task, workflow/run IDs, current stage, stage attempts/errors, artifacts, and history. Inspect the relevant `<task>/.watts-state/logs/<stage>-<attempt>.log` and `.watts-state/steps/<stage>-<attempt>/` evidence. Result feedback lives in history; reported usage may be incomplete. Never treat missing measurements as zero or an agent's completion narrative as accepted success.
 
-Stage logs are in `<task>/.watts-state/logs/<stage>-<attempt>.log`. Inspect the relevant attempt, not another task's agent output. The optional Watts web monitor shows status, workflow routes, history, and log tails. Poll at reasonable intervals while the user asks you to monitor; do not busy-loop or infer failure from quiet model output.
+Report meaningful changes: a new stage/attempt, checks/findings, a decision wait, failure/recovery, or completion. Include task/stage identity, what is known, evidence, and the next action. Avoid repeating unchanged snapshots. Poll with bounded waits appropriate to the execution; quiet output alone does not establish a stall. If the host cannot monitor in the background, say so and provide a checkpoint rather than promising later unsolicited updates.
 
-If status cannot be queried, report that uncertainty. Check connectivity and worker availability before assuming the workflow failed.
+## Decisions and authority
 
-## Respond to the execution state
+A request to run a task does not authorize all approval gates. Present the pending artifacts, relevant changes/findings/questions, and intended decision unless explicit delegation already covers it. A coordinator may review its drafted spec under the user's explicit delegation; it must disclose that role. A workload agent inside a Watts stage cannot submit human decisions.
 
-| State | Coordinator action |
-| --- | --- |
-| `not_started` | Submit with `task run` if authorized. |
-| `running` | Monitor. Do not start another execution. |
-| `waiting_approval` | Show the human the pending stage's declared inputs, changes, and open questions. Obtain their decision. |
-| `waiting_retry` | Diagnose the error, fix the authorized cause, and retry the current stage. |
-| `waiting_event` | Explain which integration or event is needed. The MVP CLI cannot deliver arbitrary events. |
-| `completed` | Summarize the outcome and evidence; mention unresolved limitations. |
-| `failed`, `cancelled`/`canceled`, `terminated`, or `timed_out`/`timedout` | The execution has ended. Explain the cause; the CLI cannot resume it. Discuss a new task with the user rather than creating one silently. |
-
-A custom workflow may route a failure or rejected outcome directly to another stage. Follow status and the submitted workflow's routing; do not impose a separate coordinator loop.
-
-## Human review
-
-After the human authorizes the specific decision, submit it:
+For an authorized coordinator decision, save the `waiting_approval` JSON to a private temporary file **outside the application workspace**, inspect its artifact paths and verify their hashes against the files reviewed, then submit:
 
 ```sh
-wctl task decide <task> <stage>
-wctl task decide <task> <stage> --reject --feedback "Specific changes requested by the human"
+wctl task decide <task> <stage> --actor <coordinator-id> --authorized-by <human-id> --reviewed-status <status-json>
+# To request changes, also add: --reject --feedback "Specific requested changes"
 ```
 
-Never approve your own work, fabricate a human signature, change identity variables to bypass checks, or interpret a request to run the task as blanket approval of future gates. The user may enter the command themselves. An agent running inside a Watts stage must not act as the human reviewer.
+Use the actual actor and authorizing human labels; do not change USER/LOGNAME or fabricate a signature. Labels record declared provenance, not authenticated identities. Direct human decisions may use `wctl task decide <task> <stage>` without delegation flags.
 
-Approval is tied to the reviewed artifact hashes. If the reviewed document changes while waiting, explain the hash mismatch and the need for a fresh review attempt; do not alter the recorded hashes. In the default SDLC, rejecting spec review returns to specification, and rejecting plan review returns to planning with the supplied feedback.
+Delegated decisions are bound to the reviewed execution, placement, attempt, and artifact hashes. If the snapshot is stale or approval files changed, inspect status and evidence again; do not replace the snapshot merely to bypass the check. Rejection follows the workflow route, including any return to drafting/planning.
 
-## Diagnose and retry
+## Recover, reconnect, and finish
 
-1. Inspect status JSON, the failed attempt's log, and affected inputs or outputs.
-2. Explain the concrete cause and distinguish a stage failure from an ended execution.
-3. Fix only what the user has authorized. Preserve task intent and earlier valid work.
-4. For `waiting_retry`, run `wctl task run <task>`, then check status again.
-5. If the attempt limit is reached, explain why another attempt is justified and obtain authorization before using `wctl task run <task> --ignore-attempt-limit`.
+- `not_started`: submit if authorized. `running`: monitor; do not create another execution.
+- `waiting_approval`: obtain or apply a covered delegated decision. `waiting_event`: report the required integration; the current CLI cannot deliver arbitrary events.
+- `waiting_retry`: diagnose the error, fix only an authorized cause, explain the side effects of retry, and run `wctl task run <task>`. Do not blindly repeat an unchanged failure. Use `--ignore-attempt-limit` only with explicit authorization after inspecting exhaustion.
+- Retry uses the pinned definition, images, resources, and settings. It creates another attempt at the current stage, not an arbitrary stage jump or rollback. Updating a tag or source template does not change that execution.
+- `completed`: report acceptance evidence, published work, checks, rework, available usage, and remaining limitations. `failed`, `cancelled`/`canceled`, `terminated`, and `timed_out`/`timedout`: the execution ended; discuss a new task rather than silently creating one.
+- On reconnect, recover the task path and execution IDs from task bindings/status, then read history and current evidence. Match identity before acting and reconstruct pending decisions from Watts, not old conversation notes. No event cursor/catch-up API exists yet.
+- If asked to cancel, run `wctl task cancel <task>` and confirm the resulting state. Stop observing separately from canceling execution; a disconnected coordinator does not cancel Watts.
 
-Retry reruns the current stage with current files, increments its attempt count, and retains the same execution. It does not roll back file changes or offer an arbitrary jump to a chosen stage. Avoid blind retries of an unchanged failure, especially when the stage has external side effects.
-
-Workflow definitions and runtime settings are frozen at submission. Editing the task's workflow or changing project model settings does not change the submitted execution. Do not rewrite pinned records to force a change.
-
-Cancellation is available with `wctl task cancel <task>` when the user asks to stop the task. Confirm the resulting status and report any incomplete work.
-
-## Report clearly
-
-Tell the user which task and stage are active, what happened, what evidence supports it, and what action is needed next. Distinguish submitted, running, waiting, and completed. Never claim that a test passed unless its actual result supports that claim.
-
-
-Application source and tests belong to the project rooted at watts.yaml. Task folders hold SPEC.md, PLAN.md, workflow.yaml, logs and evidence. Do not scaffold a separate application inside a task folder. Ensure plan quality gates target the project root.
+Use the public CLI. Never edit `.watts-state` or send ad hoc Temporal updates to advance the task. Explain unavailable state as unavailable, and preserve the user's task scope throughout recovery.

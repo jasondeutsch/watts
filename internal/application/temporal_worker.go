@@ -18,7 +18,7 @@ func (app *Service) NewTemporalWorker(temporalClient client.Client, queue string
 	// Keep the SDK heartbeat throttling defaults: the throttle interval also
 	// sets the heartbeat RPC deadline, so a short override can cancel healthy
 	// activities when the server or local machine is briefly busy.
-	workflowWorker := worker.New(temporalClient, queue, worker.Options{MaxConcurrentActivityExecutionSize: 1, WorkerStopTimeout: 10 * time.Second})
+	workflowWorker := worker.New(temporalClient, queue, worker.Options{MaxConcurrentActivityExecutionSize: 1, WorkerStopTimeout: 10 * time.Second, MaxHeartbeatThrottleInterval: 5 * time.Second, DefaultHeartbeatThrottleInterval: 5 * time.Second})
 	workflowWorker.RegisterWorkflowWithOptions(orchestration.Run, workflow.RegisterOptions{Name: orchestration.WorkflowName})
 	workflowWorker.RegisterActivityWithOptions(app.ExecuteWorkflowStage, activity.RegisterOptions{Name: orchestration.ExecuteActivity})
 	workflowWorker.RegisterActivityWithOptions(app.CaptureApprovalArtifacts, activity.RegisterOptions{Name: orchestration.HashActivity})

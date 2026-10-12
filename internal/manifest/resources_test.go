@@ -37,15 +37,15 @@ kind: Procedure
 schema_version: 1
 name: lint
 spec:
-  execution: {type: command, command: go vet ./...}
+  execution: {type: container}
+  container: {image: team/tools:0.1.0, command: [go, vet, ./...], result: exit-code}
 ---
 kind: ConfigMap
 schema_version: 1
 name: common
 spec:
   data:
-    runtime: pi
-    sandbox: {mode: local}
+    container: {image: team/agent:0.1.0, command: [agent]}
     provider: openrouter
     model: coding-model
     thinking: medium
@@ -64,11 +64,11 @@ func TestAllKindsCompileAndRoundTrip(t *testing.T) {
 	require.Len(t, bundle.Resources, 5)
 	definition, err := bundle.Compile()
 	require.NoError(t, err)
-	require.Equal(t, "builder", definition.Steps[0].Agent)
+	require.Equal(t, "build", definition.Steps[0].Agent)
 	require.Equal(t, "coding-model", definition.Steps[0].Model)
 	require.Equal(t, "medium", definition.Steps[0].AgentSettings.Thinking)
 	require.Equal(t, "USER_MODEL_KEY", definition.Steps[0].SecretEnvironment["MODEL_KEY"])
-	require.Equal(t, "go vet ./...", definition.Steps[1].Command)
+	require.Equal(t, []string{"go", "vet", "./..."}, definition.Steps[1].Container.Command)
 	require.Empty(t, definition.Steps[1].Model)
 	require.Equal(t, "build", definition.Steps[1].OnFailure)
 	encoded, err := manifest.EncodeWorkflow("task-example", definition)
@@ -88,12 +88,10 @@ func TestResourceValidation(t *testing.T) {
 		{"wrong ref kind", strings.Replace(resourceBundle, "kind: Agent, name: builder", "kind: Procedure, name: builder", 1), "references unknown"},
 		{"missing config", strings.Replace(resourceBundle, "config_ref: common", "config_ref: unknown", 1), "unknown ConfigMap"},
 		{"missing secret", strings.Replace(resourceBundle, "name: credentials, key: api-key", "name: credentials, key: missing", 1), "missing Secret"},
-		{"model on procedure", strings.Replace(resourceBundle, "execution: {type: command", "model: unexpected\n  execution: {type: command", 1), "field model"},
+		{"model on procedure", strings.Replace(resourceBundle, "execution: {type: container", "model: unexpected\n  execution: {type: container", 1), "field model"},
 		{"missing identity", strings.Replace(resourceBundle, "identity: team-builder", "identity: ''", 1), "requires identity"},
-		{"unenforced sandbox", strings.Replace(resourceBundle, "mode: local", "mode: container", 1), "cannot be enforced"},
-		{"unsupported runtime", strings.Replace(resourceBundle, "runtime: pi", "runtime: unknown", 1), "unsupported runtime"},
 		{"reserved env", strings.Replace(resourceBundle, "env: MODEL_KEY", "env: HOME", 1), "invalid secret target"},
-		{"mismatched execution", strings.Replace(resourceBundle, "type: command", "type: approval", 1), "fields do not match"},
+		{"mismatched execution", strings.Replace(resourceBundle, "type: container", "type: approval", 1), "exactly one container"},
 		{"unknown routing", strings.Replace(resourceBundle, "on_failure: build", "on_failure: unknown", 1), "unknown transition"},
 		{"duplicate resource", resourceBundle + "---\n" + resourceBundle, "duplicate resource"},
 	} {
@@ -145,5 +143,72 @@ func TestTemplatesForEveryKindAndGoGeneralist(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestContainerConfigurationSurvivesResolutionAndTaskEncoding(t *testing.T) {
+	definition, err := manifest.CompileWorkflow([]byte(resourceBundle))
+	require.NoError(t, err)
+	data, err := manifest.EncodeWorkflow("pinned", definition)
+	require.NoError(t, err)
+	decoded, err := manifest.LoadWorkflow(data)
+	require.NoError(t, err)
+	require.Equal(t, definition.Steps[0].Container, decoded.Spec.Steps[0].Container)
+	require.NotContains(t, string(data), "runtime_agent")
+}
+
+func TestAgentCapabilitiesRoundTrip(t *testing.T) {
+	data := []byte(`kind: Workflow
+schema_version: 1
+name: team
+spec:
+  steps:
+    - name: build
+      use: {kind: Agent, name: builder}
+---
+kind: Agent
+schema_version: 1
+name: builder
+spec:
+  identity: builder
+  provider: fixture
+  model: fixture
+  prompt: Implement the task.
+  container:
+    image: team/image
+    command: [launch]
+    resources: {team: team}
+  tools:
+    - name: lint
+      command: {argv: [lint], timeout_seconds: 30}
+    - name: symbols
+      mcp: {ref: gopls}
+  mcp_servers:
+    gopls: {command: gopls, args: [mcp]}
+  gates:
+    - name: lint-clean
+      tool: lint
+      expect: {exit_code: 0}
+  gate_policy: {max_repairs: 1}
+  skills:
+    - name: team-guidance
+      source: {resource: team, path: skills/go}
+`)
+	definition, err := manifest.CompileWorkflow(data)
+	require.NoError(t, err)
+	require.Len(t, definition.Steps[0].Tools, 2)
+	encoded, err := manifest.EncodeWorkflow("team", definition)
+	require.NoError(t, err)
+	reloaded, err := manifest.LoadWorkflow(encoded)
+	require.NoError(t, err)
+	require.Equal(t, definition, reloaded.Spec)
+	for _, broken := range []string{
+		strings.Replace(string(data), "tool: lint", "tool: absent", 1),
+		strings.Replace(string(data), "timeout_seconds: 30", "timeout_seconds: -1", 1),
+		strings.Replace(string(data), "resource: team, path: skills/go", "resource: team, path: ../outside", 1),
+		strings.Replace(string(data), "command: {argv: [lint], timeout_seconds: 30}", "command: {argv: [lint], typo: 1}", 1),
+	} {
+		_, err := manifest.CompileWorkflow([]byte(broken))
+		require.Error(t, err)
 	}
 }

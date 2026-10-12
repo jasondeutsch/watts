@@ -1,0 +1,65 @@
+{"id":"d1b6619a6d4c3e1372be00e7c6d4f113b6d97a7e28fc953548311b09b14ab6d4","type":"progress","message":"Starting Pi with Ralph"}
+{"id":"e7c00baf13b608b906b3fee7ff4a310e47ffba4ffcdfb9134e69e1f1c4ba7ac2-usage","type":"usage","usage":{"input_tokens":2724,"output_tokens":106,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e7c00baf13b608b906b3fee7ff4a310e47ffba4ffcdfb9134e69e1f1c4ba7ac2","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"9fa23bb434cd2a242d49d045f73d97b88266ae17c84ae88f961391b5f648c363-usage","type":"usage","usage":{"input_tokens":6559,"output_tokens":322,"cache_read_tokens":2560,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9fa23bb434cd2a242d49d045f73d97b88266ae17c84ae88f961391b5f648c363","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"67b66ab55727ee309e3669e54bf29dfcef42993403b28f3126c8455649df6cbb-usage","type":"usage","usage":{"input_tokens":7150,"output_tokens":151,"cache_read_tokens":6400,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"67b66ab55727ee309e3669e54bf29dfcef42993403b28f3126c8455649df6cbb","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a22942acf870b2d225472484918610d65c8154ad7087c4449f921aa677940ba8-usage","type":"usage","usage":{"input_tokens":7421,"output_tokens":181,"cache_read_tokens":6912,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a22942acf870b2d225472484918610d65c8154ad7087c4449f921aa677940ba8","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"1878191fe3e2f6e030b31535e0aeb7ec04c7cfcaae3679831850b0c6cc926927-usage","type":"usage","usage":{"input_tokens":7692,"output_tokens":1493,"cache_read_tokens":7168,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"1878191fe3e2f6e030b31535e0aeb7ec04c7cfcaae3679831850b0c6cc926927","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c56ef00a94cf837b854f717d9773e474af9b72b6026ebb0f92113477f37924e7-usage","type":"usage","usage":{"input_tokens":9220,"output_tokens":99,"cache_read_tokens":7680,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c56ef00a94cf837b854f717d9773e474af9b72b6026ebb0f92113477f37924e7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"34c8275b7d282281747de212e0e656486dd30e81ac531e6ccab68ae7b6a5b98d-usage","type":"usage","usage":{"input_tokens":9342,"output_tokens":126,"cache_read_tokens":9216,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"34c8275b7d282281747de212e0e656486dd30e81ac531e6ccab68ae7b6a5b98d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a2e745ae49a2c3e92cdfe476a0b0a6b1facbf561c7ce7c93e8bf7734af60fea4-usage","type":"usage","usage":{"input_tokens":9866,"output_tokens":298,"cache_read_tokens":9216,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a2e745ae49a2c3e92cdfe476a0b0a6b1facbf561c7ce7c93e8bf7734af60fea4","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"858857b303faeaf3f6dd3a79d8b4c88d08e1060174a8f63cf4e6cdc35ccd5b76-usage","type":"usage","usage":{"input_tokens":10428,"output_tokens":502,"cache_read_tokens":9728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"858857b303faeaf3f6dd3a79d8b4c88d08e1060174a8f63cf4e6cdc35ccd5b76","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"be78c8968a39af0beed5918c6eb0944659286848b340903965864b8dfdfaf6c7-usage","type":"usage","usage":{"input_tokens":10978,"output_tokens":393,"cache_read_tokens":10240,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"be78c8968a39af0beed5918c6eb0944659286848b340903965864b8dfdfaf6c7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"556245e474bce0fe20a858fc99d21391a10d0d1a15bfbc378b2af911b5a9cf37-usage","type":"usage","usage":{"input_tokens":11762,"output_tokens":384,"cache_read_tokens":10752,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"556245e474bce0fe20a858fc99d21391a10d0d1a15bfbc378b2af911b5a9cf37","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"376df3ee246ee613b08df6540b1be6d2eb1aedd89244a0c2c462f10710795abf-usage","type":"usage","usage":{"input_tokens":12342,"output_tokens":209,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"376df3ee246ee613b08df6540b1be6d2eb1aedd89244a0c2c462f10710795abf","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"72d311296fd9af678fa2866220c2ac6071efcfc28833b3a8824991cf419e706d-usage","type":"usage","usage":{"input_tokens":12640,"output_tokens":702,"cache_read_tokens":10364,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"72d311296fd9af678fa2866220c2ac6071efcfc28833b3a8824991cf419e706d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"24a9c54d6af5abdf28f8d374b2cf2bcc59b4b7f97948341575fad505366d34a5-usage","type":"usage","usage":{"input_tokens":13406,"output_tokens":381,"cache_read_tokens":11261,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"24a9c54d6af5abdf28f8d374b2cf2bcc59b4b7f97948341575fad505366d34a5","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"67f69ecb5d134627ead6afc50d0438e35e9f28a485968e03b7e0ecd289aef72e-usage","type":"usage","usage":{"input_tokens":13906,"output_tokens":84,"cache_read_tokens":11263,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"67f69ecb5d134627ead6afc50d0438e35e9f28a485968e03b7e0ecd289aef72e","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a81ecb0555651ba42d41bd2067e09e434ce4dd9d0b7ebfe7d7652b07a6fe210e-usage","type":"usage","usage":{"input_tokens":14025,"output_tokens":118,"cache_read_tokens":12201,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a81ecb0555651ba42d41bd2067e09e434ce4dd9d0b7ebfe7d7652b07a6fe210e","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"51d777bb7062b9a3e737051dfbd84d3a21e26636a7b48e3d5b06b21a9aa5ea19-usage","type":"usage","usage":{"input_tokens":14225,"output_tokens":79,"cache_read_tokens":12375,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"51d777bb7062b9a3e737051dfbd84d3a21e26636a7b48e3d5b06b21a9aa5ea19","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c2e7b505864f0bb5a767281719fff89f10ea0b1562a7b3ffbb6096cbb9e9414f-usage","type":"usage","usage":{"input_tokens":14466,"output_tokens":277,"cache_read_tokens":12151,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c2e7b505864f0bb5a767281719fff89f10ea0b1562a7b3ffbb6096cbb9e9414f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"79e31408cf002c7146750bd11c469200299f61990bc400d11b041de0ada551ac-usage","type":"usage","usage":{"input_tokens":14873,"output_tokens":1880,"cache_read_tokens":12047,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"79e31408cf002c7146750bd11c469200299f61990bc400d11b041de0ada551ac","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"08ac205b927c9a90ff4fce5a96ca4dd2d3742d0252a3b1dc31681aab59013c13-usage","type":"usage","usage":{"input_tokens":16836,"output_tokens":185,"cache_read_tokens":13973,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"08ac205b927c9a90ff4fce5a96ca4dd2d3742d0252a3b1dc31681aab59013c13","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"178fd419c73409b4b9286bd8c187244e0d4d25756637c1563bd57ed6420a1e88-usage","type":"usage","usage":{"input_tokens":17121,"output_tokens":254,"cache_read_tokens":14895,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"178fd419c73409b4b9286bd8c187244e0d4d25756637c1563bd57ed6420a1e88","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"f801976ce2e7816cfc571e0dfad0524dba0b08f65453ad968a842e561cd50346-usage","type":"usage","usage":{"input_tokens":17455,"output_tokens":75,"cache_read_tokens":15011,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"f801976ce2e7816cfc571e0dfad0524dba0b08f65453ad968a842e561cd50346","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"2f5847dfb650414de7160415c4e8f5c1c30530535f3080048cfe012a7c2f6d0c-usage","type":"usage","usage":{"input_tokens":17628,"output_tokens":162,"cache_read_tokens":15160,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"2f5847dfb650414de7160415c4e8f5c1c30530535f3080048cfe012a7c2f6d0c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"75a6a51a4c5605e2cdc3181d60fdf9975c0f928d13b31a32f4a0215b1fb5dec2-usage","type":"usage","usage":{"input_tokens":17812,"output_tokens":290,"cache_read_tokens":14962,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"75a6a51a4c5605e2cdc3181d60fdf9975c0f928d13b31a32f4a0215b1fb5dec2","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5710e5f0ee3a2f9d90a8b3537f4cf4e7c551d2a236501756b8cb0997ab5af293-usage","type":"usage","usage":{"input_tokens":18193,"output_tokens":263,"cache_read_tokens":15645,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5710e5f0ee3a2f9d90a8b3537f4cf4e7c551d2a236501756b8cb0997ab5af293","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"6125fcb246ad57ba8a2b54858cb1454ace6130e9a6c71f4ef085675c1fef5a36-usage","type":"usage","usage":{"input_tokens":18650,"output_tokens":179,"cache_read_tokens":15106,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"6125fcb246ad57ba8a2b54858cb1454ace6130e9a6c71f4ef085675c1fef5a36","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"fe3841dcfb0d43eec048622f499f73fe3911b9af2dedc8980dd2f0b9f6d61b78-usage","type":"usage","usage":{"input_tokens":18854,"output_tokens":62,"cache_read_tokens":15271,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"fe3841dcfb0d43eec048622f499f73fe3911b9af2dedc8980dd2f0b9f6d61b78","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"4368c430744d13271b2d3408d6a1cc121af228ecf133454883c8e2b4a0a8843a-usage","type":"usage","usage":{"input_tokens":18936,"output_tokens":124,"cache_read_tokens":17042,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"4368c430744d13271b2d3408d6a1cc121af228ecf133454883c8e2b4a0a8843a","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"dfec4b39f13df1bb83dcb376643c0261aa40ea74ee994f4f72c4834eeb6144f0-usage","type":"usage","usage":{"input_tokens":19083,"output_tokens":84,"cache_read_tokens":15648,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"dfec4b39f13df1bb83dcb376643c0261aa40ea74ee994f4f72c4834eeb6144f0","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"8ef256eaac4f61fc6cd9e73568106192bc389aceb51850c4d9d863c9272e62ca-usage","type":"usage","usage":{"input_tokens":19187,"output_tokens":294,"cache_read_tokens":15925,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"8ef256eaac4f61fc6cd9e73568106192bc389aceb51850c4d9d863c9272e62ca","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ae6963bcee8808c7f326494dcdcc25b45d7cd7f200bcbaad7b2bb57e84656c57-usage","type":"usage","usage":{"input_tokens":19574,"output_tokens":517,"cache_read_tokens":17225,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ae6963bcee8808c7f326494dcdcc25b45d7cd7f200bcbaad7b2bb57e84656c57","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"fd170101d076b09c0df60c13924162157c7dd7901edcf234382aaacb1859d201-usage","type":"usage","usage":{"input_tokens":20129,"output_tokens":80,"cache_read_tokens":17914,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"fd170101d076b09c0df60c13924162157c7dd7901edcf234382aaacb1859d201","type":"progress","message":"Pi completed an assistant turn"}

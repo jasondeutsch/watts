@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"os"
 	"path/filepath"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
@@ -50,16 +49,6 @@ func (app *Service) WritePackageMetadata(taskPath string, metadata *workflowpack
 		return nil
 	}
 	return storage.WriteJSONAtomically(filepath.Join(app.Root, taskPath, ".watts-state", "package.json"), metadata)
-}
-
-// InitializePackage supplies an editable source package for a new local project.
-func (app *Service) InitializePackage(cfg projectconfig.Config) error {
-	if _, err := os.Stat(app.ConfigPath()); err == nil {
-		return nil
-	} else if !os.IsNotExist(err) {
-		return err
-	}
-	return app.writeWorkflowSource(cfg, true)
 }
 
 func definitionHash(definition orchestration.Definition) string {

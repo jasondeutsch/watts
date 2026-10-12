@@ -6,6 +6,7 @@ import (
 
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +16,7 @@ name: example
 spec:
   steps:
     - name: build
-      command: "true"
+      container: {image: fixture:0.1.0, command: ["true"]}
 `
 
 func TestRejectInvalidManifests(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRejectInvalidManifests(t *testing.T) {
 		{"missing name", strings.Replace(validWorkflow, "name: example", "", 1), "name must not be empty"},
 		{"envelope typo", "typo: true\n" + validWorkflow, "line 1"},
 		{"nested typo", validWorkflow + "      timeot_seconds: 10\n", "timeot_seconds"},
-		{"duplicate key", validWorkflow + "      command: false\n", "already defined"},
+		{"duplicate key", validWorkflow + "      name: duplicate\n", "already defined"},
 		{"invalid syntax", "kind: [", "invalid YAML"},
 		{"multiple documents", validWorkflow + "---\n" + validWorkflow, "duplicate resource"},
 		{"wrong field type", strings.Replace(validWorkflow, "schema_version: 1", "schema_version: nope", 1), "invalid YAML"},
@@ -39,7 +40,7 @@ func TestRejectInvalidManifests(t *testing.T) {
 }
 
 func TestMultilineInstructionsRoundTrip(t *testing.T) {
-	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "build", Agent: "build", Identity: "builder", Provider: "openrouter", Model: "coding-model", Prompt: "Read SPEC.md.\nPreserve \\\n and \"quotes\".\n"}}}
+	definition := orchestration.Definition{Steps: []orchestration.Step{{Name: "build", Agent: "build", Container: &workload.Spec{Image: "fixture:0.1.0", Command: []string{"agent"}}, Identity: "builder", Provider: "openrouter", Model: "coding-model", Prompt: "Read SPEC.md.\nPreserve \\\n and \"quotes\".\n"}}}
 	data, err := manifest.Encode(manifest.Workflow, "example", definition)
 	require.NoError(t, err)
 	require.Contains(t, string(data), "prompt: |")

@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "execution": "f8bcbe4b0a08f53c/watts-62caf69653b0e9dc8d38e28f1152d74b/01a13084-5ea2-782e-ab76-4db6a5f8ae59/planning/1",
+  "task": "tasks/2026-10-12-tic-tac-toe-eval",
+  "step": "planning",
+  "attempt": 1,
+  "outputs": [
+    "PLAN.md"
+  ],
+  "inputs": [
+    {
+      "path": "SPEC.md",
+      "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+    }
+  ],
+  "previous": {
+    "step": "spec-review",
+    "attempt": 1,
+    "artifacts": [
+      {
+        "path": "SPEC.md",
+        "sha256": "d3c0a1a3fb34e14975e1ba9cd5d9f9855c56f01d465960a8098b23b60a79ad0f"
+      }
+    ],
+    "outcome": "approved",
+    "data": {
+      "approved_by": "j"
+    }
+  },
+  "agent": {
+    "name": "planning",
+    "identity": "watts-agent",
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-flash",
+    "prompt": "The preceding workflow gate approved the specification. Read /runtime/task/SPEC.md. Use the plan-template skill to write /runtime/task/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The application workspace is the current working directory supplied by Watts; the package descriptor may live elsewhere. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Include `bash /inputs/resources/team/scripts/lint.sh` in PLAN.md quality gates. Lint findings must be fixed without weakening the lint configuration.",
+    "settings": {
+      "thinking": "low",
+      "skills_dirs": [
+        "/opt/watts/kit/skills",
+        "/inputs/resources/team/skills"
+      ],
+      "base_url": "https://openrouter.ai/api/v1",
+      "api": "openai-completions",
+      "api_key_env": "OPENROUTER_API_KEY"
+    }
+  }
+}

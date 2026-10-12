@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/jasondeutsch/watts/internal/manifest"
@@ -19,10 +20,11 @@ type Identity struct {
 }
 
 type Metadata struct {
-	Name    string     `json:"name"`
-	Version string     `json:"version"`
-	Digest  string     `json:"digest"`
-	Layers  []Identity `json:"layers"`
+	SourcePaths []string   `json:"source_paths,omitempty"`
+	Name        string     `json:"name"`
+	Version     string     `json:"version"`
+	Digest      string     `json:"digest"`
+	Layers      []Identity `json:"layers"`
 }
 
 type Result struct {
@@ -129,6 +131,15 @@ func (pkg Package) Render(overrides ...render.ValuesSource) (Result, error) {
 	digest := sha256.New()
 	for _, layer := range pkg.Layers {
 		metadata.Layers = append(metadata.Layers, Identity{Name: layer.Descriptor.Name, Version: layer.Descriptor.Version, Digest: layer.Digest, Source: layer.Source})
+		metadata.SourcePaths = append(metadata.SourcePaths, layer.Source)
+		paths := append([]string{}, layer.Descriptor.Values...)
+		paths = append(paths, layer.Descriptor.Templates, "values.schema.json")
+		paths = append(paths, layer.Descriptor.Assets...)
+		for _, name := range paths {
+			if name != "" {
+				metadata.SourcePaths = append(metadata.SourcePaths, filepath.Join(filepath.Dir(layer.Source), name))
+			}
+		}
 		digest.Write([]byte(layer.Digest))
 	}
 	encodedValues, err := yaml.Marshal(values)

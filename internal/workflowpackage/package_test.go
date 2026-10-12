@@ -34,8 +34,11 @@ schema_version: 1
 name: check
 spec:
   execution:
-    type: command
-    command: {{ .Values.message | quote }}
+    type: container
+  container:
+    image: fixture:0.1.0
+    command: [{{ .Values.message | quote }}]
+    result: exit-code
 `)
 	write(t, root, "tools/check.sh", "#!/bin/sh\necho checked\n")
 	return filepath.Join(root, "arbitrary.yaml")
@@ -53,7 +56,7 @@ func TestConsumerValuesAndDescriptorFilenameAreIndependent(t *testing.T) {
 	require.NoError(t, err)
 	definition, err := manifest.CompileWorkflow(result.Data)
 	require.NoError(t, err)
-	require.Equal(t, "invocation", definition.Steps[0].Command)
+	require.Equal(t, []string{"invocation"}, definition.Steps[0].Container.Command)
 	require.Equal(t, "team", result.Metadata.Name)
 	require.Len(t, result.Metadata.Layers, 2)
 	require.NoError(t, os.Rename(filepath.Join(consumer, "watts.golang.yaml"), filepath.Join(consumer, "unrelated-name.yaml")))
@@ -86,8 +89,8 @@ schema_version: 1
 name: audit
 spec:
   execution:
-    type: command
-    command: go test ./...
+    type: container
+  container: {image: team/tools:0.1.0, command: [go, test, ./...], result: exit-code}
 `)
 	pkg, err := Load(consumer)
 	require.NoError(t, err)
@@ -101,7 +104,7 @@ spec:
 	definition, err := manifest.CompileWorkflow(result.Data)
 	require.NoError(t, err)
 	require.Len(t, definition.Steps, 2)
-	require.Equal(t, "go test ./...", definition.Steps[1].Command)
+	require.Equal(t, []string{"go", "test", "./..."}, definition.Steps[1].Container.Command)
 }
 
 func TestCapturedAssetsAndSourceChangesHaveDistinctDigests(t *testing.T) {
@@ -178,8 +181,8 @@ agents: {}
 procedures:
   verify:
     execution:
-      type: command
-      command: echo verified
+      type: container
+    container: {image: team/checker:0.1.0, command: [echo, verified], result: exit-code}
 config_maps: {}
 secrets: {}
 `)})
@@ -198,7 +201,7 @@ secrets: {}
 	definition, err := bundle.Compile()
 	require.NoError(t, err)
 	require.Len(t, definition.Steps, 1)
-	require.Equal(t, "echo verified", definition.Steps[0].Command)
+	require.Equal(t, []string{"echo", "verified"}, definition.Steps[0].Container.Command)
 	for _, dependency := range []string{"pi", "ralph", "gopls", "lint", "OPENROUTER"} {
 		require.NotContains(t, string(data), dependency)
 	}
@@ -211,21 +214,25 @@ func TestGoGeneralistValuesControlExplicitManifestFields(t *testing.T) {
   build:
     identity: alternate-builder
     prompt: Implement this task without Ralph.
-    skills_dirs: [team/skills]
-    mcps: [symbols]
+    skills:
+      - name: team-guidance
+        source: {resource: team, path: skills/go-builder}
+    tools:
+      - name: team-lint
+        command: {argv: [team-lint, ./...], timeout_seconds: 90}
+      - name: code-intelligence
+        mcp: {ref: symbols}
+    gates:
+      - name: team-lint-passes
+        tool: team-lint
+        expect: {exit_code: 0}
     mcp_servers:
       symbols:
         command: team-language-server
         args: [serve]
         cwd: .
     checks:
-      - script: check-plan
-        args: [--team]
-procedures:
-  lint:
-    execution:
-      command: team-lint ./...
-    timeout_seconds: 90
+      - command: [team-check, --team]
 config_maps:
   agent-defaults:
     data:
@@ -239,16 +246,16 @@ config_maps:
 			require.Equal(t, "alternate-builder", step.Identity)
 			require.Equal(t, "Implement this task without Ralph.", step.Prompt)
 			require.Equal(t, "team/model", step.Model)
-			require.Equal(t, []string{"team/skills"}, step.AgentSettings.SkillsDirs)
-			require.Equal(t, []string{"symbols"}, step.MCPs)
+			require.Equal(t, "team", step.Skills[0].Source.Resource)
+			require.Equal(t, "skills/go-builder", step.Skills[0].Source.Path)
+			require.Equal(t, []string{"team-lint", "./..."}, step.Tools[0].Command.Argv)
+			require.Equal(t, 90, step.Tools[0].Command.TimeoutSeconds)
+			require.Equal(t, "symbols", step.Tools[1].MCP.Ref)
+			require.Equal(t, "team-lint", step.Gates[0].Tool)
 			require.Equal(t, "team-language-server", step.AgentSettings.MCPServers["symbols"].Command)
-			require.Equal(t, "check-plan", step.Checks[0].Script)
-			require.Equal(t, []string{"--team"}, step.Checks[0].Args)
+			require.Equal(t, []string{"team-check", "--team"}, step.Checks[0].Command)
 		}
-		if step.Name == "lint" {
-			require.Equal(t, "team-lint ./...", step.Command)
-			require.Equal(t, 90, step.TimeoutSeconds)
-		}
+		require.NotEqual(t, "lint", step.Name)
 		if step.Name == "spec-review" {
 			require.Equal(t, "specification", step.Transitions["rejected"])
 		}

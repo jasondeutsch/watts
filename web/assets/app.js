@@ -80,7 +80,7 @@ function render() {
     const status = stage?.status || (snapshot.error ? 'unknown' : 'pending');
     const button = element('button', undefined, 'stage ' + status + (selectedStage === step.name ? ' selected' : ''));
     button.dataset.stage = step.name;
-    button.append(element('b', step.name), element('span', human(status) + ' · attempt ' + (stage?.attempts || 0)), element('small', step.model || step.capability || (step.human ? 'Human decision' : 'Step')));
+    button.append(element('b', step.name), element('span', human(status) + ' · attempt ' + (stage?.attempts || 0)), element('small', step.model || (step.human ? 'Human decision' : step.event ? 'External event' : step.container?.image || 'Container')));
     button.onclick = () => { selectedStage = step.name; render(); };
     return button;
   }));
@@ -89,7 +89,7 @@ function render() {
   $('details').replaceChildren();
   if (step) {
     const dl = element('dl');
-    Object.entries({Stage: step.name, Capability: step.capability || (step.human ? 'human' : 'agent'), Agent: step.agent || '—', Identity: step.identity || '—', Model: [step.provider, step.model].filter(Boolean).join('/') || '—', Inputs: (step.inputs || []).join(', ') || '—', Outputs: (step.outputs || []).join(', ') || '—'}).forEach(([label, value]) => dl.append(element('dt', label), element('dd', value)));
+    Object.entries({Stage: step.name, Execution: step.human ? 'approval' : step.event ? 'event' : step.agent ? 'agent container' : 'container', Image: step.container?.image || '—', Agent: step.agent || '—', Identity: step.identity || '—', Model: [step.provider, step.model].filter(Boolean).join('/') || '—', Inputs: (step.inputs || []).join(', ') || '—', Outputs: (step.outputs || []).join(', ') || '—'}).forEach(([label, value]) => dl.append(element('dt', label), element('dd', value)));
     $('details').append(dl);
     if (stage?.last_error) $('details').append(element('p', stage.last_error));
   }

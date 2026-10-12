@@ -57,11 +57,11 @@ func LoadWorkflow(data []byte) (Document[orchestration.Definition], error) {
 // EncodeWorkflow creates a self-contained authoring bundle from resolved work.
 // Credentials remain source references, including after task scaffolding.
 func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, error) {
-	workflow := WorkflowSpec{Version: definition.Version, CaptureBaseline: definition.CaptureBaseline, Templates: definition.Templates, MaxTransitions: definition.MaxTransitions}
+	workflow := WorkflowSpec{Version: definition.Version, Templates: definition.Templates, MaxTransitions: definition.MaxTransitions}
 	documents := []any{}
 	for _, step := range definition.Steps {
 		kind := Procedure
-		contract := Contract{Inputs: step.Inputs, Outputs: step.Outputs, Checks: step.Checks, PreChecks: step.PreChecks, TimeoutSeconds: step.TimeoutSeconds, MaxAttempts: step.MaxAttempts, ResultFile: step.ResultFile, Environment: step.Environment}
+		contract := Contract{Container: step.Container, Inputs: step.Inputs, Outputs: step.Outputs, Checks: step.Checks, PreChecks: step.PreChecks, TimeoutSeconds: step.TimeoutSeconds, MaxAttempts: step.MaxAttempts, Environment: step.Environment}
 		if len(step.SecretEnvironment) > 0 {
 			secretName := "credentials-" + step.Name
 			contract.Secrets = map[string]SecretKeyRef{}
@@ -75,13 +75,13 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 		var spec any
 		if step.Agent != "" {
 			kind = Agent
-			agent := AgentSpec{Contract: contract, Runtime: "pi", RuntimeAgent: step.Agent, Identity: step.Identity, Provider: step.Provider, Model: step.Model, Prompt: step.Prompt, MCPs: step.MCPs, Sandbox: Sandbox{Mode: "local"}}
+			agent := AgentSpec{Contract: contract, Identity: step.Identity, Provider: step.Provider, Model: step.Model, Prompt: step.Prompt, MCPs: step.MCPs}
+			agent.Tools, agent.Gates, agent.Skills, agent.GatePolicy = step.Tools, step.Gates, step.Skills, step.GatePolicy
 			if agent.Identity == "" {
 				agent.Identity = step.Agent
 			}
 			if settings := step.AgentSettings; settings != nil {
 				agent.Thinking, agent.SkillsDirs, agent.BaseURL, agent.API = settings.Thinking, settings.SkillsDirs, settings.BaseURL, settings.API
-				agent.Sandbox.Mode = settings.Sandbox
 				agent.MCPServers = settings.MCPServers
 				if settings.APIKeyEnv != "" {
 					ref, ok := agent.Secrets[settings.APIKeyEnv]
@@ -96,13 +96,8 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 		} else {
 			execution := Execution{}
 			switch {
-			case step.Command != "":
-				execution.Type, execution.Command = "command", step.Command
-			case step.Check != "":
-				execution.Type, execution.Check, execution.Args = "check", step.Check, step.Args
-			case step.Capability != "":
-				execution.Type, execution.Capability = "capability", step.Capability
-				execution.Argv = step.CapabilityCommand
+			case step.Container != nil:
+				execution.Type = "container"
 			case step.Human:
 				execution.Type = "approval"
 			case step.Event:

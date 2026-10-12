@@ -3,8 +3,7 @@ package terminal
 import (
 	"context"
 	"fmt"
-
-	"github.com/jasondeutsch/watts/internal/application"
+	"strings"
 )
 
 func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
@@ -14,7 +13,7 @@ func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
 	}
 	state := view.State
 	var failure error
-	if state.Status == "waiting_retry" || state.Status == "failed" || state.Status == "cancelled" || state.Status == "terminated" {
+	if state.Status == "waiting_retry" || state.Status == "failed" || state.Status == "cancelled" || state.Status == "terminated" || state.Status == "timed_out" {
 		failure = fmt.Errorf("TASK FAILED: %s is %s; inspect stage errors before retrying", taskPath, state.Status)
 		for _, stage := range state.Stages {
 			if stage.Status == "failed" && stage.LastError != "" {
@@ -36,7 +35,7 @@ func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
 			app.Say("    outcome: %s", stage.Outcome)
 		}
 		if stage.LastError != "" {
-			app.Say("    %s", application.OneLine(stage.LastError, 1024))
+			app.Say("    %s", strings.Join(strings.Fields(stage.LastError), " "))
 		}
 	}
 	if state.Current != "" {

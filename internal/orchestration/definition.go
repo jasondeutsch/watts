@@ -6,19 +6,19 @@ import (
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/jasondeutsch/watts/internal/workload"
 )
 
 type Definition struct {
-	CaptureBaseline bool              `json:"capture_baseline,omitempty" yaml:"capture_baseline,omitempty"`
-	Version         int               `json:"version,omitempty" yaml:"version,omitempty"`
-	Steps           []Step            `json:"steps" yaml:"steps"`
-	MaxTransitions  int               `json:"max_transitions,omitempty" yaml:"max_transitions,omitempty"`
-	Templates       map[string]string `json:"templates,omitempty" yaml:"templates,omitempty"`
+	Version        int               `json:"version,omitempty" yaml:"version,omitempty"`
+	Steps          []Step            `json:"steps" yaml:"steps"`
+	MaxTransitions int               `json:"max_transitions,omitempty" yaml:"max_transitions,omitempty"`
+	Templates      map[string]string `json:"templates,omitempty" yaml:"templates,omitempty"`
 }
 
 type Check struct {
-	Script string   `json:"script" yaml:"script"`
-	Args   []string `json:"args,omitempty" yaml:"args,omitempty"`
+	Command []string `json:"command" yaml:"command"`
 }
 
 type MCPServer struct {
@@ -39,49 +39,37 @@ type AgentSettings struct {
 	BaseURL    string               `json:"base_url,omitempty" yaml:"base_url,omitempty"`
 	API        string               `json:"api,omitempty" yaml:"api,omitempty"`
 	APIKeyEnv  string               `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
-	Sandbox    string               `json:"sandbox,omitempty" yaml:"sandbox,omitempty"`
 }
 
 type Step struct {
-	CapabilityCommand []string          `json:"capability_command,omitempty" yaml:"capability_command,omitempty"`
-	AgentSettings     *AgentSettings    `json:"agent_settings,omitempty" yaml:"agent_settings,omitempty"`
-	Environment       map[string]string `json:"environment,omitempty" yaml:"environment,omitempty"`
-	SecretEnvironment map[string]string `json:"secret_environment,omitempty" yaml:"secret_environment,omitempty"`
-	MCPs              []string          `json:"mcps,omitempty" yaml:"mcps,omitempty"`
-	Name              string            `json:"name" yaml:"name"`
-	Capability        string            `json:"capability,omitempty" yaml:"capability,omitempty"`
-	Parameters        map[string]any    `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Event             bool              `json:"event,omitempty" yaml:"event,omitempty"`
-	ResultFile        string            `json:"result_file,omitempty" yaml:"result_file,omitempty"`
-	Transitions       map[string]string `json:"transitions,omitempty" yaml:"transitions,omitempty"`
-	Identity          string            `json:"identity,omitempty" yaml:"identity,omitempty"`
-	Provider          string            `json:"provider,omitempty" yaml:"provider,omitempty"`
-	Model             string            `json:"model,omitempty" yaml:"model,omitempty"`
-	Agent             string            `json:"agent,omitempty" yaml:"agent,omitempty"`
-	Prompt            string            `json:"prompt,omitempty" yaml:"prompt,omitempty"`
-	Command           string            `json:"command,omitempty" yaml:"command,omitempty"`
-	Check             string            `json:"check,omitempty" yaml:"check,omitempty"`
-	Args              []string          `json:"args,omitempty" yaml:"args,omitempty"`
-	Human             bool              `json:"human,omitempty" yaml:"human,omitempty"`
-	Optional          bool              `json:"optional,omitempty" yaml:"optional,omitempty"`
-	Inputs            []string          `json:"inputs,omitempty" yaml:"inputs,omitempty"`
-	Outputs           []string          `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	PreChecks         []Check           `json:"pre_checks,omitempty" yaml:"pre_checks,omitempty"`
-	Checks            []Check           `json:"checks,omitempty" yaml:"checks,omitempty"`
-	Next              string            `json:"next,omitempty" yaml:"next,omitempty"`
-	OnFailure         string            `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
-	TimeoutSeconds    int               `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
-	MaxAttempts       int               `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
-}
-
-// AgentIdentity returns the identity declared by a workflow's agent stages.
-func (definition Definition) AgentIdentity(agent string) string {
-	for _, step := range definition.Steps {
-		if step.Agent == agent && step.Identity != "" {
-			return step.Identity
-		}
-	}
-	return agent
+	Tools             []workload.Tool      `json:"tools,omitempty" yaml:"tools,omitempty"`
+	Gates             []workload.Gate      `json:"gates,omitempty" yaml:"gates,omitempty"`
+	Skills            []workload.Skill     `json:"skills,omitempty" yaml:"skills,omitempty"`
+	GatePolicy        *workload.GatePolicy `json:"gate_policy,omitempty" yaml:"gate_policy,omitempty"`
+	Container         *workload.Spec       `json:"container,omitempty" yaml:"container,omitempty"`
+	AgentSettings     *AgentSettings       `json:"agent_settings,omitempty" yaml:"agent_settings,omitempty"`
+	Environment       map[string]string    `json:"environment,omitempty" yaml:"environment,omitempty"`
+	SecretEnvironment map[string]string    `json:"secret_environment,omitempty" yaml:"secret_environment,omitempty"`
+	MCPs              []string             `json:"mcps,omitempty" yaml:"mcps,omitempty"`
+	Name              string               `json:"name" yaml:"name"`
+	Parameters        map[string]any       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Event             bool                 `json:"event,omitempty" yaml:"event,omitempty"`
+	Transitions       map[string]string    `json:"transitions,omitempty" yaml:"transitions,omitempty"`
+	Identity          string               `json:"identity,omitempty" yaml:"identity,omitempty"`
+	Provider          string               `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Model             string               `json:"model,omitempty" yaml:"model,omitempty"`
+	Agent             string               `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Prompt            string               `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	Human             bool                 `json:"human,omitempty" yaml:"human,omitempty"`
+	Optional          bool                 `json:"optional,omitempty" yaml:"optional,omitempty"`
+	Inputs            []string             `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Outputs           []string             `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	PreChecks         []Check              `json:"pre_checks,omitempty" yaml:"pre_checks,omitempty"`
+	Checks            []Check              `json:"checks,omitempty" yaml:"checks,omitempty"`
+	Next              string               `json:"next,omitempty" yaml:"next,omitempty"`
+	OnFailure         string               `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
+	TimeoutSeconds    int                  `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
+	MaxAttempts       int                  `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
 }
 
 func ValidName(name string) bool { return namePattern.MatchString(name) && name != "end" }
@@ -155,17 +143,46 @@ func (definition Definition) successTransition(stepIndex int) string {
 
 // validateExecution checks one stage without depending on graph traversal.
 func (step Step) validateExecution() error {
-	executorCount := 0
-	for _, executor := range []string{step.Agent, step.Command, step.Check, step.Capability} {
-		if executor != "" {
-			executorCount++
+	for name, value := range step.Environment {
+		if !workload.EnvironmentTarget(name) || strings.ContainsRune(value, 0) {
+			return fmt.Errorf("step %s has invalid environment binding %s", step.Name, name)
 		}
 	}
-	if step.Human || step.Event {
-		executorCount++
+	for target, source := range step.SecretEnvironment {
+		if !workload.EnvironmentTarget(target) || !workload.EnvironmentSource(source) {
+			return fmt.Errorf("step %s has invalid secret binding %s", step.Name, target)
+		}
+		if _, exists := step.Environment[target]; exists {
+			return fmt.Errorf("step %s has conflicting environment binding %s", step.Name, target)
+		}
 	}
-	if executorCount != 1 {
-		return fmt.Errorf("step %s must set exactly one of agent, command, check, capability, human or event", step.Name)
+
+	if len(step.Tools)+len(step.Gates)+len(step.Skills) > 0 || step.GatePolicy != nil {
+		if step.Agent == "" || step.Container == nil {
+			return fmt.Errorf("step %s: tools, skills and gates require an Agent", step.Name)
+		}
+		mcps := map[string]bool{}
+		if step.AgentSettings != nil {
+			for name := range step.AgentSettings.MCPServers {
+				mcps[name] = true
+			}
+		}
+		if err := workload.ValidateAgentCapabilities(step.Tools, step.Gates, step.Skills, step.GatePolicy, step.Container.Resources, mcps); err != nil {
+			return fmt.Errorf("step %s: %w", step.Name, err)
+		}
+	}
+	executors := 0
+	if step.Container != nil {
+		executors++
+	}
+	if step.Human {
+		executors++
+	}
+	if step.Event {
+		executors++
+	}
+	if executors != 1 {
+		return fmt.Errorf("step %s must declare exactly one container, approval or event", step.Name)
 	}
 	if len(step.MCPs) > 0 && step.Agent == "" {
 		return fmt.Errorf("step %s: mcps require an agent executor", step.Name)
@@ -186,17 +203,8 @@ func (step Step) validateExecution() error {
 	if step.TimeoutSeconds < 0 || step.MaxAttempts < 0 {
 		return fmt.Errorf("step %s has a negative timeout or attempt limit", step.Name)
 	}
-	if step.Capability != "" && !ValidName(step.Capability) {
-		return fmt.Errorf("step %s has invalid capability name %q", step.Name, step.Capability)
-	}
-	if step.Event && (len(step.Transitions) == 0 || step.Optional || step.ResultFile != "" || len(step.Outputs) > 0 || len(step.Checks)+len(step.PreChecks) > 0) {
-		return fmt.Errorf("event step %s needs transitions and cannot have outputs, checks, result_file or optional", step.Name)
-	}
-	if step.Human && step.Event {
-		return fmt.Errorf("step %s cannot be both human and event", step.Name)
-	}
-	if step.ResultFile != "" && (!ValidArtifact(step.ResultFile) || step.Human || step.Event || step.Capability != "") {
-		return fmt.Errorf("step %s has invalid result_file", step.Name)
+	if step.Event && (len(step.Transitions) == 0 || step.Optional || len(step.Outputs) > 0 || len(step.Checks)+len(step.PreChecks) > 0) {
+		return fmt.Errorf("event step %s needs transitions and cannot have outputs, checks or optional", step.Name)
 	}
 	if step.Human && (step.Optional || len(step.Inputs) == 0) {
 		return fmt.Errorf("human step %s needs inputs and cannot be optional", step.Name)
@@ -209,13 +217,21 @@ func (step Step) validateExecution() error {
 			return fmt.Errorf("step %s has invalid task artifact path %q", step.Name, artifactPath)
 		}
 	}
-	for _, completionCheck := range append(append([]Check{}, step.PreChecks...), step.Checks...) {
-		if !namePattern.MatchString(strings.TrimSuffix(completionCheck.Script, ".sh")) {
-			return fmt.Errorf("step %s has invalid completion check %q", step.Name, completionCheck.Script)
+	for _, check := range append(append([]Check{}, step.PreChecks...), step.Checks...) {
+		if len(check.Command) == 0 || check.Command[0] == "" {
+			return fmt.Errorf("step %s has an empty check command", step.Name)
 		}
 	}
-	if step.Check != "" && !namePattern.MatchString(strings.TrimSuffix(step.Check, ".sh")) {
-		return fmt.Errorf("step %s has invalid check %q", step.Name, step.Check)
+	if step.Container != nil {
+		if step.Human || step.Event {
+			return fmt.Errorf("wait step %s cannot launch a container", step.Name)
+		}
+		if err := step.Container.Validate(); err != nil {
+			return fmt.Errorf("step %s: %w", step.Name, err)
+		}
+		if step.Agent != "" && step.Container.Result == "exit-code" {
+			return fmt.Errorf("Agent %s must publish a result file", step.Agent)
+		}
 	}
 	return nil
 }

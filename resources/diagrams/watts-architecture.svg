@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
 <title id="title">Watts — define, execute, measure, compare, revise</title>
-<desc id="desc">A team-owned Watts package defines a versioned process. Pinned executions run agents, checks and approvals, preserving attempt evidence. Evals compare outcomes and resource use and guide package revisions. Temporal and workers support execution. Complete usage accounting, portable packages and isolated workloads are proposed capabilities.</desc>
+<desc id="desc">A team-owned Watts package defines a versioned process. Pinned executions run agents, checks and approvals, preserving attempt evidence. Evals compare outcomes and resource use and guide package revisions. Temporal and workers support execution. Generic local container workloads are implemented; complete usage accounting and distributed artifact transport remain proposed.</desc>
 <defs>
 <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4f46e5"/></marker>
 <style>text{font-family:Arial,Helvetica,sans-serif;fill:#172033}.title{font-size:21px;font-weight:700}.body{font-size:17px;fill:#475569}.small{font-size:14px;fill:#475569}.box{fill:white;stroke:#cbd5e1;stroke-width:1.5}.arrow{fill:none;stroke:#4f46e5;stroke-width:2.5;marker-end:url(#arrow)}.future{fill:#eef2ff;stroke:#6366f1;stroke-width:1.5;stroke-dasharray:6 4}</style>
@@ -59,6 +59,6 @@
 <text x="640" y="542" class="body">Complete usage/cost accounting · portable packages</text>
 <text x="640" y="569" class="body">Isolated Agent/Procedure workloads · containers/sandboxes</text>
 
-<text x="40" y="631" class="small">0.1.0 proof of concept · current agent runtime: Pi, with Ralph as a tool · eval scaffold available</text>
+<text x="40" y="631" class="small">0.1.0 proof of concept · generic OCI workloads · Pi/Ralph example image · eval scaffold available</text>
 <text x="40" y="655" class="small">Declarative configuration makes decisions visible; it does not guarantee identical outputs or better outcomes.</text>
 </svg>

@@ -7,12 +7,12 @@ A configurable example for Go business applications and web services. The templa
 [values.yaml](values.yaml) defines the complete example policy:
 
 - Workflow order, routes, approval gates, and task document scaffolding.
-- Agent identities, prompts, Pi runtime selection, and Ralph commands and configuration.
+- Agent identities, prompts, container image selection, and private Ralph configuration.
 - Model, provider, reasoning settings, and environment-backed credential references.
 - Agent checks, skills, and the builder's gopls MCP connection.
-- Deterministic Procedures, including the golangci-lint command.
+- Callable build/test/vet/lint tools and formal gates inside the build Agent; approval waits remain Procedures.
 
-[templates/](templates/) explicitly renders Workflow placements and routes, Agent runtime and tool configuration, Procedure execution, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution still requires an adapter supporting the selected runtime; currently the supported Agent runtime is Pi.
+[templates/](templates/) explicitly renders Workflow placements and routes, Agent container and descriptive tool configuration, Procedure execution, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution uses the common container contract. The values select the Pi/Ralph image; another image can implement the same interface.
 
 [watts.yaml](watts.yaml) identifies the package, selects its values and templates, and declares scripts, skills, and lint configuration as assets. It contains no agent or tool selection. Keep credential values outside the package.
 
@@ -54,12 +54,27 @@ Task creation resolves templates and captures declared assets. Edit source value
 
 ## Default example
 
-**Specification → human spec review → planning → human plan review → build → lint → agent review**
+See the [workflow diagram](workflow-diagram.md) for stage order, approval/rework routes, and Agent completion gates.
 
-The current values select Pi, Ralph for build/review, OpenRouter, a builder skill, gopls MCP, and golangci-lint v2. These are example choices, not template requirements. Review rework returns to build so lint runs again. Export `OPENROUTER_API_KEY` before starting the worker. The default lint script expects a Go module at the project root.
+**Specification → human spec review → planning → human plan review → build → agent review**
 
-The current execution path needs the Pi/Ralph runtime dependencies, gopls, and golangci-lint on the worker PATH. See the [runbook](../../../docs/runbook.md) for execution and the [MCP guide](mcp/README.md) for the connection defined in values. Removing legacy project initialization and moving preparation into adapters is tracked in wiss-020.
+The current values select Pi, Ralph for build/review, OpenRouter, a builder skill, gopls MCP, and golangci-lint v2. These are example choices, not template requirements. Specification and planning use required document gates with bounded repair. Build runs its declared build/test/vet/lint and story-completion gates before publication, with up to two gate repair passes. Review has read-only test/vet/lint tools and a required verdict-format gate with no automatic repair; failing application checks can still produce a valid REJECT verdict and return work to build. Review rework returns to build, which reruns its gates. There is no standalone lint stage. Export `OPENROUTER_API_KEY` before starting the worker. The default lint script expects a Go module at the project root.
+
+Build the example images from the Watts checkout before starting the worker:
+
+```sh
+docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
+docker build -t watts/go-generalist:0.1.0 registry/go_generalist
+```
+
+The team image contains Pi, Ralph, Go, gopls, and golangci-lint. The currently supported worker backend is local Docker Engine; agent/tool installations belong in the image. Package scripts, lint configuration, and skills are captured and mounted at `/inputs/resources/team`. Private task documents and tool state live under `/runtime`. Application work is performed in a candidate `/workspace` and published after result/check validation. See the [runbook](../../../docs/runbook.md), [image definition](../../../registry/go_generalist/README.md), and [MCP guide](mcp/README.md).
 
 The [lint script](scripts/lint.sh) explicitly uses [.golangci.yml](.golangci.yml), preserves diagnostics and exit status, and does not automatically fix files. The [builder skill](skills/go-builder/SKILL.md) includes attribution and the MIT notice for guidance derived from samber/cc-skills-golang.
 
 This example's model-backed MCP execution has not been verified, and the workflow is not an evaluated benchmark. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare configurations over time.
+
+### Agent capability configuration
+
+`agents.build.tools` names fixed commands and the `gopls` MCP reference; `agents.build.gates` names required checks and expected exit codes. `gate_policy.max_repairs` bounds repairs inside that Agent execution. `skills` selects image-owned guidance or captured resource directories independently of tool access. Templates render each field explicitly. See [Agent tools, gates, and skills](../../../docs/kinds.md#agent-tools-gates-and-skills).
+
+The [build script](scripts/build.sh) puts compilation products under `/runtime/build` so verification does not publish a Linux executable into the developer's source tree. Declared command tools use the original image PATH; private replacement binaries do not override these checks. Other agent shell capabilities remain subject to the image's policy.

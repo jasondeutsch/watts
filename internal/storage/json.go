@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -44,3 +46,5 @@ func WriteJSON(path string, v any) error {
 	}
 	return os.WriteFile(path, append(data, '\n'), 0o644)
 }
+
+func Digest(data []byte) string { sum := sha256.Sum256(data); return hex.EncodeToString(sum[:]) }

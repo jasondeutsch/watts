@@ -19,8 +19,6 @@ type Input struct {
 	Task         string     `json:"task"`
 	Definition   Definition `json:"definition"`
 	ConfigSHA256 string     `json:"config_sha256"`
-	Offline      bool       `json:"offline,omitempty"`
-	Pass         []string   `json:"pass,omitempty"`
 }
 type ActivityInput struct {
 	Input     Input
@@ -37,13 +35,14 @@ type Result struct {
 	Data      map[string]any `json:"data,omitempty"`
 }
 type Stage struct {
-	Name       string     `json:"name"`
-	Status     string     `json:"status"`
-	Attempts   int        `json:"attempts"`
-	LastError  string     `json:"last_error,omitempty"`
-	Artifacts  []Artifact `json:"artifacts,omitempty"`
-	ApprovedBy string     `json:"approved_by,omitempty"`
-	Outcome    string     `json:"outcome,omitempty"`
+	Name         string     `json:"name"`
+	Status       string     `json:"status"`
+	Attempts     int        `json:"attempts"`
+	LastError    string     `json:"last_error,omitempty"`
+	Artifacts    []Artifact `json:"artifacts,omitempty"`
+	ApprovedBy   string     `json:"approved_by,omitempty"`
+	AuthorizedBy string     `json:"authorized_by,omitempty"`
+	Outcome      string     `json:"outcome,omitempty"`
 }
 type State struct {
 	Status      string        `json:"status"`
@@ -53,12 +52,13 @@ type State struct {
 	History     []StageResult `json:"history,omitempty"`
 }
 type Decision struct {
-	Step      string     `json:"step"`
-	Attempt   int        `json:"attempt"`
-	By        string     `json:"by"`
-	Feedback  string     `json:"feedback,omitempty"`
-	Reject    bool       `json:"reject,omitempty"`
-	Artifacts []Artifact `json:"artifacts"`
+	Step         string     `json:"step"`
+	Attempt      int        `json:"attempt"`
+	By           string     `json:"by"`
+	AuthorizedBy string     `json:"authorized_by,omitempty"`
+	Feedback     string     `json:"feedback,omitempty"`
+	Reject       bool       `json:"reject,omitempty"`
+	Artifacts    []Artifact `json:"artifacts"`
 }
 type Retry struct {
 	Step    string

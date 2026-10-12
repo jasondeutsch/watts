@@ -1,80 +1,90 @@
-# Temporal workflows
+# Temporal operations
 
-Watts uses Temporal for durable execution of a configurable workflow. The Go SDK is compiled into Watts. A Temporal Service stores workflow history, and a Watts worker runs activities against your local project files. The service does not run Pi or hold a copy of the project.
+Temporal is required for execution. Its Go SDK owns workflow history, queries,
+updates, activity scheduling, and replay. A Watts worker executes container
+activities against its local application workspace. The Temporal service does
+not launch containers or hold the application's files.
 
-Temporal is required for every workflow execution. The optional `temporal` object overrides connection defaults; omitting it uses localhost:7233, namespace default and a project-specific task queue.
+## Local service
 
-## Local setup
-
-With Docker running and Docker Compose v2 installed, start the local server from the Watts source directory:
+From the Watts checkout with Docker running:
 
 ```sh
 docker compose up -d --wait
 ```
 
-[compose.yaml](../compose.yaml) runs a pinned Temporal CLI image with its development server and Web UI. The API is available at `localhost:7233`, and the UI at [localhost:8233](http://localhost:8233). Both ports are published only on the local machine. The `default` namespace is created automatically, so Watts' default connection settings work without adding a `temporal` object to `watts.yaml`.
+The development service API is at `localhost:7233`, with its UI at
+[localhost:8233](http://localhost:8233). Compose binds these ports locally and
+creates the `default` namespace. Preserve its data volume to retain history.
+`wctl start` manages the Watts worker and web UI, not the Temporal service.
 
-Workflow history is stored in the named Docker volume `watts-temporal-data`, independently of project `.watts` directories. One server can serve multiple Watts projects, each with its own worker queue. This setup is for local development; deployed installations should use a production Temporal service. See the [server command reference](https://docs.temporal.io/cli/command-reference/server).
+## Connection
 
-Manage the server from the Watts source directory:
+Defaults are `localhost:7233`, namespace `default`, and a project-specific task
+queue derived from the project path. Local `.watts/settings.yaml` may override:
 
-```sh
-docker compose ps
-docker compose logs -f temporal
-docker compose down
+```yaml
+version: 1
+tasks_dir: tasks
+limits: {max_minutes: 30, max_attempts: 3}
+temporal:
+  address: localhost:7233
+  namespace: default
+  task_queue: my-project
 ```
 
-`down` stops the server and preserves history. `docker compose down -v` also deletes the database and all locally stored workflow history. Restart with `docker compose up -d --wait`.
+Keep queues dedicated to the project whose files the worker owns. The current
+connection supports a local or trusted self-hosted endpoint. TLS/Temporal Cloud
+authentication and distinct-node artifact delivery remain future work.
 
-From another directory, use `docker compose -f /absolute/path/to/watts/compose.yaml` followed by the same command. Stop any existing service using ports 7233 or 8233 before starting this stack.
+## Execution and recovery
 
-You can also install the [Temporal CLI](https://docs.temporal.io/cli/setup-cli) and run it directly, keeping the database outside disposable `.watts` directories:
+Task creation resolves a bundle. First submission pins its definition, image IDs,
+resource captures, and runtime preferences. Temporal owns ordered routing,
+approvals, events, attempts, rework, and completion. A retry retains that plan;
+use a new task to change execution policy.
 
-```sh
-temporal server start-dev --db-filename /absolute/path/to/temporal-dev.db
-```
+Activities have automatic retries disabled; explicit workflow retry/routing
+controls rework. Heartbeats deliver cancellation to running activities. The Docker
+backend stops the owned container, reattaches by stable execution identity, and
+never implicitly restarts a completed process. Durable acceptance receipts prevent
+reexecution after container cleanup. Publication checks baseline content and modes,
+so external edits cause explicit conflicts. See [the workload interface](container-workloads.md).
 
-Defaults are `localhost:7233`, namespace `default`, and a task queue derived from the absolute project path. An optional `task_queue` overrides the queue name; keep queues dedicated to one project because their workers need the correct filesystem. The current connection supports a local or trusted self-hosted endpoint; TLS and Temporal Cloud authentication are not configured by this first integration.
-
-## Worker and recovery
-
-Start Watts from the project with `wctl start` or `wctl start -d`. Each project currently needs a worker with access to its files and dedicated task queue. A worker polls Temporal and executes scheduled activities; the Temporal server stores history and does not execute agent processes. Stopping a worker preserves workflow state, but work requires a worker to continue.
-
-See the [runbook](runbook.md) for startup, credentials, approvals, retries, cancellation, and diagnosis. See [Kinds](kinds.md) and [workflow execution](workflows.md) for authoring. Activities have Temporal automatic retries disabled; workflow routing and explicit retries control rework.
-
-Cancellation reaches activities through heartbeats and stops subprocess groups. A project workspace lock serializes mutating activities. A process journal detects surviving subprocesses after worker loss and refuses overlapping execution; inspect and stop the reported process before retrying. Interactive agent sessions and external editors do not participate in this lock. File edits are not rolled back.
+A running workflow waiting for retry can receive `wctl task run <task>`. Completed,
+failed, cancelled, and terminated executions are terminal states. Inspect status
+before starting a replacement execution; retained local evidence is not a signal
+to advance workflow state. Workers and the Temporal service may be restarted;
+completed activities and durable waits are recovered from history.
 
 ## Stored state
 
-Task creation resolves the selected resource bundle into an editable task `workflow.yaml`. First submission freezes that definition, runtime configuration and capability commands. Use a new task to adopt a different definition. See [workflows.md](workflows.md) for workflow templates, plugin outcomes and external events.
+- `<task>/workflow.yaml`: resolved task snapshot; author changes in source values/templates before creating a new task.
+- `<task>/.watts-state/temporal.json`: execution binding and pinned definition.
+- `<task>/.watts-state/workflow-config.json`: hash-verified runtime preferences.
+- `<task>/.watts-state/resources/`: captured workload resources.
+- `<task>/.watts-state/approvals/`: hash-bound approval receipts.
+- `<task>/.watts-state/logs/`: durable attempt output.
+- `<task>/.watts-state/steps/`: input, result, events, reported usage, container records, and acceptance receipts.
+- `.watts/workflow.lock`: publication/activity serialization.
+- `~/.watts/runtime/`: private candidates, caches, agent settings, and tool state.
 
-- `<task>/workflow.yaml`: authoritative task definition, editable before submission.
-- `<task>/.watts-state/approvals/<stage>.txt`: human artifact approval receipts.
-- `<task>/.watts-state/temporal.json`: workflow/run IDs, endpoint, queue and the pinned definition.
-- `<task>/.watts-state/workflow-config.json`: local runtime settings, verified by content hash on every activity.
-- `<task>/.watts-state/logs/<stage>-<attempt>.log`: activity output.
-- `<task>/.watts-state/steps/<stage>-<attempt>/input.json` and `result.json`: executor input and validated result evidence.
-- `<task>/.watts-state/runs/<stage>-<attempt>.json`: agent provenance, with the attempt number supplied by Temporal.
-- `.watts/workflow.lock` and `.watts/workflow-active-process.json`: workspace ownership and active-process recovery.
-
-Temporal owns all progress, attempt counts, retries and completion. Local files contain evidence and execution bindings; they do not infer workflow status from process IDs. The active-process journal is used only to prevent overlapping processes.
-
-Retain the task state directory and the Temporal database. A durable execution record does not replace the project's files, snapshots or credentials. Definitions and command/prompt strings are recorded in Temporal history, so use named credentials rather than embedding secrets in them.
+Keep task evidence and the Temporal database. History does not replace application
+files or credentials. Definitions and prompt/command strings enter history; use
+Secret references instead of embedding credentials. Runtime retention and the
+consolidated home-directory settings layout remain tracked in [issues](../issues.md).
 
 ## Verification
 
-Run `go test ./...` for CLI integration tests, application behavior tests, Temporal SDK workflow tests and worker/process tests. Go tests use Testify `assert` and `require`; the `testing` package supplies the test harness. The opt-in live test starts a real development service and downloads a compatible Temporal CLI if needed:
-
 ```sh
+go test ./...
+WATTS_DOCKER_INTEGRATION=1 go test ./internal/containerengine ./internal/application
 WATTS_TEMPORAL_INTEGRATION=1 go test ./internal/application -run TestTemporalLive -v
 ```
 
-## Implementation
-
-The official Temporal Go SDK handles connections, workers, workflow queries and updates, and activity scheduling. See [workflow architecture](workflow-design.md) for package responsibilities. Workflow/activity names and serialized execution fields are stable protocol elements for recorded history.
-
-## Proposed execution boundary
-
-The [isolated workload proposal](stage-communication.md#isolated-workload-primitive) keeps Temporal responsible for routing, durable waits, and decisions. Watts adapters will launch and manage Agent/Procedure workloads in containers or sandboxes and publish evidence independently of their lifetime. Kubernetes may be an execution backend; it does not replace the workflow engine.
-
-The [package/runtime layout proposal](package-runtime-layout.md) separates authored project packages from durable task records and worker-owned home-directory state. These are future changes; the stored paths above describe current behavior. Recovery, idempotent publication, compatible workers, complete telemetry, and remote authentication are tracked in [Temporal integration completion](../issues.md#temporal-integration-completion).
+The container tests require locally available Ubuntu the pinned Node base image, and the built Pi/Ralph image.
+They run real Pi/Ralph against a deterministic fake provider. The live test starts
+an independent persistent Temporal development service; it may download its CLI.
+It covers service/worker restart, approval rework, explicit retry with an ordinary
+Node image, external events, and cancellation. It does not use your test project
+or hosted model credentials.

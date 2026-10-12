@@ -32,8 +32,8 @@ func RunCommandTimeout(cmd *exec.Cmd, limit time.Duration) error {
 	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigc)
 	if limit > 0 {
-		// A limited run gets its own process group, so the limit can stop everything Pi started
-		// and not just Pi, and Wait does not hang on a grandchild that still holds the pipes.
+		// A limited run gets its own process group, so the limit can stop the launched process group
+		// including descendants, and Wait does not hang on a grandchild that still holds the pipes.
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		cmd.WaitDelay = 2 * time.Second
 	}

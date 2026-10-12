@@ -2,7 +2,9 @@ package tasks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
@@ -40,7 +42,6 @@ func New(app *terminal.Context, args []string) error {
 func Run(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "task run")
 	var options application.RunOptions
-	arguments.RunFlags(flags, &options, false)
 	arguments.WorkflowFlags(flags, &options)
 	flags.BoolVar(&options.Force, "ignore-attempt-limit", false, "authorize another attempt after inspecting the failure")
 	positionals, err := arguments.Parse(flags, args)
@@ -85,6 +86,9 @@ func Decide(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "task decide")
 	feedback := flags.String("feedback", "", "feedback for the next agent attempt")
 	reject := flags.Bool("reject", false, "reject the pending human stage")
+	actor := flags.String("actor", "", "coordinator identity for a delegated decision")
+	authorizedBy := flags.String("authorized-by", "", "human who explicitly authorized this coordinator decision")
+	reviewedStatus := flags.String("reviewed-status", "", "JSON status snapshot reviewed before deciding (required for delegation)")
 	positionals, err := arguments.Parse(flags, args)
 	if err != nil {
 		return arguments.UsageError(err)
@@ -99,11 +103,27 @@ func Decide(app *terminal.Context, args []string) error {
 	if len(positionals) > 1 {
 		stage = positionals[1]
 	}
-	decision, err := app.SubmitTaskDecision(context.Background(), task, stage, *reject, *feedback)
+	options := application.DecisionOptions{Reject: *reject, Feedback: *feedback, Actor: *actor, AuthorizedBy: *authorizedBy}
+	if *reviewedStatus != "" {
+		data, err := os.ReadFile(*reviewedStatus)
+		if err != nil {
+			return fmt.Errorf("read reviewed status: %w", err)
+		}
+		var view application.TemporalTaskStatus
+		if err := json.Unmarshal(data, &view); err != nil {
+			return fmt.Errorf("decode reviewed status: %w", err)
+		}
+		options.ReviewedStatus = &view
+	}
+	decision, err := app.SubmitTaskDecisionWithOptions(context.Background(), task, stage, options)
 	if err != nil {
 		return err
 	}
-	app.Say("Recorded decision by %s for %s (rejected: %v).", decision.By, decision.Step, decision.Reject)
+	if decision.AuthorizedBy != "" {
+		app.Say("Recorded delegated decision by %s, authorized by %s, for %s attempt %d (rejected: %v).", decision.By, decision.AuthorizedBy, decision.Step, decision.Attempt, decision.Reject)
+	} else {
+		app.Say("Recorded decision by %s for %s attempt %d (rejected: %v).", decision.By, decision.Step, decision.Attempt, decision.Reject)
+	}
 	return nil
 }
 

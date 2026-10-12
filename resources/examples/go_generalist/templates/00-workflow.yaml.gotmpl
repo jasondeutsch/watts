@@ -6,9 +6,6 @@ spec:
 {{ if hasKey $workflow "version" }}
   version: {{ $workflow.version }}
 {{ end }}
-{{ if hasKey $workflow "capture_baseline" }}
-  capture_baseline: {{ $workflow.capture_baseline }}
-{{ end }}
 {{ if hasKey $workflow "max_transitions" }}
   max_transitions: {{ $workflow.max_transitions }}
 {{ end }}

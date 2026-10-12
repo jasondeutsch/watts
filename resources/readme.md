@@ -15,9 +15,9 @@ Resources for people and agents working with Watts. Start here for guidance on c
 
 ## References
 
-- [Spec drafting skill](../internal/kit/kit/skills/spec-template/SKILL.md)
-- [Plan drafting skill](../internal/kit/kit/skills/plan-template/SKILL.md)
+- [Spec drafting skill](../registry/pi_ralph/kit/skills/spec-template/SKILL.md)
+- [Plan drafting skill](../registry/pi_ralph/kit/skills/plan-template/SKILL.md)
 - [Task runbook](../docs/runbook.md)
 - [Workflow configuration](../docs/workflows.md)
 
-Add reusable examples, guides, and templates here as they become necessary. Runtime assets used by workflow workers remain in `internal/kit`; this directory is the entry point for users and their coordinating agents.
+Add reusable examples, guides, and templates here as they become necessary. Runtime-specific assets live in `registry/` image sources; this directory is the entry point for users and their coordinating agents.

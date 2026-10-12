@@ -13,13 +13,12 @@ RUN apt-get update \
         "@lnilluv/pi-ralph-loop@${RALPH_VERSION}" \
     && npm cache clean --force
 
-ENV PI_CODING_AGENT_DIR=/home/node/.pi/agent
-RUN mkdir -p /home/node/.pi/agent /workspace \
-    && chown -R node:node /home/node/.pi /workspace
+COPY launcher.mjs protocol.mjs telemetry.ts tools.mjs tools.ts patch-ralph.mjs /opt/watts/
+COPY kit/skills /opt/watts/kit/skills/
+RUN node /opt/watts/patch-ralph.mjs
 
-COPY --chown=node:node settings.json /home/node/.pi/agent/settings.json
+ENV PI_CODING_AGENT_DIR=/runtime/pi
 
 USER node
 WORKDIR /workspace
-ENTRYPOINT ["pi"]
-CMD ["--help"]
+ENTRYPOINT ["node", "/opt/watts/launcher.mjs"]

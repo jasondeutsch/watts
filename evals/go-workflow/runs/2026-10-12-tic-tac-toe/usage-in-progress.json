@@ -1,0 +1,19 @@
+{
+  "status": "in_progress",
+  "completed_stages": {
+    "planning-1": {
+      "input_tokens": 46359,
+      "output_tokens": 4870,
+      "cache_read_tokens": 35328,
+      "cache_write_tokens": 0
+    },
+    "specification-1": {
+      "input_tokens": 31336,
+      "output_tokens": 2530,
+      "cache_read_tokens": 22784,
+      "cache_write_tokens": 0
+    }
+  },
+  "cost_usd": null,
+  "note": "Private build-live-events is a partial snapshot; do not add it to the completed build usage later."
+}

@@ -4,7 +4,7 @@ Status: proposal for portable execution and publication. Named [Kinds](kinds.md)
 
 ## Purpose
 
-In this proposal, “stage” means a Workflow step executing a referenced Agent or Procedure; it is not an additional Kind. An executor performs that work using Pi/Ralph, a script, or eventually a container. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
+In this proposal, “stage” means a Workflow step executing a referenced Agent or Procedure; it is not an additional Kind. A container workload performs that work using its declared image and command; Pi/Ralph is one image implementation. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
 
 Stages communicate through engine-delivered results and referenced artifacts. They do not launch or call another stage directly. The interface should remain consistent across executor implementations.
 
@@ -30,7 +30,7 @@ Authored packages, durable task evidence, and worker working files have separate
 
 ## Authoring, compilation, and execution
 
-`workflow.yaml` is the authoring format. Compilation combines it with project configuration and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
+Package values and YAML templates are the authoring inputs; a task's `workflow.yaml` is their resolved snapshot. Compilation combines the resolved resources with execution preferences and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
 
 Compilation validates stage contracts and connections, resolves executor settings and MCP definitions, and packages instructions, skills, scripts, and configuration. The source workflow remains available for editing and provenance, but workers do not reread it during that execution. Retries use the same compiled plan; configuration changes require a new compilation and application.
 
@@ -169,7 +169,7 @@ Temporal coordinates orchestration. Watts executor adapters own package material
 
 Watts already has stage inputs and outputs, a shared executor result containing outcome/feedback/artifacts/data, validated transitions, attempt records, and previous-stage feedback. See [workflow configuration](workflows.md) and [workflow architecture](workflow-design.md).
 
-Watts resolves Agent/Procedure references, ConfigMap defaults, and Secret source names into pinned workflow definitions and runtime settings. It does not compile self-contained stage packages. Explicit upstream bindings, immutable artifact delivery across executors, a workspace revision and publication contract, and distributed container execution require further design and implementation. Current task-relative output files and snapshots should not be mistaken for the complete proposed interface.
+Watts resolves Agent/Procedure references, ConfigMap defaults, and Secret source names into pinned workflow definitions and runtime settings. It does not compile self-contained stage packages. Explicit upstream bindings, immutable artifact delivery across executors, strong cross-node workspace revision identities and distributed container execution require further design and implementation. Local candidate publication and recovery are implemented. Current task-relative output files and snapshots should not be mistaken for the complete proposed interface.
 
 ## Relationship to tracked issues
 
@@ -177,7 +177,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 
 | Issue | Connection |
 | --- | --- |
-| [wiss-007](../issues.md#wiss-007-executor-abstraction) | A common stage contract separates workflow behavior from Pi/Ralph and future container executors |
+| [wiss-016](../issues.md#wiss-016-typed-workflow-resources-and-compiled-execution-packages) | Extend resolved resources and the implemented generic workload contract into portable execution packages |
 | [wiss-014](../issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
 | [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
 | [wiss-003](../issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](../issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
@@ -197,3 +197,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 - Which artifact store and transfer protocol support local and distributed execution, and who owns retention?
 - How are executable dependencies and container images pinned, and how are runtime requirements matched to workers?
 - How does publication remain atomic and idempotent across node loss or repeated completion delivery?
+
+## Local container implementation
+
+The [common workload interface](container-workloads.md) now implements local OCI execution, isolated candidate workspaces, explicit result/output publication, captured image/resource identities, cancellation, reattachment, and acceptance receipts. Runtime-specific behavior lives in images. The broader cross-node package/artifact transport, scheduling, stronger revision identities, and storage policy in this proposal remain future work.

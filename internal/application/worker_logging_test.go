@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/testsuite"
 )
 
 func TestWorkerLogsAttemptDiagnosticsAndChecks(t *testing.T) {
-	project, request := boundTemporalTask(t, orchestration.Step{Name: "build", Command: "printf 'compiler: undefined symbol\\n' >&2; exit 1"})
+	requireDocker(t)
+	step := containerStep("printf 'compiler: undefined symbol\\n' >&2; exit 1")
+	step.Name = "build"
+	project, request := boundTemporalTask(t, step)
 	var log bytes.Buffer
 	var suite testsuite.WorkflowTestSuite
 	app := &Service{Root: project.Root, Output: &log}
@@ -22,7 +24,7 @@ func TestWorkerLogsAttemptDiagnosticsAndChecks(t *testing.T) {
 	text := log.String()
 	require.Contains(t, text, `msg="Attempt execution started"`)
 	require.Contains(t, text, "stage=build attempt=1")
-	require.Contains(t, text, `msg="Command starting"`)
+	require.Contains(t, text, `msg="Container executing"`)
 	require.Contains(t, text, `msg="Attempt execution failed"`)
 	require.Contains(t, text, "compiler: undefined symbol")
 	require.Contains(t, text, "next_action=")

@@ -1,93 +1,142 @@
-# Container images and workload execution
+# Container workload interface
 
-Status: proposal for [wiss-013](../issues.md#wiss-013-containerized-workloads-across-kinds). Container execution and the illustrative manifest fields below are not implemented. This document clarifies how images, resource manifests, and executor adapters fit together; the [stage communication proposal](stage-communication.md) defines inputs, publication, and routing.
+Watts core is independent of agents, models, and tools. An executable Agent or
+Procedure selects an OCI image and command. Watts requires a container execution
+environment; the currently supported backend is a local Docker Engine, accessed
+through the official Docker Go SDK. Temporal owns routing, retries, approvals,
+and external-event waits.
 
-## The execution primitive
+An ordinary command image needs no Watts base image. Use `result: exit-code` for
+simple deterministic Procedures. An Agent or a Procedure with custom outcomes
+must implement the structured input/result contract. Its launcher can live in
+an image you build or extend; no runtime-specific code belongs in Watts core.
 
-An isolated workload is Watts' basic execution primitive, analogous to a Kubernetes Pod. Agent and executable Procedure attempts specialize its lifecycle. Workflow orchestrates them through Temporal; ConfigMap and Secret provide scoped configuration and credential references. Approval and event waits do not require running containers.
+## Mounted interface
 
-A container image supplies installed software. A manifest defines the work and its runtime requirements. The resolved execution request supplies attempt identity, inputs, workspace revision, configuration, and output bindings. An image does not replace the Agent or Procedure definition.
+| Path | Access | Contents |
+| --- | --- | --- |
+| `/inputs/input.json` | Read-only | Versioned execution input |
+| `/inputs/task/` | Read-only | Captured declared task inputs |
+| `/inputs/config/` | Read-only | Literal `container.files` |
+| `/inputs/resources/` | Read-only | Captured `container.resources` |
+| `/outputs/` | Writable | Structured result, event stream, and output artifacts |
+| `/outputs/task/` | Writable | Declared task outputs; inputs are seeded here |
+| `/runtime/` | Writable | Workload-private settings, caches, tools, and state |
+| `/workspace/` | Read-only by default | Isolated copy of application files |
 
-| Component | Responsibility |
-| --- | --- |
-| OCI image | Executables, libraries, extensions, and installed tools |
-| Agent/Procedure manifest | Runtime selection, work configuration, permissions, inputs, and outputs |
-| Container backend | Materialize inputs, launch, observe, cancel, collect outputs, and clean up |
-| Agent adapter | Translate Agent configuration into runtime-specific files/commands and translate events into results and usage |
-| Workflow/Temporal | Durable routing, approval/event waits, decisions, and attempt scheduling |
+The image root filesystem is read-only, capabilities are dropped, privilege
+escalation is disabled, and the user is nonroot. `/tmp` is a bounded, non-executable
+tmpfs. Executable scratch files, such as Go test binaries, can use `/runtime/tmp`.
+No live project mount, Docker socket, or worker home directory is exposed.
 
-The container backend and agent adapter are separate responsibilities. The backend need not know Pi's model configuration; the Pi adapter need not implement container scheduling. A local container engine and Kubernetes could implement the same execution boundary later.
+The environment names the interface with `WATTS_INPUT`, `WATTS_OUTPUTS`,
+`WATTS_RESULT`, `WATTS_EVENTS`, and `WATTS_WORKSPACE`. `HOME=/runtime/home` and
+`TMPDIR=/runtime/tmp`. Only explicitly declared environment and secret bindings
+are added to the image environment.
 
-## Procedures can use existing images
+## Input and result
 
-A command-based Procedure can run an ordinary image containing the required executable. Watts supplies its command, working directory, workspace access, configuration, and declared output locations, then records its exit status and logs.
+`input.json` contains `version: 1`, an opaque `execution` identity, `task`, `step`,
+`attempt`, optional `parameters`, hashed `inputs`, declared `outputs`, and
+`previous` result/feedback. Agents additionally receive an `agent` object with
+name, identity, provider, model, prompt, selected MCPs, and descriptive settings.
+The `task` field is a logical project identifier; use mounted paths for file access.
 
-```yaml
-# Illustrative proposal, not current schema or a copyable configuration.
-kind: Procedure
-name: test
-spec:
-  runtime:
-    container:
-      image: golang:<pinned-version-or-digest>
-  execution:
-    command: [go, test, ./...]
+The command reads its configuration, performs work, and writes `/outputs/result.json`:
+
+```json
+{"outcome":"success","artifacts":["report.md"],"feedback":"Checks passed"}
 ```
 
-No Watts daemon or wrapper must be installed in that image. The command must still obey its declared input/output contract, and successful exit alone does not replace required checks or artifact validation. Native structured outcomes may require an output file or adapter; stdout is diagnostic output, not an implicit routing protocol.
+Optional `data` holds structured output. Artifact names identify files beneath
+`/outputs/task/`. The result must contain one JSON object, use a declared outcome,
+and name only declared outputs. Exiting zero without a required result is a
+failure. Nonzero exit, invalid output, failed checks, and error events fail the
+attempt and prevent application publication.
 
-## Agents need suitable runtime images
+With `result: exit-code`, exit zero supplies the outcome `success`; declared
+outputs are still validated. Agent workloads always require a result file.
 
-An Agent's image must contain its selected agent software and required tools. An existing suitable image can be used directly. Otherwise, Watts or the team must build and maintain a custom image.
+## Agent capabilities and gate evidence
 
-For the supported Pi/Ralph path, Watts should provide a ready-to-run image containing pinned Pi, its required extensions including Ralph, and their runtime dependencies. Ralph is a tool used by Pi inside an Agent workload, not an orchestration primitive. The Go generalist example should select a suitable image containing its declared Go toolchain, lint tool, gopls MCP executable, and other required dependencies, or extend the supported base image to supply them.
+The Agent input also carries `tools`, `gates`, `gate_policy`, and `skills`; see [the manifest fields](kinds.md#agent-tools-gates-and-skills). Workload adapters expose tools/skills natively and implement gate repair. Watts core does not register Pi tools or interpret Ralph state.
 
-```yaml
-# Illustrative proposal; field names and launch contract remain to be designed.
-kind: Agent
-name: builder
-spec:
-  runtime:
-    adapter: pi
-    container:
-      image: <registry>/<pi-go-image>@sha256:<digest>
-  # Model, instructions, skills, MCPs, and credential references remain
-  # typed Agent configuration, supplied from the resolved manifest.
+When gates are declared, the executor must run every gate against a stable final candidate and write `/outputs/gates.json`:
+
+```json
+{"version":1,"execution":"<input execution>","workspace":{"main.go":{"sha256":"<content hash>","mode":420}},"task_outputs":{},"results":[{"name":"lint-clean","tool":"lint","status":"passed","exit_code":0,"evidence":"tools/<call-id>.json"}]}
 ```
 
-The Pi adapter prepares Pi configuration and its launch command inside the attempt environment, consumes runtime events, and records structured results, usage, and evidence. How the adapter communicates across the container boundary remains to be specified. Do not assume arbitrary images support Pi or that every agent follows a universal command protocol.
+`workspace` contains every regular candidate file and its permission bits, using the same snapshot contract as publication. `task_outputs` snapshots the files under `/outputs/task` using the same hash/mode representation. Checks must leave both candidate and published task outputs unchanged. Each referenced call record contains `tool`, fixed `argv`, resolved `working_dir`, execution `status` (`exited`, `error`, `timed_out`, or `canceled`), nullable `exit_code`, stdout/stderr, duration, truncation, and evidence path. An exited command may still fail a gate. Partial output is bounded and marked as truncated.
 
-A derived image is packaging, not necessarily a Watts wrapper. Team images can add tools or use a different agent runtime. A different runtime needs a compatible adapter; an image reference by itself does not supply that integration.
+The worker checks execution identity, complete gate coverage, expected exit codes, declared commands, and equality with the final candidate and task outputs. Missing/stale evidence fails before publication. Legacy post-checks cannot invalidate a gate silently by changing the candidate afterward. Gate reports and tool records are retained with attempt evidence, including failed attempts. No standalone workflow stage or duplicate checker container is required.
 
-## Launch and publication
+Receipts are evidence from the trusted workload executor, not attestations against a malicious image or unrestricted process. A gated Agent image must implement this interface; simply writing a normal result file is insufficient.
 
-1. Resolve and pin the workload definition, adapter requirements, and image identity.
-2. Materialize the bound workspace revision and upstream artifacts into the execution environment.
-3. Supply nonsecret configuration and inject scoped credentials at launch. Keep credentials out of image layers, packages, logs, and Temporal history.
-4. Run the declared command or let the agent adapter configure and invoke its runtime.
-5. Observe progress, collect incremental logs and usage, and stop the owned workload on cancellation or timeout.
-6. Validate and publish outputs and any candidate workspace revision before returning an accepted result to Temporal.
-7. Clean up disposable state according to worker retention policy after durable evidence is recorded.
+Tool/gate events use common event records with `details` containing call/gate identity, status, and evidence references. Recoverable tool/gate failures are not terminal `error` events; exhausted repair or an unrecoverable executor failure produces a terminal error. Reported model usage includes repair passes.
 
-Application access is explicit: build may modify a candidate workspace; review and QA inspect its identified revision read-only and write reports separately. A shared writable mount is not sufficient isolation. Pi/Ralph private configuration and registries remain in the workload's private environment and must not appear in the application workspace.
+## Events and usage
 
-## Initial scope
+`/outputs/events.jsonl` is optional. Each line needs a stable `id` and `type`:
 
-- Consume existing OCI images; pin image digests in resolved execution plans.
-- Support command-based Procedures and the supported Pi Agent adapter inside the common container lifecycle.
-- Provide a maintained Pi/Ralph runtime image and document the Go generalist image requirements.
-- Keep image building outside Watts initially. Teams can use standard image build tools and reference the resulting image.
-- Treat image contents as executable code: define filesystem, network, credential, and resource permissions. Containerization alone is not a complete security policy.
-- Preserve failed and canceled attempt evidence and usage. Do not equate container restart or Temporal retry with exactly-once side effects.
+```json
+{"id":"turn-1","type":"usage","usage":{"provider":"example","model":"coding","input_tokens":100,"output_tokens":20}}
+{"id":"progress-1","type":"progress","message":"Running tests"}
+{"id":"error-1","type":"error","message":"Provider rate limited"}
+```
 
-Remote registries are image distribution infrastructure; this proposal does not require a Watts package registry. Runtime configuration and retention follow the [package/runtime layout proposal](package-runtime-layout.md).
+Repeated identical IDs are deduplicated; conflicting IDs fail validation. An
+`error` event fails even a zero-exit command. Events and reported usage are retained
+on failed attempts. Missing counters and prices remain unknown. Input includes
+cached input when the runtime can account for it; cache counters are a breakdown,
+not extra tokens to add to input. Watts does not invent provider prices.
 
-## Decisions before implementation
+The worker saves event evidence, a usage summary, container identity/exit records,
+input, result, workspace hash manifests, acceptance receipt, and logs under `<task>/.watts-state/steps/` and
+`logs/`. Private attempt directories live under `~/.watts/runtime/`. Full retention
+and archival policy remain tracked separately in [issues](../issues.md).
 
-- Select the initial local container backend and supported platforms.
-- Specify the command/adapter launch contract, entrypoint handling, working directories, mounts, user identity, and output collection.
-- Define adapter compatibility checks, image architecture requirements, and image release/maintenance ownership.
-- Specify network/resource policies, credential delivery, cancellation, and interrupted publication recovery.
-- Verify a deterministic Procedure and Pi/Ralph Agent through a complete Go build/review loop, with no tool-private files leaking into the project.
+## Publication and recovery
 
-Related work: [executor abstraction](../issues.md#wiss-007-executor-abstraction), [portable execution packages](../issues.md#wiss-016-typed-workflow-resources-and-compiled-execution-packages), [local sandboxing](../issues.md#wiss-017-sandboxed-execution-in-a-developers-local-environment), and [Temporal integration](../issues.md#temporal-integration-completion).
+Images and resource contents are captured at submission. Each attempt captures
+its input files and candidate workspace before launch. Editing a tag, template,
+or package afterward does not alter that execution.
+
+Containers have stable execution identities. Activity redelivery reattaches to an
+existing container or reads its completed state; it does not restart a completed
+process. Durable acceptance receipts also prevent execution after container cleanup.
+Cancellation stops the owned container. A failed attempt stays available for
+inspection; an explicit retry receives a new attempt environment.
+
+After validating the result and checks, Watts publishes declared task outputs.
+A `workspace: write` candidate is published only where the live application still
+matches its captured baseline or already matches the same candidate. Conflicting
+human edits are preserved and reported. Publication uses confined, atomic file
+writes and can resume partially applied matching changes. This is per-file
+publication, not an atomic replacement of an entire repository.
+
+## Runtime-specific images
+
+[Pi/Ralph](../registry/pi_ralph/README.md) translates the common input into Pi
+settings and runs Ralph as a Pi tool. Its configuration, extensions, nested usage,
+registry adaptation, and completion checks live in the image source. The
+[Go image](../registry/go_generalist/README.md) extends it with a toolchain, lint,
+and gopls. The [Go package](../resources/examples/go_generalist/README.md) declares
+the team's skills, checks, credentials, and routing.
+
+## Execution backends and current limits
+
+The workload contract separates image behavior from the execution backend. Podman
+is a potential backend that requires compatibility testing or an adapter.
+Kubernetes would require a backend for workload scheduling, input delivery,
+observation, cancellation, and output collection. Neither is currently supported;
+using OCI images alone does not establish backend compatibility. Temporal would
+continue to own workflow routing and durable state.
+
+The implemented backend uses local Docker with bind-mounted attempt storage. The worker and
+Docker daemon must share that filesystem; remote daemons and distinct-node
+scheduling are not supported. Containers reduce accidental host access but do
+not constitute a hardened multi-tenant sandbox. Outbound `bridge` networking is
+not an egress allowlist. Kubernetes scheduling, immutable artifact transport,
+strong identities, network policy, and storage lifecycle remain future work;
+see [stage communication](stage-communication.md) and [sandboxing](sandbox.md).

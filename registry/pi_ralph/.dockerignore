@@ -1,3 +1,13 @@
 *
 !Dockerfile
-!settings.json
+!launcher.mjs
+!protocol.mjs
+!protocol.test.mjs
+!telemetry.ts
+!patch-ralph.mjs
+!kit/
+!kit/skills/
+!kit/skills/**
+!tools.mjs
+!tools.ts
+!tools.test.mjs

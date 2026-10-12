@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
@@ -53,7 +54,7 @@ func resultState(t *testing.T, env *testsuite.TestWorkflowEnvironment) State {
 func TestApprovalRejectionReturnsToCustomStage(t *testing.T) {
 	calls := 0
 	env := environment(func(context.Context, ActivityInput) (Result, error) { calls++; return Result{}, nil })
-	d := Definition{Steps: []Step{{Name: "draft", Command: "prepare"}, {Name: "authorize", Human: true, Inputs: []string{"proposal.md"}, OnFailure: "draft"}, {Name: "publish", Command: "publish"}}}
+	d := Definition{Steps: []Step{{Name: "draft", Container: fixtureContainer("prepare")}, {Name: "authorize", Human: true, Inputs: []string{"proposal.md"}, OnFailure: "draft"}, {Name: "publish", Container: fixtureContainer("publish")}}}
 	env.RegisterDelayedCallback(func() {
 		st := queryState(t, env)
 		assert.Equal(t, "waiting_approval", st.Status,
@@ -91,7 +92,7 @@ func TestFailureWaitsForExplicitRetryAndRejectsStaleAttempt(t *testing.T) {
 		env.UpdateWorkflow(RetryUpdate, "stale", &testsuite.TestUpdateCallback{OnReject: func(error) { rejected = true }, OnAccept: func() { assert.Fail(t, fmt.Sprint("stale retry was accepted")) }, OnComplete: func(any, error) {}}, Retry{Step: "write", Attempt: 0})
 		env.UpdateWorkflowNoRejection(RetryUpdate, "retry", t, Retry{Step: "write", Attempt: 1})
 	}, time.Second)
-	env.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "write", Command: "write"}}}})
+	env.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "write", Container: fixtureContainer("write")}}}})
 	st := resultState(t, env)
 	assert.True(t, rejected,
 		"stale attempt must be rejected")
@@ -127,19 +128,19 @@ func TestCancellationDuringHumanWait(t *testing.T) {
 }
 func TestTransitionLimitBoundsRework(t *testing.T) {
 	env := environment(func(context.Context, ActivityInput) (Result, error) { return Result{}, errors.New("rejected") })
-	env.ExecuteWorkflow(Run, Input{Definition: Definition{MaxTransitions: 2, Steps: []Step{{Name: "review", Command: "review", OnFailure: "review"}}}})
+	env.ExecuteWorkflow(Run, Input{Definition: Definition{MaxTransitions: 2, Steps: []Step{{Name: "review", Container: fixtureContainer("review"), OnFailure: "review"}}}})
 	assert.NotEqual(t, nil, env.GetWorkflowError(),
 		"unbounded rework must fail")
 }
 func TestDefinitionValidation(t *testing.T) {
 	for _, d := range []Definition{
-		{Steps: []Step{{Name: "first", Command: "true", Next: "missing"}}},
-		{Steps: []Step{{Name: "first", Command: "true", Next: "end"}, {Name: "unreachable", Command: "true"}}},
+		{Steps: []Step{{Name: "first", Container: fixtureContainer("true"), Next: "missing"}}},
+		{Steps: []Step{{Name: "first", Container: fixtureContainer("true"), Next: "end"}, {Name: "unreachable", Container: fixtureContainer("true")}}},
 		{Steps: []Step{{Name: "approve", Human: true}}},
 		{Steps: []Step{{Name: "approve", Human: true, Inputs: []string{"proposal.md"}, Outputs: []string{"result.md"}}}},
-		{Steps: []Step{{Name: "approve", Human: true, Inputs: []string{"proposal.md"}, Checks: []Check{{Script: "verify"}}}}},
-		{Steps: []Step{{Name: "write", Command: "true", Outputs: []string{"../outside"}}}},
-		{Steps: []Step{{Name: "write", Command: "true", Outputs: []string{".watts-state/state.json"}}}},
+		{Steps: []Step{{Name: "approve", Human: true, Inputs: []string{"proposal.md"}, Checks: []Check{{Command: []string{"verify"}}}}}},
+		{Steps: []Step{{Name: "write", Container: fixtureContainer("true"), Outputs: []string{"../outside"}}}},
+		{Steps: []Step{{Name: "write", Container: fixtureContainer("true"), Outputs: []string{".watts-state/state.json"}}}},
 	} {
 		{
 			err := d.Validate()
@@ -156,9 +157,9 @@ func TestAgentStagesRunInDeclaredOrder(t *testing.T) {
 		return Result{Outcome: "success"}, nil
 	})
 	definition := Definition{Steps: []Step{
-		{Name: "design", Agent: "designer", Identity: "design-agent", Prompt: "Design"},
-		{Name: "code", Agent: "builder", Identity: "code-agent", Prompt: "Build"},
-		{Name: "qa", Agent: "tester", Identity: "qa-agent", Prompt: "Test"},
+		{Name: "design", Agent: "designer", Identity: "design-agent", Prompt: "Design", Container: fixtureContainer("design")},
+		{Name: "code", Agent: "builder", Identity: "code-agent", Prompt: "Build", Container: fixtureContainer("build")},
+		{Name: "qa", Agent: "tester", Identity: "qa-agent", Prompt: "Test", Container: fixtureContainer("test")},
 	}}
 	env.ExecuteWorkflow(Run, Input{Definition: definition})
 	require.NoError(t, env.GetWorkflowError())
@@ -170,7 +171,7 @@ func TestWorkflowStatusPreservesCheckExplanation(t *testing.T) {
 	env := environment(func(context.Context, ActivityInput) (Result, error) {
 		return Result{}, fmt.Errorf("completion check check-spec: SPEC.md still contains template placeholders (%w)", errors.New("exit status 1"))
 	})
-	env.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "specification", Command: "true", OnFailure: "end"}}}})
+	env.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "specification", Container: fixtureContainer("true"), OnFailure: "end"}}}})
 	require.ErrorContains(t, env.GetWorkflowError(), message)
 	value, err := env.QueryWorkflow(StatusQuery)
 	require.NoError(t, err)
@@ -178,4 +179,35 @@ func TestWorkflowStatusPreservesCheckExplanation(t *testing.T) {
 	require.NoError(t, value.Get(&state))
 	require.Equal(t, message, state.Stages[0].LastError)
 	require.Equal(t, message, state.History[0].Error)
+}
+
+func fixtureContainer(command string) *workload.Spec {
+	return &workload.Spec{Image: "fixture:0.1.0", Command: []string{command}}
+}
+
+func TestDelegatedDecisionProvenanceSurvivesRejectionAndApproval(t *testing.T) {
+	env := environment(func(context.Context, ActivityInput) (Result, error) { return Result{}, nil })
+	definition := Definition{Steps: []Step{{Name: "draft", Container: fixtureContainer("draft")}, {Name: "approve", Human: true, Inputs: []string{"SPEC.md"}, Transitions: map[string]string{"rejected": "draft", "approved": "end"}}}}
+	for attempt := 1; attempt <= 2; attempt++ {
+		env.RegisterDelayedCallback(func() {
+			state := queryState(t, env)
+			decision := Decision{Step: "approve", Attempt: attempt, By: "external-coordinator", AuthorizedBy: "human", Reject: attempt == 1, Artifacts: state.Stages[1].Artifacts, Feedback: "Clarify acceptance"}
+			env.UpdateWorkflowNoRejection(DecisionUpdate, fmt.Sprint(attempt), t, decision)
+		}, time.Duration(attempt)*time.Second)
+	}
+	env.ExecuteWorkflow(Run, Input{Definition: definition})
+	state := resultState(t, env)
+	require.Equal(t, "external-coordinator", state.Stages[1].ApprovedBy)
+	require.Equal(t, "human", state.Stages[1].AuthorizedBy)
+	var decisions []StageResult
+	for _, entry := range state.History {
+		if entry.Step == "approve" {
+			decisions = append(decisions, entry)
+			require.Equal(t, "external-coordinator", entry.Data["approved_by"])
+			require.Equal(t, "human", entry.Data["authorized_by"])
+		}
+	}
+	require.Len(t, decisions, 2)
+	require.Equal(t, "rejected", decisions[0].Outcome)
+	require.Equal(t, "approved", decisions[1].Outcome)
 }

@@ -1,0 +1,10 @@
+name: go-generalist
+version: 0.1.0
+description: Go business applications and web services
+values:
+  - values.yaml
+templates: templates
+assets:
+  - skills
+  - scripts
+  - .golangci.yml

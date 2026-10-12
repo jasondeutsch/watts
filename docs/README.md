@@ -3,13 +3,14 @@
 | Guide | Use it for |
 | --- | --- |
 | [Runbook](runbook.md) | Install, configure a project, run tasks, approve, and recover |
+| [External coordinators](coordinators.md) | Drive tasks through an agent, report progress, and record delegated decisions |
 | [Kinds](kinds.md) | Workflow, Procedure, Agent, ConfigMap, and Secret fields and references |
-| [Workflow execution](workflows.md) | Routing, results, capability plugins, events, and MCP selection |
+| [Workflow execution](workflows.md) | Routing, results, events, and MCP selection |
 | [Templating](templates.md) | Values files, package rendering, validation, and output selection |
 | [Temporal](temporal.md) | Server operations, worker responsibilities, and stored state |
 | [Architecture](workflow-design.md) | Authoring-to-execution flow and package responsibilities |
 | [Stage communication proposal](stage-communication.md) | Future portable packages, isolated workspaces, and publication |
-| [Container workloads proposal](container-workloads.md) | Images, container backends, agent adapters, and initial execution scope |
+| [Container workloads](container-workloads.md) | Container interface, supported and proposed backends, publication, and image responsibilities |
 | [Package/runtime layout proposal](package-runtime-layout.md) | Authored Watts packages, durable task evidence, worker storage, and retention |
 | [Sandboxing](sandbox.md) | Current security boundaries and isolation research |
 
