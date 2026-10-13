@@ -36,7 +36,7 @@ procedures:
                 - go
                 - vet
                 - ./...
-            image: watts/go-generalist:0.1.0
+            image: watts/coder-golang:0.1.0
             network: bridge
             result: exit-code
             workspace: read-only

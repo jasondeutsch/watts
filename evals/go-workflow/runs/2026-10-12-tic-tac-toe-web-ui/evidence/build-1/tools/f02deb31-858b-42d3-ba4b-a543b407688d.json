@@ -1,0 +1,1 @@
+{"tool":"vet","argv":["/usr/local/go/bin/go","vet","./..."],"working_dir":"/workspace","status":"exited","exit_code":0,"stdout":"","stderr":"","truncated":false,"evidence":"tools/f02deb31-858b-42d3-ba4b-a543b407688d.json","duration_ms":1248}

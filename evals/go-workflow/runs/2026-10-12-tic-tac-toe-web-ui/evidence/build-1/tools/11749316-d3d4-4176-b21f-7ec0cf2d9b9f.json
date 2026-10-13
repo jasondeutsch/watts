@@ -1,0 +1,1 @@
+{"tool":"lint","argv":["bash","/inputs/resources/team/scripts/lint.sh"],"working_dir":"/workspace","status":"exited","exit_code":0,"stdout":"0 issues.\n","stderr":"","truncated":false,"evidence":"tools/11749316-d3d4-4176-b21f-7ec0cf2d9b9f.json","duration_ms":967}

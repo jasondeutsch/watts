@@ -59,7 +59,7 @@ package resources. The Pi/Ralph example image writes its own private MCP and Pi
 settings and forwards those settings to Ralph children.
 
 Changing a tool or model means changing values/image policy and creating a new
-task. A retry uses the existing pinned execution. See the [Go package](../resources/examples/go_generalist/README.md)
+task. A retry uses the existing pinned execution. See the [Go package](../resources/examples/coder_golang/README.md)
 for a concrete setup with lint, skills, gopls, and review routing.
 
 ## Errors and observation

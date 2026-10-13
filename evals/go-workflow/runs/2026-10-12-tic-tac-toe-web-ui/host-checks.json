@@ -1,0 +1,10 @@
+[
+  {
+    "check": "go-test",
+    "exit_code": 0
+  },
+  {
+    "check": "go-vet",
+    "exit_code": 0
+  }
+]

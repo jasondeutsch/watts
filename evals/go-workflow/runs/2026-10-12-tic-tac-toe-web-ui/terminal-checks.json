@@ -1,0 +1,142 @@
+[
+  {
+    "name": "X-win-(1, 2, 3)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n4\n2\n5\n3\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  X  \n---+---+---\n  O  |  O  |     \n---+---+---\n     |     |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(4, 5, 6)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "4\n1\n5\n2\n6\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  2  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  X  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  3  \n---+---+---\n  X  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  O  |     \n---+---+---\n  X  |  X  |  X  \n---+---+---\n     |     |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(7, 8, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "7\n1\n8\n2\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  X  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  X  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  X  |  X  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  X  |  X  |  9  \nPlayer X, enter a cell number (1-9):   O  |  O  |     \n---+---+---\n     |     |     \n---+---+---\n  X  |  X  |  X  \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(1, 4, 7)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n2\n4\n3\n7\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  O  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  O  \n---+---+---\n  X  |     |     \n---+---+---\n  X  |     |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(2, 5, 8)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "2\n1\n5\n3\n8\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  3  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  O  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  O  \n---+---+---\n     |  X  |     \n---+---+---\n     |  X  |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(3, 6, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "3\n1\n6\n2\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  2  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  2  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  2  |  X  \n---+---+---\n  4  |  5  |  X  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  X  \n---+---+---\n  4  |  5  |  X  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  O  |  X  \n---+---+---\n     |     |  X  \n---+---+---\n     |     |  X  \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(1, 5, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n2\n5\n3\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  O  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  O  \n---+---+---\n     |  X  |     \n---+---+---\n     |     |  X  \nPlayer X wins!\n"
+  },
+  {
+    "name": "X-win-(3, 5, 7)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "3\n1\n5\n2\n7\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  2  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  2  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  2  |  X  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  X  \n---+---+---\n  4  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  O  |  X  \n---+---+---\n     |  X  |     \n---+---+---\n  X  |     |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "O-win-(1, 2, 3)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "4\n1\n5\n2\n7\n3\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  2  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  2  |  3  \n---+---+---\n  X  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  3  \n---+---+---\n  X  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  O  |  3  \n---+---+---\n  X  |  X  |  6  \n---+---+---\n  X  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  O  |  O  \n---+---+---\n  X  |  X  |     \n---+---+---\n  X  |     |     \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(4, 5, 6)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n4\n2\n5\n7\n6\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  O  |  6  \n---+---+---\n  X  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |     \n---+---+---\n  O  |  O  |  O  \n---+---+---\n  X  |     |     \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(7, 8, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n7\n2\n8\n4\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  O  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  O  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  O  |  O  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  X  |  5  |  6  \n---+---+---\n  O  |  O  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |     \n---+---+---\n  X  |     |     \n---+---+---\n  O  |  O  |  O  \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(1, 4, 7)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "2\n1\n3\n4\n5\n7\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  O  |  X  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  O  |  X  |     \n---+---+---\n  O  |     |     \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(2, 5, 8)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n2\n3\n5\n4\n8\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  4  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |     \n---+---+---\n     |  O  |     \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(3, 6, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n3\n2\n6\n4\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  O  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  4  |  5  |  O  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  X  |  5  |  O  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  X  |     |  O  \n---+---+---\n     |     |  O  \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(1, 5, 9)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "2\n1\n3\n5\n4\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   1  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  4  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  X  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   O  |  X  |  X  \n---+---+---\n  X  |  O  |     \n---+---+---\n     |     |  O  \nPlayer O wins!\n"
+  },
+  {
+    "name": "O-win-(3, 5, 7)",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n3\n2\n5\n4\n7\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  O  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  4  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  X  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  O  \n---+---+---\n  X  |  O  |     \n---+---+---\n  O  |     |     \nPlayer O wins!\n"
+  },
+  {
+    "name": "draw",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n2\n3\n5\n4\n6\n8\n7\n9\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  4  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  O  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  O  \n---+---+---\n  7  |  X  |  9  \nPlayer O, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  O  \n---+---+---\n  O  |  X  |  9  \nPlayer X, enter a cell number (1-9):   X  |  O  |  X  \n---+---+---\n  X  |  O  |  O  \n---+---+---\n  O  |  X  |  X  \nThe game is a draw.\n"
+  },
+  {
+    "name": "invalid-retains-turn",
+    "pass": true,
+    "exit_code": 0,
+    "input": "0\n10\nhello\n1\n1\n4\n2\n5\n3\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9): invalid input: \"0\" is not a number between 1 and 9\n  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9): invalid input: \"10\" is not a number between 1 and 9\n  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9): invalid input: \"hello\" is not a number between 1 and 9\n  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9): That cell is already occupied.\n  X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  X  |  3  \n---+---+---\n  O  |  O  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  X  |  X  \n---+---+---\n  O  |  O  |     \n---+---+---\n     |     |     \nPlayer X wins!\n"
+  },
+  {
+    "name": "empty-EOF",
+    "pass": true,
+    "exit_code": 0,
+    "input": "",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9): Game abandoned.\n"
+  },
+  {
+    "name": "partial-EOF",
+    "pass": true,
+    "exit_code": 0,
+    "input": "1\n4\n",
+    "output": "  1  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  4  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer O, enter a cell number (1-9):   X  |  2  |  3  \n---+---+---\n  O  |  5  |  6  \n---+---+---\n  7  |  8  |  9  \nPlayer X, enter a cell number (1-9): Game abandoned.\n"
+  }
+]

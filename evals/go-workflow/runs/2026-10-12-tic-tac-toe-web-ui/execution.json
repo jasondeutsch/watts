@@ -1,0 +1,96 @@
+{
+  "task": "tasks/2026-10-12-tic-tac-toe-web-ui-eval",
+  "project": "/Users/j/watts_project/test",
+  "configuration_id": "coder-golang-low-tools-gates",
+  "setup_at": "2026-10-12T22:17:01.514251+00:00",
+  "cli_sha256": "49f3d7a54471a1a3bb0731c98b064cba9cdebd1faffe9bf5aeb325a6bc741575",
+  "actor": "Codex",
+  "authorizing_principal": "j",
+  "decisions": [
+    {
+      "step": "spec-review",
+      "attempt": 1,
+      "artifacts": [
+        {
+          "path": "SPEC.md",
+          "sha256": "7fd14f36e0fba38bacaadd691aeeebdafedca0b3a625aa7f2c0f3eeadcc711c5"
+        }
+      ],
+      "outcome": "rejected",
+      "feedback": "The user authorizes resolving OQ-1 with the recommended server-held state: one shared in-memory game, page refresh retrieves/resumes the current board, concurrent state changes are serialized, and reset returns an empty board with X to move. Record this as a resolved choice in the assumptions/open-questions section and preserve the existing acceptance criteria, terminal behavior, and bounded local scope. This is a requested clarification, not an implementation failure; do not introduce new features or requirements.",
+      "data": {
+        "approved_by": "Codex",
+        "authorized_by": "j"
+      }
+    },
+    {
+      "step": "spec-review",
+      "attempt": 2,
+      "artifacts": [
+        {
+          "path": "SPEC.md",
+          "sha256": "28943abfc4b6a7ad62d5612423644747b0b966c583c300723be107021905fa9c"
+        }
+      ],
+      "outcome": "approved",
+      "data": {
+        "approved_by": "Codex",
+        "authorized_by": "j"
+      }
+    },
+    {
+      "step": "plan-review",
+      "attempt": 1,
+      "artifacts": [
+        {
+          "path": "SPEC.md",
+          "sha256": "28943abfc4b6a7ad62d5612423644747b0b966c583c300723be107021905fa9c"
+        },
+        {
+          "path": "PLAN.md",
+          "sha256": "4df2bdcc95cdf45a3fec6157fa77ec5cc6c4a27d7d94f3a64ec5ba93cb103d03"
+        }
+      ],
+      "outcome": "rejected",
+      "feedback": "The plan needs two corrections before build. (1) Honor the resolved server-held state/refresh requirement: declare a read-only state retrieval endpoint (for example GET /state), or equivalent initial hydration, and explain that page load/refresh retrieves the existing board without resetting it. Include tests for retrieval after moves, refresh/second-tab hydration, and unchanged state on failed requests. Current static embedded HTML plus only move/reset endpoints does not establish that behavior. (2) Choose one concrete web startup interface and use it consistently throughout architecture, stories, and documentation: an explicit web mode with loopback default and an address override is sufficient; remove conflicting web-subcommand versus addr-only alternatives. Preserve the terminal default, existing acceptance criteria, no-third-party-dependencies constraint, protected ttt binary, and final build/test/vet/lint/story gates inside the build Agent. Do not add features or a separate lint stage.",
+      "data": {
+        "approved_by": "Codex",
+        "authorized_by": "j"
+      }
+    },
+    {
+      "step": "plan-review",
+      "attempt": 2,
+      "artifacts": [
+        {
+          "path": "SPEC.md",
+          "sha256": "28943abfc4b6a7ad62d5612423644747b0b966c583c300723be107021905fa9c"
+        },
+        {
+          "path": "PLAN.md",
+          "sha256": "1c28a67b22899521e5640f815361db6da4611aa76f5b5d004ff3583db4f89904"
+        }
+      ],
+      "outcome": "approved",
+      "data": {
+        "approved_by": "Codex",
+        "authorized_by": "j"
+      }
+    }
+  ],
+  "workflow_id": "watts-c5fb15192d2c2dc3f509809971a3d605",
+  "run_id": "01a13230-ce84-77d5-91a7-ca2909ec9d79",
+  "observed_at": "2026-10-12T22:54:23.938593+00:00",
+  "status": "completed",
+  "current": null,
+  "delegation": {
+    "authorized_at": "2026-10-12T22:25:06.589771+00:00",
+    "user_instruction": "yes you may resolve that choice",
+    "scope": "Resolve the state-management choice and perform SPEC/PLAN review for this eval within the presented local web-UI scope, based on the affirmative reply to the coordinator request. No broader task or scope changes are authorized."
+  },
+  "eval_verified_success": "fail",
+  "eval_workflow_compliance": "fail",
+  "submission_recorded_at": "2026-10-12T22:19:21.042806+00:00",
+  "elapsed_seconds_upper_bound": 2103,
+  "elapsed_measurement": "Recorded submission to first observed terminal status; includes approval waits and polling delay."
+}

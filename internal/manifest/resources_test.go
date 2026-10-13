@@ -102,8 +102,8 @@ func TestResourceValidation(t *testing.T) {
 	}
 }
 
-func TestTemplatesForEveryKindAndGoGeneralist(t *testing.T) {
-	for _, directory := range []string{"resource-templates", "resources/examples/go_generalist"} {
+func TestTemplatesForEveryKindAndCoderGolang(t *testing.T) {
+	for _, directory := range []string{"resource-templates", "resources/examples/coder_golang"} {
 		t.Run(directory, func(t *testing.T) {
 			root, err := os.OpenRoot(filepath.Join("..", "..", directory))
 			require.NoError(t, err)

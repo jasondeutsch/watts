@@ -19,7 +19,7 @@ The current interface is the CLI. MCP and wait-for-change are proposed, not avai
 ## Create the request
 
 1. If the user names an existing task, inspect it. Otherwise run `wctl task new <slug> --package <descriptor>` from the application directory, retain the exact returned task path, and verify it exists beneath the configured task directory before writing.
-2. Read the entire task `workflow.yaml` bundle, following Workflow `use` references to Agent/Procedure resources. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Go generalist or fixed names.
+2. Read the entire task `workflow.yaml` bundle, following Workflow `use` references to Agent/Procedure resources. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Golang coder or fixed names.
 3. Preserve existing human content in `SPEC.md`. Draft the requested behavior, scope, constraints, observable acceptance criteria, and unresolved questions using project evidence. A rough request is sufficient; ask only for missing intent. A verified team spec skill or [bundled spec guidance](../../../registry/pi_ralph/kit/skills/spec-template/SKILL.md) may help when available.
 4. SPEC.md describes what and why; PLAN.md describes approach and sequence. Do not create REQUIREMENTS.md, implement the application yourself, or bypass workflow-owned refinement/planning. Application changes belong in the project root; task directories hold documents and evidence.
 

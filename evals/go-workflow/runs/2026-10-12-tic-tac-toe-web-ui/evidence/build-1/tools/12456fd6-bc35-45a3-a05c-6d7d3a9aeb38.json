@@ -1,0 +1,1 @@
+{"tool":"test","argv":["/usr/local/go/bin/go","test","./..."],"working_dir":"/workspace","status":"exited","exit_code":0,"stdout":"ok  \ttic-tac-toe\t(cached)\n","stderr":"","truncated":false,"evidence":"tools/12456fd6-bc35-45a3-a05c-6d7d3a9aeb38.json","duration_ms":1421}

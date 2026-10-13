@@ -34,7 +34,7 @@ Provider errors are explicit error events even when Pi exits zero. No project
 
 Tests in `protocol.test.mjs` check telemetry mapping. The application image tests
 exercise plain Pi, Ralph tool execution, and provider failures with a fake gateway.
-The [Go team image](../go_generalist/README.md) adds Go, gopls, and golangci-lint.
+The [Go team image](../coder_golang/README.md) adds Go, gopls, and golangci-lint.
 Upstream dependencies retain their licenses; Watts-owned source follows the
 repository license.
 

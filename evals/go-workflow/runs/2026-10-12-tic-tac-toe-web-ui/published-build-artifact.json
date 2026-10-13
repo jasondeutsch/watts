@@ -1,0 +1,8 @@
+{
+  "path": "tic-tac-toe",
+  "size": 9079875,
+  "sha256": "6037752fb07ad473f191d9045ad657dff6a846d5f7a072198da51a203c627f1d",
+  "mode": "0o755",
+  "magic_hex": "7f454c46020101000000000000000000",
+  "quarantine": "/private/tmp/watts-web-eval-published-linux-binary"
+}

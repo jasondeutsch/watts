@@ -1,0 +1,452 @@
+kind: Workflow
+schema_version: 1
+name: 2026-10-12-tic-tac-toe-web-ui-eval
+spec:
+  version: 1
+  steps:
+    - name: specification
+      use:
+        kind: Agent
+        name: specification
+    - name: spec-review
+      use:
+        kind: Procedure
+        name: spec-review
+      transitions:
+        approved: planning
+        rejected: specification
+    - name: planning
+      use:
+        kind: Agent
+        name: planning
+    - name: plan-review
+      use:
+        kind: Procedure
+        name: plan-review
+      transitions:
+        approved: build
+        rejected: planning
+    - name: build
+      use:
+        kind: Agent
+        name: build
+    - name: review
+      use:
+        kind: Agent
+        name: review
+      transitions:
+        changes-required: build
+        success: end
+---
+kind: Secret
+schema_version: 1
+name: credentials-specification
+spec:
+  env:
+    OPENROUTER_API_KEY: OPENROUTER_API_KEY
+---
+kind: Agent
+schema_version: 1
+name: specification
+spec:
+  tools:
+    - name: check-spec
+      description: Validate the task spec artifact.
+      command:
+        argv:
+          - node
+          - /inputs/resources/team/scripts/check.mjs
+          - spec
+          - /runtime/task
+        working_dir: /runtime/task
+        timeout_seconds: 30
+  gates:
+    - name: spec-valid
+      tool: check-spec
+      expect:
+        exit_code: 0
+  skills:
+    - name: watts-guidance
+      source:
+        image_path: /opt/watts/kit/skills
+    - name: go-team-guidance
+      source:
+        resource: team
+        path: skills
+  container:
+    image: watts/coder-golang:0.1.0
+    command:
+      - node
+      - /opt/watts/launcher.mjs
+    network: bridge
+    workspace: read-only
+    memory_mb: 4096
+    cpus: 2
+    files:
+      launcher.json: '{"outputs":["SPEC.md"]}'
+    resources:
+      team: .watts/packages/coder-golang/0b9b5bbc9174a5d58d0dfb3d515aa5e0c1ebcde0ee624d9582056611a46db133
+  inputs:
+    - SPEC.md
+  outputs:
+    - SPEC.md
+  environment:
+    GOCACHE: /runtime/go-cache
+    GOMODCACHE: /runtime/go-mod
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: Read the human's request in /runtime/task/SPEC.md; it may be rough notes rather than a complete draft. Use the spec-template skill to investigate the project and draft or refine /runtime/task/SPEC.md. Preserve existing human intent, constraints, and substantive content; never overwrite it with a blank template. Record unresolved questions rather than inventing requirements. Incorporate previous review feedback. Write the updated SPEC.md to disk. Do not implement code or approve documents. The application workspace is the current working directory supplied by Watts; the package descriptor may live elsewhere. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+  auth:
+    secret:
+      name: credentials-specification
+      key: OPENROUTER_API_KEY
+    env: OPENROUTER_API_KEY
+  base_url: https://openrouter.ai/api/v1
+  api: openai-completions
+  thinking: low
+---
+kind: Procedure
+schema_version: 1
+name: spec-review
+spec:
+  inputs:
+    - SPEC.md
+  execution:
+    type: approval
+---
+kind: Secret
+schema_version: 1
+name: credentials-planning
+spec:
+  env:
+    OPENROUTER_API_KEY: OPENROUTER_API_KEY
+---
+kind: Agent
+schema_version: 1
+name: planning
+spec:
+  tools:
+    - name: check-plan
+      description: Validate the task plan artifact.
+      command:
+        argv:
+          - node
+          - /inputs/resources/team/scripts/check.mjs
+          - plan
+          - /runtime/task
+        working_dir: /runtime/task
+        timeout_seconds: 30
+  gates:
+    - name: plan-valid
+      tool: check-plan
+      expect:
+        exit_code: 0
+  skills:
+    - name: watts-guidance
+      source:
+        image_path: /opt/watts/kit/skills
+    - name: go-team-guidance
+      source:
+        resource: team
+        path: skills
+  container:
+    image: watts/coder-golang:0.1.0
+    command:
+      - node
+      - /opt/watts/launcher.mjs
+    network: bridge
+    workspace: read-only
+    memory_mb: 4096
+    cpus: 2
+    files:
+      launcher.json: '{"outputs":["PLAN.md"]}'
+    resources:
+      team: .watts/packages/coder-golang/0b9b5bbc9174a5d58d0dfb3d515aa5e0c1ebcde0ee624d9582056611a46db133
+  inputs:
+    - SPEC.md
+  outputs:
+    - PLAN.md
+  environment:
+    GOCACHE: /runtime/go-cache
+    GOMODCACHE: /runtime/go-mod
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: 'The preceding workflow gate approved the specification. Read /runtime/task/SPEC.md. Use the plan-template skill to write /runtime/task/PLAN.md with real quality gates and sequenced stories. Incorporate previous review feedback. Do not implement code or approve documents. The application workspace is the current working directory supplied by Watts; the package descriptor may live elsewhere. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory. Describe the build Agent''s declared tools and gates in PLAN.md: `bash /inputs/resources/team/scripts/build.sh`, `go test ./...`, `go vet ./...`, and `bash /inputs/resources/team/scripts/lint.sh`. These run inside the build Agent; do not add a separate lint stage or install replacement tools. Lint findings must be fixed without weakening the lint configuration.'
+  auth:
+    secret:
+      name: credentials-planning
+      key: OPENROUTER_API_KEY
+    env: OPENROUTER_API_KEY
+  base_url: https://openrouter.ai/api/v1
+  api: openai-completions
+  thinking: low
+---
+kind: Procedure
+schema_version: 1
+name: plan-review
+spec:
+  inputs:
+    - SPEC.md
+    - PLAN.md
+  execution:
+    type: approval
+---
+kind: Secret
+schema_version: 1
+name: credentials-build
+spec:
+  env:
+    OPENROUTER_API_KEY: OPENROUTER_API_KEY
+---
+kind: Agent
+schema_version: 1
+name: build
+spec:
+  tools:
+    - name: build
+      description: Compile the project into private runtime storage.
+      command:
+        argv:
+          - bash
+          - /inputs/resources/team/scripts/build.sh
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: test
+      description: Run the project Go tests.
+      command:
+        argv:
+          - /usr/local/go/bin/go
+          - test
+          - ./...
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: vet
+      description: Run Go vet static analysis.
+      command:
+        argv:
+          - /usr/local/go/bin/go
+          - vet
+          - ./...
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: lint
+      description: Check the project against team lint policy.
+      command:
+        argv:
+          - bash
+          - /inputs/resources/team/scripts/lint.sh
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: code-intelligence
+      mcp:
+        ref: gopls
+    - name: check-stories
+      description: Validate the task stories artifact.
+      command:
+        argv:
+          - node
+          - /inputs/resources/team/scripts/check.mjs
+          - stories
+          - /runtime/task
+        working_dir: /runtime/task
+        timeout_seconds: 30
+  gates:
+    - name: build-passes
+      tool: build
+      expect:
+        exit_code: 0
+    - name: test-passes
+      tool: test
+      expect:
+        exit_code: 0
+    - name: vet-passes
+      tool: vet
+      expect:
+        exit_code: 0
+    - name: lint-passes
+      tool: lint
+      expect:
+        exit_code: 0
+    - name: stories-complete
+      tool: check-stories
+      expect:
+        exit_code: 0
+  skills:
+    - name: watts-guidance
+      source:
+        image_path: /opt/watts/kit/skills
+    - name: go-team-guidance
+      source:
+        resource: team
+        path: skills
+  gate_policy:
+    max_repairs: 2
+  container:
+    image: watts/coder-golang:0.1.0
+    command:
+      - node
+      - /opt/watts/launcher.mjs
+    network: bridge
+    workspace: write
+    memory_mb: 4096
+    cpus: 2
+    files:
+      launcher.json: '{"outputs":["STORY_LOG.md"],"ralph":true}'
+      ralph.md: |
+        ---
+        max_iterations: 10
+        timeout: 900
+        completion_promise: DONE
+        completion_gate: required
+        stop_on_error: true
+        commands:
+          - name: completion
+            run: node /inputs/resources/team/scripts/check.mjs stories /runtime/task
+            acceptance: true
+        ---
+        Implement PLAN.md stories in /workspace. Read /runtime/task/SPEC.md and PLAN.md. Run the quality gates from /workspace. Append DONE US-### to /runtime/task/STORY_LOG.md only after tests and lint pass. Address previous workflow feedback. Stop with <promise>DONE</promise> when all stories are done.
+
+        Use the declared command tools for quality checks; do not install or substitute verification tools. The executor runs required gates against the final candidate. Put build products and caches under /runtime.
+    resources:
+      team: .watts/packages/coder-golang/0b9b5bbc9174a5d58d0dfb3d515aa5e0c1ebcde0ee624d9582056611a46db133
+  inputs:
+    - SPEC.md
+    - PLAN.md
+  outputs:
+    - STORY_LOG.md
+  environment:
+    GOCACHE: /runtime/go-cache
+    GOMODCACHE: /runtime/go-mod
+  identity: watts-agent
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: /ralph --path /runtime/task
+  auth:
+    secret:
+      name: credentials-build
+      key: OPENROUTER_API_KEY
+    env: OPENROUTER_API_KEY
+  base_url: https://openrouter.ai/api/v1
+  api: openai-completions
+  thinking: low
+  mcp_servers:
+    gopls:
+      command: gopls
+      args:
+        - mcp
+      cwd: .
+---
+kind: Secret
+schema_version: 1
+name: credentials-review
+spec:
+  env:
+    OPENROUTER_API_KEY: OPENROUTER_API_KEY
+---
+kind: Agent
+schema_version: 1
+name: review
+spec:
+  tools:
+    - name: test
+      description: Run the project Go tests.
+      command:
+        argv:
+          - /usr/local/go/bin/go
+          - test
+          - ./...
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: vet
+      description: Run Go vet static analysis.
+      command:
+        argv:
+          - /usr/local/go/bin/go
+          - vet
+          - ./...
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: lint
+      description: Check the project against team lint policy.
+      command:
+        argv:
+          - bash
+          - /inputs/resources/team/scripts/lint.sh
+        working_dir: /workspace
+        timeout_seconds: 300
+    - name: verify-verdict
+      description: Validate the review verdict artifact; PASS and REJECT are both valid decisions.
+      command:
+        argv:
+          - node
+          - /inputs/resources/team/scripts/check.mjs
+          - verdict
+          - /runtime/task
+        working_dir: /runtime/task
+        timeout_seconds: 30
+  gates:
+    - name: verdict-valid
+      tool: verify-verdict
+      expect:
+        exit_code: 0
+  skills:
+    - name: watts-guidance
+      source:
+        image_path: /opt/watts/kit/skills
+    - name: go-team-guidance
+      source:
+        resource: team
+        path: skills
+  gate_policy:
+    max_repairs: 0
+  container:
+    image: watts/coder-golang:0.1.0
+    command:
+      - node
+      - /opt/watts/launcher.mjs
+    network: bridge
+    workspace: read-only
+    memory_mb: 4096
+    cpus: 2
+    files:
+      launcher.json: '{"outputs":["review/VERDICT.md"],"ralph":true,"verdict":"review/VERDICT.md"}'
+      ralph.md: |
+        ---
+        max_iterations: 10
+        timeout: 900
+        completion_promise: REVIEWED
+        completion_gate: required
+        stop_on_error: true
+        commands:
+          - name: completion
+            run: node /inputs/resources/team/scripts/check.mjs verdict /runtime/task
+            acceptance: true
+        ---
+        Review /workspace against SPEC.md and PLAN.md in /runtime/task. Run the quality gates. Do not change the application. Write /runtime/task/review/VERDICT.md with specific findings and a final line VERDICT: PASS or VERDICT: REJECT. Stop with <promise>REVIEWED</promise> after writing the verdict.
+
+        Use the declared command tools for quality checks; do not install or substitute verification tools. The executor runs required gates against the final candidate. Put build products and caches under /runtime.
+    resources:
+      team: .watts/packages/coder-golang/0b9b5bbc9174a5d58d0dfb3d515aa5e0c1ebcde0ee624d9582056611a46db133
+  inputs:
+    - SPEC.md
+    - PLAN.md
+    - STORY_LOG.md
+  outputs:
+    - review/VERDICT.md
+  environment:
+    GOCACHE: /runtime/go-cache
+    GOMODCACHE: /runtime/go-mod
+  identity: watts-reviewer
+  provider: openrouter
+  model: deepseek/deepseek-v4-flash
+  prompt: /ralph --path /runtime/task
+  auth:
+    secret:
+      name: credentials-review
+      key: OPENROUTER_API_KEY
+    env: OPENROUTER_API_KEY
+  base_url: https://openrouter.ai/api/v1
+  api: openai-completions
+  thinking: low

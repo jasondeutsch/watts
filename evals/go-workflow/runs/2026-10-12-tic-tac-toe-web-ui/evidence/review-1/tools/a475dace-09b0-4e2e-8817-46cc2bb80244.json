@@ -1,0 +1,1 @@
+{"tool":"verify-verdict","argv":["node","/inputs/resources/team/scripts/check.mjs","verdict","/runtime/task"],"working_dir":"/runtime/task","status":"exited","exit_code":0,"stdout":"verdict: OK\n","stderr":"","truncated":false,"evidence":"tools/a475dace-09b0-4e2e-8817-46cc2bb80244.json","duration_ms":38}

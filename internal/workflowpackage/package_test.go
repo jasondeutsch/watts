@@ -166,8 +166,8 @@ func TestAssetsAndValuesCannotEscapePackageRoot(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestGoGeneralistTemplatesDoNotRequireExampleTools(t *testing.T) {
-	pkg, err := Load(filepath.Join("..", "..", "resources", "examples", "go_generalist"))
+func TestCoderGolangTemplatesDoNotRequireExampleTools(t *testing.T) {
+	pkg, err := Load(filepath.Join("..", "..", "resources", "examples", "coder_golang"))
 	require.NoError(t, err)
 	// Supply a complete alternative policy rather than merge example defaults.
 	values, err := render.MergeValues(render.ValuesSource{Name: "alternative.yaml", Data: []byte(`workflow:
@@ -207,8 +207,8 @@ secrets: {}
 	}
 }
 
-func TestGoGeneralistValuesControlExplicitManifestFields(t *testing.T) {
-	pkg, err := Load(filepath.Join("..", "..", "resources", "examples", "go_generalist"))
+func TestCoderGolangValuesControlExplicitManifestFields(t *testing.T) {
+	pkg, err := Load(filepath.Join("..", "..", "resources", "examples", "coder_golang"))
 	require.NoError(t, err)
 	result, err := pkg.Render(render.ValuesSource{Name: "team.yaml", Data: []byte(`agents:
   build:
@@ -263,7 +263,7 @@ config_maps:
 }
 
 func TestTemplatesRejectUnsupportedValuesRatherThanDroppingThem(t *testing.T) {
-	for _, directory := range []string{"resource-templates", "resources/examples/go_generalist"} {
+	for _, directory := range []string{"resource-templates", "resources/examples/coder_golang"} {
 		pkg, err := Load(filepath.Join("..", "..", directory))
 		require.NoError(t, err)
 		for _, values := range []string{

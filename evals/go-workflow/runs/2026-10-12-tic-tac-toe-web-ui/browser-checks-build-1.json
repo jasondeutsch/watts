@@ -1,0 +1,39 @@
+[
+  {
+    "name": "X-win",
+    "passed": true
+  },
+  {
+    "name": "O-win",
+    "passed": true
+  },
+  {
+    "name": "draw",
+    "passed": true
+  },
+  {
+    "name": "reset",
+    "passed": true
+  },
+  {
+    "name": "post-completion-no-mutation",
+    "passed": true
+  },
+  {
+    "name": "refresh-preserves-state",
+    "passed": true
+  },
+  {
+    "name": "second-tab-hydration",
+    "passed": true
+  },
+  {
+    "name": "360px-no-horizontal-overflow",
+    "passed": true
+  },
+  {
+    "name": "empty-cell-accessible-names",
+    "passed": false,
+    "details": "All nine empty cell buttons have no text or aria-label."
+  }
+]

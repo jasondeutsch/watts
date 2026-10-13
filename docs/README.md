@@ -14,4 +14,4 @@
 | [Package/runtime layout proposal](package-runtime-layout.md) | Authored Watts packages, durable task evidence, worker storage, and retention |
 | [Sandboxing](sandbox.md) | Current security boundaries and isolation research |
 
-Start with the [repository quick start](../readme.md). For a team setup, use the [Go generalist example](../resources/examples/go_generalist/README.md); for an external coordinating agent, use the [resources toolbox](../resources/readme.md). The [Go workflow eval](../evals/go-workflow/README.md) describes comparing configured workflows over time. Proposed features are tracked in [issues](../issues.md).
+Start with the [repository quick start](../readme.md). For a team setup, use the [Golang coder example](../resources/examples/coder_golang/README.md); for an external coordinating agent, use the [resources toolbox](../resources/readme.md). The [Go workflow eval](../evals/go-workflow/README.md) describes comparing configured workflows over time. Proposed features are tracked in [issues](../issues.md).

@@ -1,0 +1,69 @@
+[
+  {
+    "name": "new-game",
+    "expect": "Nine empty cells, X to move; local page and assets load."
+  },
+  {
+    "name": "alternate-turns",
+    "moves": [
+      1,
+      4
+    ],
+    "expect": "X at 1, O at 4, X next."
+  },
+  {
+    "name": "occupied-cell",
+    "moves": [
+      1,
+      1,
+      4
+    ],
+    "expect": "Second move is rejected/disabled without advancing the turn."
+  },
+  {
+    "name": "x-win",
+    "moves": [
+      1,
+      4,
+      2,
+      5,
+      3
+    ],
+    "expect": "X wins; remaining cells cannot change the completed board."
+  },
+  {
+    "name": "o-win",
+    "moves": [
+      1,
+      4,
+      2,
+      5,
+      9,
+      6
+    ],
+    "expect": "O wins."
+  },
+  {
+    "name": "draw",
+    "moves": [
+      1,
+      2,
+      3,
+      5,
+      4,
+      6,
+      8,
+      7,
+      9
+    ],
+    "expect": "Draw; game is complete."
+  },
+  {
+    "name": "reset",
+    "expect": "Reset clears marks/outcome and restores X."
+  },
+  {
+    "name": "mobile",
+    "expect": "Board/status/reset controls remain usable in a narrow viewport."
+  }
+]

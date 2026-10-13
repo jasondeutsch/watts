@@ -120,8 +120,8 @@ publication, not an atomic replacement of an entire repository.
 [Pi/Ralph](../registry/pi_ralph/README.md) translates the common input into Pi
 settings and runs Ralph as a Pi tool. Its configuration, extensions, nested usage,
 registry adaptation, and completion checks live in the image source. The
-[Go image](../registry/go_generalist/README.md) extends it with a toolchain, lint,
-and gopls. The [Go package](../resources/examples/go_generalist/README.md) declares
+[Go image](../registry/coder_golang/README.md) extends it with a toolchain, lint,
+and gopls. The [Go package](../resources/examples/coder_golang/README.md) declares
 the team's skills, checks, credentials, and routing.
 
 ## Execution backends and current limits

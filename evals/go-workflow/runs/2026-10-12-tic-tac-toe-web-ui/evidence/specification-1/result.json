@@ -1,0 +1,9 @@
+{
+  "artifacts": [
+    {
+      "path": "SPEC.md",
+      "sha256": "7fd14f36e0fba38bacaadd691aeeebdafedca0b3a625aa7f2c0f3eeadcc711c5"
+    }
+  ],
+  "outcome": "success"
+}

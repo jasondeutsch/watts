@@ -1,0 +1,17 @@
+{
+  "loopToken": "e9ddce1d-7346-4101-8f20-0c7e52fd9425",
+  "ralphPath": "/runtime/task/RALPH.md",
+  "taskDir": "/runtime/task",
+  "cwd": "/workspace",
+  "status": "complete",
+  "currentIteration": 2,
+  "maxIterations": 10,
+  "timeout": 900,
+  "completionPromise": "REVIEWED",
+  "startedAt": "2026-10-12T22:49:16.769Z",
+  "guardrails": {
+    "blockCommands": [],
+    "protectedFiles": []
+  },
+  "completedAt": "2026-10-12T22:53:42.092Z"
+}

@@ -1,0 +1,261 @@
+{"id":"9fe41856fce806b38719823caae8ece244c79f5b25e89d730c7c479d96bbf73e","type":"progress","message":"Starting Pi with Ralph (gate repair 0)"}
+{"id":"584b8b67aec5edb4c0c22f8e05c7a1a1aa18d978aec546415b2933280a2948e7-usage","type":"usage","usage":{"input_tokens":3097,"output_tokens":162,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"584b8b67aec5edb4c0c22f8e05c7a1a1aa18d978aec546415b2933280a2948e7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"145a45dd5576568e7c928d3151b4202130290adda599a0efd3e51e712ce6bfcf-usage","type":"usage","usage":{"input_tokens":9892,"output_tokens":310,"cache_read_tokens":8012,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"145a45dd5576568e7c928d3151b4202130290adda599a0efd3e51e712ce6bfcf","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ff1662967d2310d6398f18d5d6ae4a08a5e76d5b18b732bdd50bf05798349a33-usage","type":"usage","usage":{"input_tokens":15092,"output_tokens":178,"cache_read_tokens":12677,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ff1662967d2310d6398f18d5d6ae4a08a5e76d5b18b732bdd50bf05798349a33","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"41bb936167e9d24be261071b79cd48560f0e071080a9eb9eeb0b0c88dacb3847-usage","type":"usage","usage":{"input_tokens":15946,"output_tokens":16000,"cache_read_tokens":12756,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"41bb936167e9d24be261071b79cd48560f0e071080a9eb9eeb0b0c88dacb3847","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"31f3a458cfc294ef0be192c2fe70b99a24636b2f5594581e3894b2bd7fd8eac7-usage","type":"usage","usage":{"input_tokens":3055,"output_tokens":133,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"31f3a458cfc294ef0be192c2fe70b99a24636b2f5594581e3894b2bd7fd8eac7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"efc786bc7bed9e246c0eec80ea211694ce43f1424b5bdc20dda128787f1c7d0c-usage","type":"usage","usage":{"input_tokens":9688,"output_tokens":210,"cache_read_tokens":2048,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"efc786bc7bed9e246c0eec80ea211694ce43f1424b5bdc20dda128787f1c7d0c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"9af1ea4f8d6c68e10d8c712a65ddf2a7c1004d4448e9404893f414475d133d63-usage","type":"usage","usage":{"input_tokens":14212,"output_tokens":218,"cache_read_tokens":9472,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9af1ea4f8d6c68e10d8c712a65ddf2a7c1004d4448e9404893f414475d133d63","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"d3edd34f318538c6a10a2991feb3b428bdd1297c093ce9c938c26b84749cf22b-usage","type":"usage","usage":{"input_tokens":14957,"output_tokens":2299,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"d3edd34f318538c6a10a2991feb3b428bdd1297c093ce9c938c26b84749cf22b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"64b03acd7e4551fab92e226b243a63ca93357918a85dccb157e0c2f7858c7057-usage","type":"usage","usage":{"input_tokens":17280,"output_tokens":1753,"cache_read_tokens":12288,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"64b03acd7e4551fab92e226b243a63ca93357918a85dccb157e0c2f7858c7057","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"bfe63634402355920af78171ac5f30f7035c0cf827e4e1ffc62b1457f950007d-usage","type":"usage","usage":{"input_tokens":19050,"output_tokens":1838,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"bfe63634402355920af78171ac5f30f7035c0cf827e4e1ffc62b1457f950007d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"162ccb877454a49e13ed6917a02f5e6f14f80110760981bb18d91990b2da5a1e-usage","type":"usage","usage":{"input_tokens":20908,"output_tokens":1661,"cache_read_tokens":16384,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"162ccb877454a49e13ed6917a02f5e6f14f80110760981bb18d91990b2da5a1e","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"1b4ef2b8e4f0a71608c65b6a9fb2d7060ea7e1db161594fcd3b29e1c3f3ba4a5-usage","type":"usage","usage":{"input_tokens":22589,"output_tokens":67,"cache_read_tokens":16384,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"1b4ef2b8e4f0a71608c65b6a9fb2d7060ea7e1db161594fcd3b29e1c3f3ba4a5","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"db146382b1fd5ca0c42efd8db78a8bda41370cd3dfeeaf5f9f4269c962cb3cbf-usage","type":"usage","usage":{"input_tokens":24253,"output_tokens":252,"cache_read_tokens":22528,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"db146382b1fd5ca0c42efd8db78a8bda41370cd3dfeeaf5f9f4269c962cb3cbf","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"4ae73c0e6e21a5b3f4e14196c4e097e37d764fe1da59fa9a8dab2feb453b23c2-usage","type":"usage","usage":{"input_tokens":24709,"output_tokens":206,"cache_read_tokens":12288,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"4ae73c0e6e21a5b3f4e14196c4e097e37d764fe1da59fa9a8dab2feb453b23c2","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"be78ffcb6932c32202891c96661d43fbaa6f62fd17849fbae4f93473f8398ee3-usage","type":"usage","usage":{"input_tokens":25118,"output_tokens":111,"cache_read_tokens":20480,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"be78ffcb6932c32202891c96661d43fbaa6f62fd17849fbae4f93473f8398ee3","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"cee8dbba9a5d3ec4ea53b58152f65f268c21c6f4e2f6a9a145b0540d4ca866fe-usage","type":"usage","usage":{"input_tokens":25242,"output_tokens":78,"cache_read_tokens":20480,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"cee8dbba9a5d3ec4ea53b58152f65f268c21c6f4e2f6a9a145b0540d4ca866fe","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"7d14c656d4fbe1e8fdc1f75d6210e99380a57578757483c602ba9814d87e11e1-usage","type":"usage","usage":{"input_tokens":25381,"output_tokens":97,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"7d14c656d4fbe1e8fdc1f75d6210e99380a57578757483c602ba9814d87e11e1","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c1d6cabd9e4d7374ec2196cd35ea744d838271a9028fa2176b9bf4c9a4cba845-usage","type":"usage","usage":{"input_tokens":25522,"output_tokens":87,"cache_read_tokens":25344,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c1d6cabd9e4d7374ec2196cd35ea744d838271a9028fa2176b9bf4c9a4cba845","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"36cfd2b410ffb5e25e6b2545f6e76421451b9657a4f476f62802ca1daf308391-usage","type":"usage","usage":{"input_tokens":25622,"output_tokens":64,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"36cfd2b410ffb5e25e6b2545f6e76421451b9657a4f476f62802ca1daf308391","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"f023df399cef05360d85dbec86996b1ecbd9d2421e17e3b2e3a0cc08a4f694f8-usage","type":"usage","usage":{"input_tokens":25719,"output_tokens":95,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"f023df399cef05360d85dbec86996b1ecbd9d2421e17e3b2e3a0cc08a4f694f8","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0d3f0cb49814d90ec74b5af5e2e6d0b5586ac04c6a68f57c684af95d9350498b-usage","type":"usage","usage":{"input_tokens":27458,"output_tokens":1843,"cache_read_tokens":25088,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0d3f0cb49814d90ec74b5af5e2e6d0b5586ac04c6a68f57c684af95d9350498b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"01eded87b9b84099f91daa41d400302c6fa4b6290f2fadc792d2c4e0f77e9970-usage","type":"usage","usage":{"input_tokens":29320,"output_tokens":98,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"01eded87b9b84099f91daa41d400302c6fa4b6290f2fadc792d2c4e0f77e9970","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ba1dd036f237b71beb83b549d55cf9d2a2cb9c2052fb9f3c9541fd5cd8327402-usage","type":"usage","usage":{"input_tokens":31063,"output_tokens":309,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ba1dd036f237b71beb83b549d55cf9d2a2cb9c2052fb9f3c9541fd5cd8327402","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c955422beada09696a28660f3497a5527216e2dafeb8ae997f64505c791d8482-usage","type":"usage","usage":{"input_tokens":31385,"output_tokens":317,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c955422beada09696a28660f3497a5527216e2dafeb8ae997f64505c791d8482","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"3bc1e4f2a4458f45d9fbc22e1d310f2bbdfca18baa8be4dd2fc237c5eefbecad-usage","type":"usage","usage":{"input_tokens":31733,"output_tokens":1745,"cache_read_tokens":28672,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"3bc1e4f2a4458f45d9fbc22e1d310f2bbdfca18baa8be4dd2fc237c5eefbecad","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"fa77ab22a4d2c92ce2571727b6c437cb88192b83187cf12e63585f4ebc0dedfa-usage","type":"usage","usage":{"input_tokens":33486,"output_tokens":151,"cache_read_tokens":28672,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"fa77ab22a4d2c92ce2571727b6c437cb88192b83187cf12e63585f4ebc0dedfa","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"448e128986802d1d474faf0152d7ca9e783ae16419f25be0024cffc5d1947d79-usage","type":"usage","usage":{"input_tokens":35283,"output_tokens":412,"cache_read_tokens":28672,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"448e128986802d1d474faf0152d7ca9e783ae16419f25be0024cffc5d1947d79","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"08262549954a0592f31464cde2f688b34a1f05b4943c2eeb7638e07dd52a7600-usage","type":"usage","usage":{"input_tokens":35708,"output_tokens":80,"cache_read_tokens":32768,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"08262549954a0592f31464cde2f688b34a1f05b4943c2eeb7638e07dd52a7600","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"8d4e78a53fbc56f9b2887149ebe9b7cff2455736b5b6b9a397bd49b090112a91-usage","type":"usage","usage":{"input_tokens":35991,"output_tokens":106,"cache_read_tokens":33280,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"8d4e78a53fbc56f9b2887149ebe9b7cff2455736b5b6b9a397bd49b090112a91","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"77125ec6f55b8f089345fa5bcc8dea988b82e97de36ce75e8482c3afcf6753aa-usage","type":"usage","usage":{"input_tokens":36335,"output_tokens":103,"cache_read_tokens":35072,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"77125ec6f55b8f089345fa5bcc8dea988b82e97de36ce75e8482c3afcf6753aa","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e159ec1c2da7e710dbd2b110f6484070eef5387d42ff5ce994291ed89cc7e7c8-usage","type":"usage","usage":{"input_tokens":36656,"output_tokens":92,"cache_read_tokens":28672,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e159ec1c2da7e710dbd2b110f6484070eef5387d42ff5ce994291ed89cc7e7c8","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"998b85031b883d7b5082eb8b5ad5938ccc66a0eb49e4effff87c81b6afbbb2f1-usage","type":"usage","usage":{"input_tokens":36903,"output_tokens":80,"cache_read_tokens":36096,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"998b85031b883d7b5082eb8b5ad5938ccc66a0eb49e4effff87c81b6afbbb2f1","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e0c036e4486e0aee9372f4de7e07831ce97d784c9068843afccc461b69a83bd4-usage","type":"usage","usage":{"input_tokens":37113,"output_tokens":394,"cache_read_tokens":36608,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e0c036e4486e0aee9372f4de7e07831ce97d784c9068843afccc461b69a83bd4","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"4851f5d77f2e6fbb46f59f1f0000d0bb0e1fd7d82f89a48db469295786b2955b-usage","type":"usage","usage":{"input_tokens":37532,"output_tokens":76,"cache_read_tokens":36864,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"4851f5d77f2e6fbb46f59f1f0000d0bb0e1fd7d82f89a48db469295786b2955b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"387db6d8dbda9e97a2eeb2e339d7fefa30ff9ec8a4b714764027fb40d55e6d20-usage","type":"usage","usage":{"input_tokens":37621,"output_tokens":87,"cache_read_tokens":36864,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"387db6d8dbda9e97a2eeb2e339d7fefa30ff9ec8a4b714764027fb40d55e6d20","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"9bae9ed08b7870537f816ff57fd3a1ffe5d3c12e6a7b0be944fd976d81546a71-usage","type":"usage","usage":{"input_tokens":37733,"output_tokens":4646,"cache_read_tokens":36864,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9bae9ed08b7870537f816ff57fd3a1ffe5d3c12e6a7b0be944fd976d81546a71","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"f44b71d3ffb36049a16f603d38b42e44e8ee9d66dc9db1ef01bc3ad9553ab532-usage","type":"usage","usage":{"input_tokens":42400,"output_tokens":70,"cache_read_tokens":32768,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"f44b71d3ffb36049a16f603d38b42e44e8ee9d66dc9db1ef01bc3ad9553ab532","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0f225cd3419ae7cebca118aee8385092a0270744e09c78289829a7c661d35898-usage","type":"usage","usage":{"input_tokens":42483,"output_tokens":66,"cache_read_tokens":36864,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0f225cd3419ae7cebca118aee8385092a0270744e09c78289829a7c661d35898","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"af5ddf3339b040ff33cae837968b823a32ebdb8ca2bee10359a2e0c163f7f164-usage","type":"usage","usage":{"input_tokens":42624,"output_tokens":99,"cache_read_tokens":40960,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"af5ddf3339b040ff33cae837968b823a32ebdb8ca2bee10359a2e0c163f7f164","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"fc563ceed4ee00f8e5406a5065e951cc974fa2ad4943d657263a0f8fa0ad5e19-usage","type":"usage","usage":{"input_tokens":42792,"output_tokens":82,"cache_read_tokens":42240,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"fc563ceed4ee00f8e5406a5065e951cc974fa2ad4943d657263a0f8fa0ad5e19","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"3f0906a4113439aa952d9249b6308d9f98a7a3df2f6490f453dad9147090ad8c-usage","type":"usage","usage":{"input_tokens":42887,"output_tokens":12936,"cache_read_tokens":40960,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"3f0906a4113439aa952d9249b6308d9f98a7a3df2f6490f453dad9147090ad8c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"71f5d9d2ae45a9d3b6dfac381e1b1bfcb6efc2974aea72e7327b143062683749-usage","type":"usage","usage":{"input_tokens":55914,"output_tokens":436,"cache_read_tokens":0,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"71f5d9d2ae45a9d3b6dfac381e1b1bfcb6efc2974aea72e7327b143062683749","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"72516cc09dbd35bcb39c7d0086b66b7ef3c8b4c6a893ecfd19d7dc4549fbe752-usage","type":"usage","usage":{"input_tokens":56363,"output_tokens":881,"cache_read_tokens":50163,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"72516cc09dbd35bcb39c7d0086b66b7ef3c8b4c6a893ecfd19d7dc4549fbe752","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e74eb4e6b3e4d705647033448d4cb29c26492321cf1f9c5a6661df194388d94b-usage","type":"usage","usage":{"input_tokens":57257,"output_tokens":528,"cache_read_tokens":51531,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e74eb4e6b3e4d705647033448d4cb29c26492321cf1f9c5a6661df194388d94b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"2068d6fb7bbdf9eebf055803ddbdcb9fe01b0278be6fdf7d66f3577307adcb0d-usage","type":"usage","usage":{"input_tokens":57798,"output_tokens":680,"cache_read_tokens":46816,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"2068d6fb7bbdf9eebf055803ddbdcb9fe01b0278be6fdf7d66f3577307adcb0d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0f5a5757fb8d8bdfbcb332f04b6ad8375fd81edbcac62cbd24d400cd004a23cd-usage","type":"usage","usage":{"input_tokens":58491,"output_tokens":765,"cache_read_tokens":52641,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0f5a5757fb8d8bdfbcb332f04b6ad8375fd81edbcac62cbd24d400cd004a23cd","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"14fd89ef715f288b796da52aebb50bad07f41068b6f06ae4c073bbd91b1c5f15-usage","type":"usage","usage":{"input_tokens":59269,"output_tokens":970,"cache_read_tokens":49193,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"14fd89ef715f288b796da52aebb50bad07f41068b6f06ae4c073bbd91b1c5f15","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"511e4ce5f80134540ae4295d9141ee2dd7ed701c6687e961b153014a5239539f-usage","type":"usage","usage":{"input_tokens":60252,"output_tokens":737,"cache_read_tokens":52419,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"511e4ce5f80134540ae4295d9141ee2dd7ed701c6687e961b153014a5239539f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5c9e056f1a19a2a4fc4818e5b3b8efd98824285b71d2624c4421b1ed7a48464c-usage","type":"usage","usage":{"input_tokens":61002,"output_tokens":56,"cache_read_tokens":50021,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5c9e056f1a19a2a4fc4818e5b3b8efd98824285b71d2624c4421b1ed7a48464c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"eab3ebd9f2e126466b20b3bd0d64964ff7fa0ee50aa1e4ac3483e6638b4ef398-usage","type":"usage","usage":{"input_tokens":61225,"output_tokens":233,"cache_read_tokens":51429,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"eab3ebd9f2e126466b20b3bd0d64964ff7fa0ee50aa1e4ac3483e6638b4ef398","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ab8d4fecd9812506abf97c033173191cb23150d542276635a6d97c145aa027b2-usage","type":"usage","usage":{"input_tokens":61483,"output_tokens":1535,"cache_read_tokens":36864,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ab8d4fecd9812506abf97c033173191cb23150d542276635a6d97c145aa027b2","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"2faa3d0c2d423e5aecea42eaed69583baf91d434124f70d9ddba5716fe8bad84-usage","type":"usage","usage":{"input_tokens":63031,"output_tokens":458,"cache_read_tokens":40960,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"2faa3d0c2d423e5aecea42eaed69583baf91d434124f70d9ddba5716fe8bad84","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5e57986a1e838b607ead0c70dbc89e5eb7d19124ffb3f18720f66af0fc804391-usage","type":"usage","usage":{"input_tokens":63521,"output_tokens":532,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5e57986a1e838b607ead0c70dbc89e5eb7d19124ffb3f18720f66af0fc804391","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"2bb304419e3fc7215f214b5b19d3a1813d904e07da69244bef2ddb3a8ddc1bf5-usage","type":"usage","usage":{"input_tokens":64066,"output_tokens":138,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"2bb304419e3fc7215f214b5b19d3a1813d904e07da69244bef2ddb3a8ddc1bf5","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c04fe97fdb9c5a9b3ec2eb2a0fdd85949d6f9948971d35d7149728a9e2d6ff64-usage","type":"usage","usage":{"input_tokens":64217,"output_tokens":962,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c04fe97fdb9c5a9b3ec2eb2a0fdd85949d6f9948971d35d7149728a9e2d6ff64","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"637322b4d45a6ad187c7a6d6279cc80794a1fa0b752efa181eb49763d0a8eb84-usage","type":"usage","usage":{"input_tokens":65227,"output_tokens":67,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"637322b4d45a6ad187c7a6d6279cc80794a1fa0b752efa181eb49763d0a8eb84","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ab986aea769a6fddfcb1389a8b6e2d903c7050fae7e226870c6d5170239cad0e-usage","type":"usage","usage":{"input_tokens":65331,"output_tokens":73,"cache_read_tokens":64000,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ab986aea769a6fddfcb1389a8b6e2d903c7050fae7e226870c6d5170239cad0e","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a63d4655e29bf3b239483d27f2fa8c3932f63f055a0fd110363718befc614133-usage","type":"usage","usage":{"input_tokens":65640,"output_tokens":121,"cache_read_tokens":40960,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a63d4655e29bf3b239483d27f2fa8c3932f63f055a0fd110363718befc614133","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"8abbec35b1df11c92589186eb23c0ed9f4f75a93ceebf4c89b0dd559d4b822f9-usage","type":"usage","usage":{"input_tokens":65774,"output_tokens":1030,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"8abbec35b1df11c92589186eb23c0ed9f4f75a93ceebf4c89b0dd559d4b822f9","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"35d4eead9ff0426063e2b5b6145f83c66ff9d95644e9fa95597433849abdc8b7-usage","type":"usage","usage":{"input_tokens":66819,"output_tokens":536,"cache_read_tokens":61440,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"35d4eead9ff0426063e2b5b6145f83c66ff9d95644e9fa95597433849abdc8b7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"bb8d351318e63caa1b9a2bb9848cb15cddc92d098e37263ba94742f4fc30d351-usage","type":"usage","usage":{"input_tokens":67370,"output_tokens":682,"cache_read_tokens":65536,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"bb8d351318e63caa1b9a2bb9848cb15cddc92d098e37263ba94742f4fc30d351","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5ad86d5c2f9f65629c011aca82e7cf0f4b256e898ec10d5f64b27c68a2201f2c-usage","type":"usage","usage":{"input_tokens":68067,"output_tokens":769,"cache_read_tokens":66816,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5ad86d5c2f9f65629c011aca82e7cf0f4b256e898ec10d5f64b27c68a2201f2c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"00c84a70250ca0a5b122083a3f736d816911d195a01b72d41270349d9014da4e-usage","type":"usage","usage":{"input_tokens":68851,"output_tokens":1010,"cache_read_tokens":65536,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"00c84a70250ca0a5b122083a3f736d816911d195a01b72d41270349d9014da4e","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5c638bd47356b46491b452d06ed04ba97cad593cf05ceea217ff6393ede1166f-usage","type":"usage","usage":{"input_tokens":69876,"output_tokens":786,"cache_read_tokens":65536,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5c638bd47356b46491b452d06ed04ba97cad593cf05ceea217ff6393ede1166f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c15d7f8fcb4ad08084f4dbaaad65ff63c7604959cd2a2354d34b6fa3a73414d4-usage","type":"usage","usage":{"input_tokens":70659,"output_tokens":126,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c15d7f8fcb4ad08084f4dbaaad65ff63c7604959cd2a2354d34b6fa3a73414d4","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"229de636f315b8f173ff3f5c6006fc58570c5a6e3bb8a1957054f48e73fbdde7-usage","type":"usage","usage":{"input_tokens":70798,"output_tokens":84,"cache_read_tokens":65536,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"229de636f315b8f173ff3f5c6006fc58570c5a6e3bb8a1957054f48e73fbdde7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"64d9378791bb1b192a91cf6882c57df6abe91a656fbc4c379c6bd6e0cbe4795b-usage","type":"usage","usage":{"input_tokens":70971,"output_tokens":108,"cache_read_tokens":65536,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"64d9378791bb1b192a91cf6882c57df6abe91a656fbc4c379c6bd6e0cbe4795b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e1463e3a04d10ea5a31c0aa13fb3abb20823437a9ffcf3e3abb95632bf89a68f-usage","type":"usage","usage":{"input_tokens":71296,"output_tokens":130,"cache_read_tokens":70656,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e1463e3a04d10ea5a31c0aa13fb3abb20823437a9ffcf3e3abb95632bf89a68f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"cd13364f5e0c29004d11317e89228f87110faff590b43710673cdc419b61c1c7-usage","type":"usage","usage":{"input_tokens":71439,"output_tokens":672,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"cd13364f5e0c29004d11317e89228f87110faff590b43710673cdc419b61c1c7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"089bf8c636f76c6dd696ccf719860764f126268da4a4dc739ec342cee86bb75d-usage","type":"usage","usage":{"input_tokens":72142,"output_tokens":71,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"089bf8c636f76c6dd696ccf719860764f126268da4a4dc739ec342cee86bb75d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"9ac30363967c4f319a8b241bc11364ebfa8d182f6c49f15cb6d89d1288902a15-usage","type":"usage","usage":{"input_tokens":72226,"output_tokens":71,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9ac30363967c4f319a8b241bc11364ebfa8d182f6c49f15cb6d89d1288902a15","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"24313b73b896556c78cffafb2a08d2c7d143f296c1a4cc2ba2afaf672414f69c-usage","type":"usage","usage":{"input_tokens":72365,"output_tokens":95,"cache_read_tokens":72192,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"24313b73b896556c78cffafb2a08d2c7d143f296c1a4cc2ba2afaf672414f69c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"890d9df33d0c726c503383c80b3c21927346a9d61ba9996f39fed1b35f20328d-usage","type":"usage","usage":{"input_tokens":72534,"output_tokens":129,"cache_read_tokens":72192,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"890d9df33d0c726c503383c80b3c21927346a9d61ba9996f39fed1b35f20328d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"73da6d6df77e3629bc1e26a6a919039d2e593f16fbca889034222a4a7d6d7d38-usage","type":"usage","usage":{"input_tokens":72699,"output_tokens":97,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"73da6d6df77e3629bc1e26a6a919039d2e593f16fbca889034222a4a7d6d7d38","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0149ff58b01caa253fee38f195559050c620f4eeed064be615c525ac2c81a7b1-usage","type":"usage","usage":{"input_tokens":73084,"output_tokens":131,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0149ff58b01caa253fee38f195559050c620f4eeed064be615c525ac2c81a7b1","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c17e3212c9e019498ae97c6de3b665afef7c708994c2b72cb788596463cbf77b-usage","type":"usage","usage":{"input_tokens":73228,"output_tokens":91,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c17e3212c9e019498ae97c6de3b665afef7c708994c2b72cb788596463cbf77b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"974d3e49fc464917a36077f5a48757da976cd6bd0aaa53455486a87874e1325b-usage","type":"usage","usage":{"input_tokens":73581,"output_tokens":405,"cache_read_tokens":73216,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"974d3e49fc464917a36077f5a48757da976cd6bd0aaa53455486a87874e1325b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e04556417d4440142d139723410bc2d1482b1df51cb04094cfc2786feaba21c5-usage","type":"usage","usage":{"input_tokens":73999,"output_tokens":56,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e04556417d4440142d139723410bc2d1482b1df51cb04094cfc2786feaba21c5","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"774f3d3428532c6e3a0d7418ce6a66a163dba0b8b7cc263dbe8b4a189b7a1c80-usage","type":"usage","usage":{"input_tokens":74080,"output_tokens":143,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"774f3d3428532c6e3a0d7418ce6a66a163dba0b8b7cc263dbe8b4a189b7a1c80","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"f9945345739da3eada59c92cdca54d2ac06dd155b361535b319fe9d2807b4777-usage","type":"usage","usage":{"input_tokens":74236,"output_tokens":56,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"f9945345739da3eada59c92cdca54d2ac06dd155b361535b319fe9d2807b4777","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ce070a946a2d91ac50e5cdfc2836cc494b9d5eaeabb6765741f1b41dbb5a7c9d-usage","type":"usage","usage":{"input_tokens":74305,"output_tokens":68,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ce070a946a2d91ac50e5cdfc2836cc494b9d5eaeabb6765741f1b41dbb5a7c9d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"f8239e6f01f8ec31d2023da1737a0fd7d402fad84e1a97559622b5dd40c7ff98-usage","type":"usage","usage":{"input_tokens":74850,"output_tokens":340,"cache_read_tokens":69632,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"f8239e6f01f8ec31d2023da1737a0fd7d402fad84e1a97559622b5dd40c7ff98","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"ce724e031bc8acf961f186a15f547aa6c280d2a20728ca0817edd57c1357d305-usage","type":"usage","usage":{"input_tokens":75207,"output_tokens":205,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"ce724e031bc8acf961f186a15f547aa6c280d2a20728ca0817edd57c1357d305","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"5f92b6e3ea2ccf4eaf68e50e4539079a073dca0973e0aa37212fe02f57d56a96-usage","type":"usage","usage":{"input_tokens":75428,"output_tokens":88,"cache_read_tokens":74752,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"5f92b6e3ea2ccf4eaf68e50e4539079a073dca0973e0aa37212fe02f57d56a96","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"12d60759354974e6e61c5e197e8f55d70fb058f3b93dd2d8b995c2741f0d537d-usage","type":"usage","usage":{"input_tokens":75561,"output_tokens":138,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"12d60759354974e6e61c5e197e8f55d70fb058f3b93dd2d8b995c2741f0d537d","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"21001f14845a6a1f1f64ca06e6fca2a1dfaca899e7ac9b3ff9d1b0b5cfdd7d6f-usage","type":"usage","usage":{"input_tokens":75799,"output_tokens":208,"cache_read_tokens":75008,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"21001f14845a6a1f1f64ca06e6fca2a1dfaca899e7ac9b3ff9d1b0b5cfdd7d6f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"803aec506dbcdab3786640c8b52b0ad903cf9ef7de5b6dde8a68d7dca6fbe1a0-usage","type":"usage","usage":{"input_tokens":76033,"output_tokens":70,"cache_read_tokens":75264,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"803aec506dbcdab3786640c8b52b0ad903cf9ef7de5b6dde8a68d7dca6fbe1a0","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"991bc128b5cac1cad1c733dbb4f8a84da75709f2fadf0ba6dece71b831147feb-usage","type":"usage","usage":{"input_tokens":76627,"output_tokens":108,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"991bc128b5cac1cad1c733dbb4f8a84da75709f2fadf0ba6dece71b831147feb","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a05489b549c7e0e92675b42c01ad0232f681b260e62481015181e674e87789df-usage","type":"usage","usage":{"input_tokens":76874,"output_tokens":194,"cache_read_tokens":75776,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a05489b549c7e0e92675b42c01ad0232f681b260e62481015181e674e87789df","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"621d8793e73ccc2a0f3a78169b9618136665a4a9ffd8ce4d9710f36f79d0265c-usage","type":"usage","usage":{"input_tokens":77081,"output_tokens":163,"cache_read_tokens":76800,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"621d8793e73ccc2a0f3a78169b9618136665a4a9ffd8ce4d9710f36f79d0265c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"86e64653e7eafe2a00e9dafc11c6d0a8347f17007cf0829261f7624d25ec4867-usage","type":"usage","usage":{"input_tokens":77269,"output_tokens":72,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"86e64653e7eafe2a00e9dafc11c6d0a8347f17007cf0829261f7624d25ec4867","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0b25ab4a8ed0897f296559fd71f5178662e15cc0d0f41147cd7c16c820dfadd7-usage","type":"usage","usage":{"input_tokens":77355,"output_tokens":154,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0b25ab4a8ed0897f296559fd71f5178662e15cc0d0f41147cd7c16c820dfadd7","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"215b1f33ae2d13b54f8ec8e3fe7df74754f1b05411f5e300e0011d80732d6b56-usage","type":"usage","usage":{"input_tokens":77561,"output_tokens":172,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"215b1f33ae2d13b54f8ec8e3fe7df74754f1b05411f5e300e0011d80732d6b56","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"9d72d7c18f8ff2a9e00435570d74ffc666bd3ff67ade05ea77a54cd4429b4c2f-usage","type":"usage","usage":{"input_tokens":77827,"output_tokens":184,"cache_read_tokens":77312,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9d72d7c18f8ff2a9e00435570d74ffc666bd3ff67ade05ea77a54cd4429b4c2f","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"2ac5dfe6f99b6c97b96b799b13724dbc7cb37b2e2942d7c7a55579b7114cde4c-usage","type":"usage","usage":{"input_tokens":78036,"output_tokens":192,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"2ac5dfe6f99b6c97b96b799b13724dbc7cb37b2e2942d7c7a55579b7114cde4c","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0d93adc34348ea915cfe9418d47a1ac5d2c1df4c90b0352222e3d05cd00482cc-usage","type":"usage","usage":{"input_tokens":78265,"output_tokens":564,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0d93adc34348ea915cfe9418d47a1ac5d2c1df4c90b0352222e3d05cd00482cc","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e132515e100a9ec2158eea2b706b23ac15cce8cb03c5c763026dd0a5e580ff28-usage","type":"usage","usage":{"input_tokens":78844,"output_tokens":322,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e132515e100a9ec2158eea2b706b23ac15cce8cb03c5c763026dd0a5e580ff28","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"d24d0b84672948d7e06292279b32df071f91c3cda39d1852676a196c0ae7db87-usage","type":"usage","usage":{"input_tokens":79187,"output_tokens":194,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"d24d0b84672948d7e06292279b32df071f91c3cda39d1852676a196c0ae7db87","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"7cba48ec48ff2322e409c26d8838163214c02a791897ea304b9df4a96c18a829-usage","type":"usage","usage":{"input_tokens":79419,"output_tokens":124,"cache_read_tokens":78592,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"7cba48ec48ff2322e409c26d8838163214c02a791897ea304b9df4a96c18a829","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"1b78d822201ded39a3e712a09471e11bc3b776f9f410f7aa471c9b7ecc6d1858-usage","type":"usage","usage":{"input_tokens":79569,"output_tokens":212,"cache_read_tokens":73728,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"1b78d822201ded39a3e712a09471e11bc3b776f9f410f7aa471c9b7ecc6d1858","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"424184affc130646308f03ad4fb594f21de4dfde1a0b92454b264d69cc2ae461-usage","type":"usage","usage":{"input_tokens":79804,"output_tokens":755,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"424184affc130646308f03ad4fb594f21de4dfde1a0b92454b264d69cc2ae461","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"609f0f2bb2083e8f18c216ed7ab0a89dedee0774df72e8cca5207f34c20ec0df-usage","type":"usage","usage":{"input_tokens":81049,"output_tokens":100,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"609f0f2bb2083e8f18c216ed7ab0a89dedee0774df72e8cca5207f34c20ec0df","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"df17b9634a0858cab42fa5a8be18df6e68c92e8e29abe7b813a13608ae7d561b-usage","type":"usage","usage":{"input_tokens":81169,"output_tokens":280,"cache_read_tokens":77824,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"df17b9634a0858cab42fa5a8be18df6e68c92e8e29abe7b813a13608ae7d561b","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"e234ec8131cb678368d6a4f14d735705966a4e49e6a1fcd2cc6fb92826cf397a-usage","type":"usage","usage":{"input_tokens":3076,"output_tokens":240,"cache_read_tokens":1024,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"e234ec8131cb678368d6a4f14d735705966a4e49e6a1fcd2cc6fb92826cf397a","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"13ec17d01fb0834d6aca2b0dc2cf8f865ccd1f1e53a1b82e24c4930648290aba-usage","type":"usage","usage":{"input_tokens":9940,"output_tokens":265,"cache_read_tokens":3072,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"13ec17d01fb0834d6aca2b0dc2cf8f865ccd1f1e53a1b82e24c4930648290aba","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0642354dd1f2c62c85283a61528e0556f6bb6106af7d7c5ba70c7161428b8fc5-usage","type":"usage","usage":{"input_tokens":10578,"output_tokens":269,"cache_read_tokens":1024,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"0642354dd1f2c62c85283a61528e0556f6bb6106af7d7c5ba70c7161428b8fc5","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"1a635152e764976a2e88b4aaeefc811b95d04dd1565eb74ceef9bb3fb1f9f55a-usage","type":"usage","usage":{"input_tokens":20094,"output_tokens":108,"cache_read_tokens":1024,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"1a635152e764976a2e88b4aaeefc811b95d04dd1565eb74ceef9bb3fb1f9f55a","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c26cb8a6-1eb7-451e-bdf6-ccca452a6a95","type":"tool","message":"Starting tool build","details":{"tool":"build","evidence":"tools/24ec5495-cea9-4d37-b398-d44f7b3ff8cd.json"}}
+{"id":"38263e1b-8fb7-47d3-93e4-57e8e84c6e2a","type":"tool","message":"Tool build: exited (0)","details":{"tool":"build","status":"exited","exit_code":0,"evidence":"tools/24ec5495-cea9-4d37-b398-d44f7b3ff8cd.json"}}
+{"id":"259d5a84-3e5e-4657-a896-c7a268f97b85","type":"tool","message":"Starting tool test","details":{"tool":"test","evidence":"tools/c9d08ef9-9508-48ad-bcfd-4f674f0d49a6.json"}}
+{"id":"8a0e44b6-0899-4193-9866-ca3b0d947845","type":"tool","message":"Tool test: exited (0)","details":{"tool":"test","status":"exited","exit_code":0,"evidence":"tools/c9d08ef9-9508-48ad-bcfd-4f674f0d49a6.json"}}
+{"id":"811328c2c5a92376a89518115d5799734497bccd71b70761b11625113b777dde-usage","type":"usage","usage":{"input_tokens":20406,"output_tokens":54,"cache_read_tokens":8192,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"811328c2c5a92376a89518115d5799734497bccd71b70761b11625113b777dde","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"b0e716c9-e2f9-4573-b1dd-dcb0d40654b5","type":"tool","message":"Starting tool vet","details":{"tool":"vet","evidence":"tools/9d1e0a14-118c-4d71-adce-bf56e487da89.json"}}
+{"id":"5b46b5e7-057c-4a50-909f-7bbe02b071fa","type":"tool","message":"Tool vet: exited (0)","details":{"tool":"vet","status":"exited","exit_code":0,"evidence":"tools/9d1e0a14-118c-4d71-adce-bf56e487da89.json"}}
+{"id":"1202b8c2-31cb-40f1-875e-6e99c10b7167","type":"tool","message":"Starting tool lint","details":{"tool":"lint","evidence":"tools/021e517b-93ac-42d2-89a5-312fd562d9a6.json"}}
+{"id":"964612ae-551c-4ecb-a3cd-10609988b748","type":"tool","message":"Tool lint: exited (0)","details":{"tool":"lint","status":"exited","exit_code":0,"evidence":"tools/021e517b-93ac-42d2-89a5-312fd562d9a6.json"}}
+{"id":"9bb13b14639e607da2d98e8ee731dc4682e4e67b93a2711190f3e55b7469c7f4-usage","type":"usage","usage":{"input_tokens":20655,"output_tokens":1155,"cache_read_tokens":19968,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"9bb13b14639e607da2d98e8ee731dc4682e4e67b93a2711190f3e55b7469c7f4","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"de1640811919b10b01f151bdbb4f3dfd30fff2328cd0c96d786a3fc4ecc0007a-usage","type":"usage","usage":{"input_tokens":21933,"output_tokens":517,"cache_read_tokens":8192,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"de1640811919b10b01f151bdbb4f3dfd30fff2328cd0c96d786a3fc4ecc0007a","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"05e1a402-3960-4a85-ae0c-9dc74ed442f4","type":"tool","message":"Starting tool check-stories","details":{"tool":"check-stories","evidence":"tools/79fa1eb8-3b1b-4caa-8340-d7af669f1d54.json"}}
+{"id":"c393ae88-8ff4-4384-95bc-4f7b99ee685c","type":"tool","message":"Tool check-stories: exited (1)","details":{"tool":"check-stories","status":"exited","exit_code":1,"evidence":"tools/79fa1eb8-3b1b-4caa-8340-d7af669f1d54.json"}}
+{"id":"66ffa40f9ff98e8306bf4b22935a0bc9edf190e0a7ac50f29d7794a210ad1e21-usage","type":"usage","usage":{"input_tokens":22605,"output_tokens":93,"cache_read_tokens":16384,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"66ffa40f9ff98e8306bf4b22935a0bc9edf190e0a7ac50f29d7794a210ad1e21","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"c510bec5c0749e26084a6180cfecf1d334253a9440e3fd3b323aab42072567e6-usage","type":"usage","usage":{"input_tokens":23270,"output_tokens":707,"cache_read_tokens":20480,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"c510bec5c0749e26084a6180cfecf1d334253a9440e3fd3b323aab42072567e6","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"a5d6f7ef750d1d55a4061de5bfddc4aace2286fba796040532f84560eba22651-usage","type":"usage","usage":{"input_tokens":24480,"output_tokens":122,"cache_read_tokens":22528,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"a5d6f7ef750d1d55a4061de5bfddc4aace2286fba796040532f84560eba22651","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"eade872df6341a6f2d23c9218fac15882ab015c8f9e111b4918c40452ce3645a-usage","type":"usage","usage":{"input_tokens":24625,"output_tokens":44,"cache_read_tokens":23040,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"eade872df6341a6f2d23c9218fac15882ab015c8f9e111b4918c40452ce3645a","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"0318d83c-14ce-4de3-8190-cef39d8db23f","type":"tool","message":"Starting tool check-stories","details":{"tool":"check-stories","evidence":"tools/48472da3-c416-48e2-a06b-624f7254d856.json"}}
+{"id":"c21c3dec-407e-45f8-a0be-37fbb83e41b9","type":"tool","message":"Tool check-stories: exited (0)","details":{"tool":"check-stories","status":"exited","exit_code":0,"evidence":"tools/48472da3-c416-48e2-a06b-624f7254d856.json"}}
+{"id":"746a4e1d3ae11ff20e11deb99c8faf5d7cbeb5c8e239a4c06183b1c6c99f8cf1-usage","type":"usage","usage":{"input_tokens":24780,"output_tokens":528,"cache_read_tokens":24576,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"746a4e1d3ae11ff20e11deb99c8faf5d7cbeb5c8e239a4c06183b1c6c99f8cf1","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"283052505316842038278b6893c8e90365537d6fb94c488fa827e63fc025a3c1-usage","type":"usage","usage":{"input_tokens":25730,"output_tokens":507,"cache_read_tokens":24320,"cache_write_tokens":0,"provider":"openrouter","model":"deepseek/deepseek-v4-flash"}}
+{"id":"283052505316842038278b6893c8e90365537d6fb94c488fa827e63fc025a3c1","type":"progress","message":"Pi completed an assistant turn"}
+{"id":"8ea9372e-a8a0-4d3a-88d5-275562e5b164","type":"tool","message":"Starting tool build","details":{"tool":"build","evidence":"tools/e8cb8365-d537-47e8-acef-5243eca1cb73.json"}}
+{"id":"852056ed-beca-423f-85a7-c9f95a07c3d9","type":"tool","message":"Tool build: exited (0)","details":{"tool":"build","status":"exited","exit_code":0,"evidence":"tools/e8cb8365-d537-47e8-acef-5243eca1cb73.json"}}
+{"id":"3395291e-905b-44d7-b43d-d713334ebe7b","type":"gate","message":"Gate build-passes: passed","details":{"gate":"build-passes","tool":"build","evidence":"tools/e8cb8365-d537-47e8-acef-5243eca1cb73.json"}}
+{"id":"1456ac21-1432-42ee-94b1-8234f9077fe5","type":"tool","message":"Starting tool test","details":{"tool":"test","evidence":"tools/12456fd6-bc35-45a3-a05c-6d7d3a9aeb38.json"}}
+{"id":"54702b47-b4e3-4c29-af66-a5177b1cb8ac","type":"tool","message":"Tool test: exited (0)","details":{"tool":"test","status":"exited","exit_code":0,"evidence":"tools/12456fd6-bc35-45a3-a05c-6d7d3a9aeb38.json"}}
+{"id":"8d23133e-1245-442b-8be6-878fd86a1b81","type":"gate","message":"Gate test-passes: passed","details":{"gate":"test-passes","tool":"test","evidence":"tools/12456fd6-bc35-45a3-a05c-6d7d3a9aeb38.json"}}
+{"id":"06338a5d-93b0-43a1-99d3-2f9d029becb0","type":"tool","message":"Starting tool vet","details":{"tool":"vet","evidence":"tools/f02deb31-858b-42d3-ba4b-a543b407688d.json"}}
+{"id":"f6ed4fa1-a4f4-42b2-bfe0-7c46c8cfff06","type":"tool","message":"Tool vet: exited (0)","details":{"tool":"vet","status":"exited","exit_code":0,"evidence":"tools/f02deb31-858b-42d3-ba4b-a543b407688d.json"}}
+{"id":"8c3170e6-52ec-4821-8cb7-b7da857b860b","type":"gate","message":"Gate vet-passes: passed","details":{"gate":"vet-passes","tool":"vet","evidence":"tools/f02deb31-858b-42d3-ba4b-a543b407688d.json"}}
+{"id":"f20848ad-c97d-4c92-83ab-6e15ad328782","type":"tool","message":"Starting tool lint","details":{"tool":"lint","evidence":"tools/11749316-d3d4-4176-b21f-7ec0cf2d9b9f.json"}}
+{"id":"e51d26b2-b773-429f-b9cc-b27b4d6da580","type":"tool","message":"Tool lint: exited (0)","details":{"tool":"lint","status":"exited","exit_code":0,"evidence":"tools/11749316-d3d4-4176-b21f-7ec0cf2d9b9f.json"}}
+{"id":"9806be18-c3b9-40f7-a8e8-21f973ef1fcf","type":"gate","message":"Gate lint-passes: passed","details":{"gate":"lint-passes","tool":"lint","evidence":"tools/11749316-d3d4-4176-b21f-7ec0cf2d9b9f.json"}}
+{"id":"b2b0bcf8-3061-4d66-bba6-95bb4abae003","type":"tool","message":"Starting tool check-stories","details":{"tool":"check-stories","evidence":"tools/669d03ac-00e8-40b9-af3f-9a7d6c6f0d14.json"}}
+{"id":"86beabe9-73d8-4099-b061-e07a8c952795","type":"tool","message":"Tool check-stories: exited (0)","details":{"tool":"check-stories","status":"exited","exit_code":0,"evidence":"tools/669d03ac-00e8-40b9-af3f-9a7d6c6f0d14.json"}}
+{"id":"dca0b57b-a7d9-481a-a0ad-ce8daa37eb70","type":"gate","message":"Gate stories-complete: passed","details":{"gate":"stories-complete","tool":"check-stories","evidence":"tools/669d03ac-00e8-40b9-af3f-9a7d6c6f0d14.json"}}
+{"id":"a7266a7e4e7161680a458bda0bf2b8c283590f68f966640bda319e7708239ddc","type":"progress","message":"Agent result published"}

@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "go.mod": {
+      "sha256": "50df9f122965a7f01bac0b071a21fdb17bec58132537c5c9065efa618b34f9e0",
+      "mode": 420
+    },
+    "main.go": {
+      "sha256": "58f8ced5b6d6114d96d946de7a7a01153ae2ca6b263a403c1aaf7af360618d0a",
+      "mode": 420
+    },
+    "main_test.go": {
+      "sha256": "ec2f6af77b9d575c63ee02e468980e6a6f8f4bae9298768e34fe3fed41ff4c56",
+      "mode": 420
+    }
+  },
+  "candidate": {
+    "README.md": {
+      "sha256": "424137d6e40587d7e569b8b79a307821a86e4dcbf8dd263aedb9c97e155e4bcd",
+      "mode": 420
+    },
+    "go.mod": {
+      "sha256": "50df9f122965a7f01bac0b071a21fdb17bec58132537c5c9065efa618b34f9e0",
+      "mode": 420
+    },
+    "index.html": {
+      "sha256": "d1e96c0642c43bc4f81e37e9ca9a8ca5d4a78ff133d50d5b4dfb024b6dff8a81",
+      "mode": 420
+    },
+    "main.go": {
+      "sha256": "73d748a2e85d970f934f45d6765ab3dc668c7a79b495a2aeaa36c68a89647203",
+      "mode": 420
+    },
+    "main_test.go": {
+      "sha256": "ec2f6af77b9d575c63ee02e468980e6a6f8f4bae9298768e34fe3fed41ff4c56",
+      "mode": 420
+    },
+    "server.go": {
+      "sha256": "1310e7dca172fee2c6f9e4466219f83a391199de80e205715431023bce160d70",
+      "mode": 420
+    },
+    "server_test.go": {
+      "sha256": "1f08fb87968186181da74740d6b5b444d179d3b53c6f116a855baf8785b03819",
+      "mode": 420
+    },
+    "tic-tac-toe": {
+      "sha256": "6037752fb07ad473f191d9045ad657dff6a846d5f7a072198da51a203c627f1d",
+      "mode": 493
+    }
+  }
+}

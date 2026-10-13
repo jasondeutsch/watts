@@ -4,7 +4,7 @@ Watts remains a proof of concept at **0.1.0**. This backlog contains open work; 
 
 Watts core executes a generic workload contract. Agent/tool integrations belong in images; Temporal owns durable orchestration. Currently, only local Docker Engine execution is supported. Podman and Kubernetes remain possible future backends.
 
-The [October 10 eval](evals/go-workflow/runs/2026-10-10-tic-tac-toe/README.md) and [October 12 container eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe/README.md) retain historical evidence. Prioritize the current output, image integration, and publication problems below before treating Go generalist as a reliable end-to-end example.
+The [October 10 eval](evals/go-workflow/runs/2026-10-10-tic-tac-toe/README.md) and [October 12 container eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe/README.md) retain historical evidence. Prioritize the current output, image integration, and publication problems below before treating Golang coder as a reliable end-to-end example.
 
 ## Candidate improvements
 
@@ -60,17 +60,36 @@ Task creation currently creates the final directory before writing artifacts, th
 
 ### wiss-042: Evaluate changes to an existing application
 
-The tic-tac-toe eval starts from an empty project. It does not establish whether the workflow can change existing code while preserving earlier behavior.
+The original tic-tac-toe eval starts from an empty project. The [web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) now exercises an incremental change against captured source and native-binary baselines. The workflow completed, and independent HTTP/terminal checks passed, but accessibility, test quality, and artifact handling prevent a clean verified success. Repeat this case from the same baseline before drawing performance conclusions.
 
 - Define a small feature or intentional bug fix against a known application baseline, with regression checks for existing behavior.
 - Record the package/values, images, context, starting code, approvals, outcomes, attempts, elapsed time, and available usage evidence using the existing eval structure.
 - Compare repeated runs from the same baseline; keep human assessment alongside deterministic checks. This is an eval scenario, not a new eval framework.
 
+### wiss-046: Bound and explain workflow resource consumption
+
+The [incremental web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) reported more than 2.5 million input-plus-output tokens during its first build attempt before gate acceptance. One Ralph iteration produced no durable changes and included a 16,000-output-token response. Iteration limits and timeouts alone do not describe the resource cost of repeated long contexts.
+
+- Consider optional declarative per-workload and whole-run limits for reported tokens and elapsed execution time, covering retries and internal repair loops. Preserve generic orchestration; image adapters report normalized consumption.
+- Expose consumption, cache treatment, remaining known budget, and the reason for a limit being reached to coordinators and the UI. Unknown cost or missing telemetry must remain explicit.
+- Define the stop/recovery contract: preserve candidate/evidence, stop safely at a supported boundary, and require an explicit decision before extending an exhausted budget. Do not silently switch models or weaken gates.
+- Record whether limits are enforceable live or only checked after an attempt; durable telemetry under wiss-025 is a prerequisite for reliable live enforcement. Evaluate changes to example prompt/context size using repeated comparable runs, independently of correctness.
+
+### wiss-047: Make Golang coder review verify claims against real evidence
+
+The [incremental web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed with reviewer PASS, but independent inspection found unnamed empty-cell buttons and HTTP tests that copied handlers instead of testing the production router. The reviewer also described the newly published Linux binary as pre-existing, contradicting the captured original baseline. Passing command gates and a syntactically valid verdict did not establish all acceptance criteria.
+
+- Refine example builder/reviewer guidance to exercise production code paths. Factor reusable handler construction when needed; test the real handler or executable rather than recreating implementation in tests.
+- Supply a captured baseline/change inventory as explicit reviewer context so preservation claims compare before and after. Use generic artifacts/resources and provenance; keep Go-specific review policy in the example.
+- Require evidence for each substantive claim, including browser accessibility/responsiveness and protected-artifact integrity where the case requires them. Missing evidence is an unresolved finding, not PASS.
+- Retain a challenge case with a passing copied-handler test, unnamed controls, and an incidental build product; verify the configured reviewer identifies defects and returns `changes-required` to build.
+- Compare fresh runs before accepting improved reviewer guidance. Coordinate publication policy with wiss-031 and context primitives with wiss-033/wiss-043; Watts cannot guarantee model judgment merely by validating verdict syntax.
+
 ### wiss-043: Demonstrate explicit project context with existing primitives
 
 Teams need a practical starting point for supplying architecture notes, conventions, and constraints to an ephemeral builder.
 
-- Extend the Go generalist example with a small versioned context resource and named skill that explicitly tells the Agent how to use it.
+- Extend the Golang coder example with a small versioned context resource and named skill that explicitly tells the Agent how to use it.
 - Demonstrate captured/pinned inputs and keep context subordinate to task scope, approvals, and verification results.
 - Start through existing resources and skills, without adding a memory service or Kind. This is the initial example slice of wiss-033.
 
@@ -98,6 +117,8 @@ Acceptance criteria:
 - Display stage/attempt identity, update time, failure cause, and available actions. An idle log alone must not imply a stalled execution.
 - Mark truncation and provide access to full output; do not silently discard oversized records. Preserve earlier attempts when querying Temporal fails.
 - Verify active nested-agent output, oversized events, failed attempts, and retry visibility against the live UI/API. Coordinate with wiss-011 and wiss-025.
+
+The [web-UI incremental eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) confirms the nested-agent visibility gap: while Ralph iteration 2 was writing source and reporting assistant-turn usage in private outputs, the public task log and UI showed only the outer session and completed iteration 1 summary. Task identity, attempts, and rejection feedback were visible. Stream useful normalized progress from image-owned events rather than presenting quiet outer-process output as the only activity evidence.
 
 ### wiss-004: Coordinator lifecycle and approval provenance
 
@@ -149,6 +170,8 @@ Acceptance criteria:
 - Clarify configurable publication exclusions and declared artifact destinations. Do not hard-code Go binary names or reject all generated files.
 - Retain requested deliverables with provenance while excluding incidental tool output from source publication.
 - Verify both source-only changes and intentionally requested build artifacts. Coordinate with wiss-022 and wiss-028.
+
+The [web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) reproduced publication leakage despite private-output guidance and a correct configured build tool: the Agent also ran a workspace build, and a 9,079,875-byte Linux executable was accepted/published alongside source. The final gate receipt included it in the candidate inventory. Explicit publication policy must cover the whole candidate, not just the declared build command. The original native `ttt` was missing before planning; deletion attribution is unknown and should not be assigned to build without evidence.
 
 ## Orchestration and recovery
 
@@ -299,7 +322,7 @@ Remaining work:
 
 ### wiss-034: MCP Kind for reusable tool services
 
-Introduce **Kind: MCP** as a named, reusable tool-service resource. Agents reference the service instead of embedding its connection and deployment details in each Agent's `mcp_servers` configuration. The current [Go example](resources/examples/go_generalist/mcp/README.md) embeds gopls directly; it should demonstrate the new reference model.
+Introduce **Kind: MCP** as a named, reusable tool-service resource. Agents reference the service instead of embedding its connection and deployment details in each Agent's `mcp_servers` configuration. The current [Go example](resources/examples/coder_golang/mcp/README.md) embeds gopls directly; it should demonstrate the new reference model.
 
 Think of the resource as a virtual service boundary, optionally implemented by a gateway/BFF. It describes the MCP interface, configuration, and execution constraints independently of whether Watts, the team, or a third party supplies it. Ownership/provenance may inform policy, but must not require a different Kind or Agent integration. A virtual service does not necessarily require Watts to proxy every call or launch another container.
 
@@ -312,7 +335,7 @@ Acceptance criteria:
 - Reuse ConfigMap/Secret bindings for configuration and credentials. Resolve scoped consumer bindings without storing credential values in rendered packages, logs, or Temporal history.
 - Compile references into resolved execution inputs, recording service/configuration identity and runtime bindings. Pin what Watts controls; do not imply that pinning a remote endpoint freezes its implementation or responses.
 - Fail clearly when a selected backend cannot satisfy a service's requirements. Distinguish connection, authentication, unavailable tools, and platform incompatibility from agent/model errors.
-- Keep native client integration in workload images/adapters rather than introduce Pi-specific code in core. Add templates, values/schema support, documentation, and a Go generalist gopls example, with tests for reuse, bindings, lifecycle, and unsupported platforms.
+- Keep native client integration in workload images/adapters rather than introduce Pi-specific code in core. Add templates, values/schema support, documentation, and a Golang coder gopls example, with tests for reuse, bindings, lifecycle, and unsupported platforms.
 
 This resource describes MCPs **used by workloads**. It is distinct from wiss-010, which exposes Watts operations to coordinator clients. Coordinate with wiss-013, wiss-016, and wiss-027 for managed services and distributed placement. Transport details, gateway behavior, and the initial supported lifecycle scopes need design before implementation.
 
@@ -398,10 +421,10 @@ Acceptance criteria:
 - Evaluate required gates after the Agent finishes against the final candidate. Bind gate evidence to execution identity and workspace content/modes; missing, stale, or failed evidence prevents publication.
 - Return failed checks to the same Agent execution for bounded repair, rerun all gates after edits, and fail explicitly when repair is exhausted. Required checks must not mutate the checked workspace; put build products under private runtime storage.
 - Keep commands and native agent integration out of generic orchestration. Gate receipts are trusted-executor evidence, not cryptographic attestations against a malicious workload image.
-- Remove the standalone Go generalist lint stage; demonstrate build/review command tools, gates, named skills, and MCP selection in source values/templates. Document fixed-tool arguments and current limitations.
+- Remove the standalone Golang coder lint stage; demonstrate build/review command tools, gates, named skills, and MCP selection in source values/templates. Document fixed-tool arguments and current limitations.
 - Test real command-tool exposure, repair, exhaustion, cancellation/timeouts, and stale/missing evidence without hosted model calls. Follow with a fresh full-workflow eval; do not rewrite the earlier pinned execution.
 
-Implementation now includes the typed contract, explicit templates, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Parser/renderer tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. A fresh hosted full-workflow eval remains necessary before closure. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
+Implementation now includes the typed contract, explicit templates, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Parser/renderer tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. The fresh [hosted web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed: build final-candidate gates and review verdict validation passed, including internal correction of story/verdict formatting. It also exposed unrelated command-created publication leakage and false semantic review claims (wiss-031/wiss-047). Final-gate repair/exhaustion remain covered by component/integration tests rather than this hosted run. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
 
 ## Long-term execution and integrations
 

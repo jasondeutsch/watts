@@ -1,0 +1,1 @@
+{"tool":"check-spec","argv":["node","/inputs/resources/team/scripts/check.mjs","spec","/runtime/task"],"working_dir":"/runtime/task","status":"exited","exit_code":0,"stdout":"spec: OK\n","stderr":"","truncated":false,"evidence":"tools/da241e0d-c505-4ee8-a582-dbe17669fe50.json","duration_ms":44}

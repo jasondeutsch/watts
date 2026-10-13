@@ -1,0 +1,11 @@
+{{ range $name, $settings := (get .Values "config_maps" | default dict) }}
+---
+kind: ConfigMap
+schema_version: 1
+name: {{ $name | quote }}
+spec:
+  data:
+{{ range $key, $value := $settings.data }}
+    {{ $key | quote }}: {{ $value | toYaml | nindent 6 }}
+{{ end }}
+{{ end }}

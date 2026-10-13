@@ -1,0 +1,9 @@
+{
+  "artifacts": [
+    {
+      "path": "review/VERDICT.md",
+      "sha256": "f2e31b52f23c8be9a1216f7e8f6c4a18639b8a57de0ca1c750d1b2f481858f62"
+    }
+  ],
+  "outcome": "success"
+}

@@ -9,7 +9,7 @@ Resources for people and agents working with Watts. Start here for guidance on c
 
 ## Examples and templates
 
-- [Go generalist team](examples/go_generalist/README.md): values-driven workflow, builder skill, gopls MCP, and lint script.
+- [Golang coder team](examples/coder_golang/README.md): values-driven workflow, builder skill, gopls MCP, and lint script.
 - [Base resource templates](../resource-templates/README.md): all five Kinds.
 - [Kinds reference](../docs/kinds.md) and [templating guide](../docs/templates.md).
 

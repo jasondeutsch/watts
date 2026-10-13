@@ -14,7 +14,7 @@ From the Watts checkout:
 make build
 docker compose up -d --wait
 docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
-docker build -t watts/go-generalist:0.1.0 registry/go_generalist
+docker build -t watts/coder-golang:0.1.0 registry/coder_golang
 ```
 
 Use `make install` for `/usr/local/bin/wctl`, or
@@ -36,7 +36,7 @@ Without `-d` it remains in the foreground. `wctl stop` stops both; detached logs
 are in `.watts/service.log`. Export credential sources before starting the worker.
 Restart the service after changing its environment or rebuilding Watts.
 
-See the [Go generalist example](../resources/examples/go_generalist/README.md) for
+See the [Golang coder example](../resources/examples/coder_golang/README.md) for
 a fuller coding workflow. A root package descriptor lets you omit `--package`;
 other descriptor filenames are selected explicitly and carry no special meaning.
 

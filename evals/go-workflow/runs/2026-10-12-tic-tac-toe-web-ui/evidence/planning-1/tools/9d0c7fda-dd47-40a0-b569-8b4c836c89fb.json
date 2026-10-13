@@ -1,0 +1,1 @@
+{"tool":"check-plan","argv":["node","/inputs/resources/team/scripts/check.mjs","plan","/runtime/task"],"working_dir":"/runtime/task","status":"exited","exit_code":0,"stdout":"plan: OK\n","stderr":"","truncated":false,"evidence":"tools/9d0c7fda-dd47-40a0-b569-8b4c836c89fb.json","duration_ms":39}

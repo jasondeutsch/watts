@@ -153,7 +153,7 @@ control. Build and review may use the same model.
 
 `mcps` selects names from `mcp_servers`. Each server may declare `command`,
 `args`, `cwd`, `env`, `url`, `headers`, `exposure`, and `description`. A local MCP
-executable belongs in the workload image. See the [Go example MCP guidance](../resources/examples/go_generalist/mcp/README.md).
+executable belongs in the workload image. See the [Go example MCP guidance](../resources/examples/coder_golang/mcp/README.md).
 
 ## Agent tools, gates, and skills
 
@@ -189,7 +189,7 @@ An `mcp.ref` currently selects a name from the Agent's `mcp_servers`. It may exp
 
 All declared gates are required and currently accept command-tool exit codes (default zero, configurable 0–255). The image executor runs them after Agent completion and returns failures for repair inside the same execution. `max_repairs` excludes the initial pass; omission allows two repairs, zero allows none, and the maximum is ten. Each command timeout and the enclosing stage deadline still apply. Gates must leave application files unchanged; a mutation invalidates the suite. Command results and a final workspace-bound gate report are required before Watts accepts publication.
 
-A skill selects one source: an absolute `image_path` outside workload mounts, or a `resource` key declared under `container.resources` plus a relative `path`. Captured resource hashes pin package-owned skills; the pinned image supplies image-owned skills. Source directories must exist when the executor loads them. The adapter exposes them through the runtime's native skill mechanism. These fields supplement the existing descriptive settings; the [Go example](../resources/examples/go_generalist/values.yaml) uses named skills and tools.
+A skill selects one source: an absolute `image_path` outside workload mounts, or a `resource` key declared under `container.resources` plus a relative `path`. Captured resource hashes pin package-owned skills; the pinned image supplies image-owned skills. Source directories must exist when the executor loads them. The adapter exposes them through the runtime's native skill mechanism. These fields supplement the existing descriptive settings; the [Go example](../resources/examples/coder_golang/values.yaml) uses named skills and tools.
 
 ## ConfigMap and Secret
 

@@ -1,0 +1,1 @@
+{"tool":"build","argv":["bash","/inputs/resources/team/scripts/build.sh"],"working_dir":"/workspace","status":"exited","exit_code":0,"stdout":"","stderr":"","truncated":false,"evidence":"tools/e8cb8365-d537-47e8-acef-5243eca1cb73.json","duration_ms":635}

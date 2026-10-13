@@ -34,7 +34,7 @@ From this checkout, build Watts and start local Temporal with Docker Compose:
 make build
 docker compose up -d --wait
 docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
-docker build -t watts/go-generalist:0.1.0 registry/go_generalist
+docker build -t watts/coder-golang:0.1.0 registry/coder_golang
 ```
 
 The build produces `bin/wctl`; `make install` installs it to `/usr/local/bin`. Ensure the installation directory is on your `PATH`. Temporal can also run remotely; see [Temporal setup](docs/temporal.md).
@@ -65,7 +65,7 @@ wctl task run <task>
 wctl task status <task>
 ```
 
-The scaffolded package is a small build/check example. For the full specification, planning, approval, build, and review process with Agent quality gates, use the [Go generalist package](resources/examples/go_generalist/README.md).
+The scaffolded package is a small build/check example. For the full specification, planning, approval, build, and review process with Agent quality gates, use the [Golang coder package](resources/examples/coder_golang/README.md).
 
 When the workflow pauses for human review, inspect the document and approve it:
 
@@ -101,7 +101,7 @@ The [documentation index](docs/README.md) groups guides by task.
 | [Kinds](docs/kinds.md) | Resource definitions, references, shared defaults, and credentials |
 | [Workflow execution](docs/workflows.md) | Routing, results, events, and MCP tools |
 | [Templating](docs/templates.md) | Values-driven packages and rendering |
-| [Go team example](resources/examples/go_generalist/README.md) | Custom workflow, skills, gopls, and lint |
+| [Go team example](resources/examples/coder_golang/README.md) | Custom workflow, skills, gopls, and lint |
 | [Temporal](docs/temporal.md) | Infrastructure, workers, durable execution, and recovery |
 | [Web UI](web/readme.md) | Task monitoring, output, and retry controls |
 | [Agent resources](resources/readme.md) | Coordinator skill and supporting resources |
