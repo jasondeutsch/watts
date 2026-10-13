@@ -6,9 +6,8 @@
 | --- | --- |
 | `setup` | Worker startup/shutdown and manifest-scoped diagnostics commands |
 | `settings` | Configuration display, edits, application and environment settings |
-| `agents` | Interactive Pi, agent discovery, creation, cleanup and session feeds |
 | `tasks` | Task lifecycle, execution, status and human decisions |
-| `templates` | Standalone YAML rendering, resource validation, and terminal/file output |
+| `language` | ACL compile/exec argument and output adapters |
 | `devtools` | Mock model gateway |
 | `arguments` | Flag parsing, argument validation and common execution flags |
 | `terminal` | Streams, prompts, diagnostic output, JSON and execution previews |
@@ -19,4 +18,4 @@ Keep commands focused on translating arguments into application calls and render
 
 Application behavior and live Temporal tests live in `internal/application`; deterministic workflow tests live in `internal/orchestration`. Tests use Testify `assert` for independent expectations and `require` for prerequisites. CLI tests retain end-to-end command coverage without reexporting core types through test aliases.
 
-User-facing behavior is documented in the [runbook](../docs/runbook.md), [Kinds reference](../docs/kinds.md), and [templating guide](../docs/templates.md).
+User-facing behavior is documented in the [runbook](../docs/runbook.md) and [ACL language specification](../docs/language-spec.md).

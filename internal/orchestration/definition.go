@@ -30,6 +30,8 @@ type AgentSettings struct {
 }
 
 type Step struct {
+	DependsOn         []string                       `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	TransitionLimits  map[string]int                 `json:"transition_limits,omitempty" yaml:"transition_limits,omitempty"`
 	MCPServices       map[string]workload.MCPService `json:"mcp_services,omitempty" yaml:"mcp_services,omitempty"`
 	Tools             []workload.Tool                `json:"tools,omitempty" yaml:"tools,omitempty"`
 	Gates             []workload.Gate                `json:"gates,omitempty" yaml:"gates,omitempty"`
@@ -102,7 +104,23 @@ func (definition Definition) Validate() error {
 			return err
 		}
 	}
-	for _, step := range definition.Steps {
+	for index, step := range definition.Steps {
+		for _, dependency := range step.DependsOn {
+			found := false
+			for _, prior := range definition.Steps[:index] {
+				if prior.Name == dependency {
+					found = true
+				}
+			}
+			if !found {
+				return fmt.Errorf("step %s has a forward or unknown data dependency %s", step.Name, dependency)
+			}
+		}
+		for outcome, limit := range step.TransitionLimits {
+			if limit < 1 || step.Transitions[outcome] == "" {
+				return fmt.Errorf("step %s has an invalid transition limit for %s", step.Name, outcome)
+			}
+		}
 		targets := []string{step.Next, step.OnFailure}
 		for outcome, target := range step.Transitions {
 			if !ValidName(outcome) || target == "" {

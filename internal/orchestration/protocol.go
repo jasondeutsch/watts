@@ -48,14 +48,15 @@ type Stage struct {
 	Outcome      string     `json:"outcome,omitempty"`
 }
 type State struct {
-	StartedAt   time.Time     `json:"started_at,omitempty"`
-	FinishedAt  time.Time     `json:"finished_at,omitempty"`
-	ReportError string        `json:"report_error,omitempty"`
-	Status      string        `json:"status"`
-	Current     string        `json:"current,omitempty"`
-	Stages      []Stage       `json:"stages"`
-	Transitions int           `json:"transitions"`
-	History     []StageResult `json:"history,omitempty"`
+	Routes      map[string]int `json:"routes,omitempty"`
+	StartedAt   time.Time      `json:"started_at,omitempty"`
+	FinishedAt  time.Time      `json:"finished_at,omitempty"`
+	ReportError string         `json:"report_error,omitempty"`
+	Status      string         `json:"status"`
+	Current     string         `json:"current,omitempty"`
+	Stages      []Stage        `json:"stages"`
+	Transitions int            `json:"transitions"`
+	History     []StageResult  `json:"history,omitempty"`
 }
 type Decision struct {
 	Step         string     `json:"step"`

@@ -1,0 +1,15 @@
+procedure "plan-review" {
+  inputs = ["SPEC.md", "PLAN.md"]
+
+  execution {
+    type = "approval"
+  }
+}
+
+procedure "spec-review" {
+  inputs = ["SPEC.md"]
+
+  execution {
+    type = "approval"
+  }
+}

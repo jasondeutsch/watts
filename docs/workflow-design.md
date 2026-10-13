@@ -3,9 +3,9 @@
 Watts separates authoring, durable orchestration, generic execution, and image-owned
 agent behavior. The CLI and web UI call the application layer; neither owns a runner.
 
-1. A local package captures descriptors, values, templates, schemas, and assets.
-2. Rendering produces typed Workflow, Agent, Procedure, MCP, ConfigMap, and Secret resources.
-3. Compilation resolves references/defaults into a graph and workload contracts.
+1. ACL packages compose typed variables, local modules, resources, and captured assets.
+2. `wctl compile` resolves references/defaults into a frozen JSON artifact with a graph and workload contracts.
+3. `wctl exec` consumes that artifact without rereading source packages.
 4. Submission freezes image identities, resources, and worker preferences.
 5. Temporal schedules activities and retains routes, waits, attempts, and outcomes.
 6. The worker captures an isolated candidate and launches its image with the common interface.
@@ -14,9 +14,8 @@ agent behavior. The CLI and web UI call the application layer; neither owns a ru
 | Package | Responsibility |
 | --- | --- |
 | `cli`, `web` | User interfaces |
-| `internal/render` | Go templates, Sprig, values merging, and schema validation |
-| `internal/workflowpackage` | Local package capture, composition, and scaffolding |
-| `internal/manifest` | Typed YAML resources, strict validation, and compilation |
+| `internal/workflowlang` | ACL expressions, modules, artifact connections, captured assets, and compilation |
+| `internal/manifest` | Shared typed resource contract validation and resolution |
 | `internal/config` | Local operational preferences |
 | `internal/orchestration` | Serializable graph/result protocol and deterministic Temporal interpreter |
 | `internal/application` | Task lifecycle, submission, activities, evidence, and publication |

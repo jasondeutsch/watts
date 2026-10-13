@@ -1,0 +1,34 @@
+variable "api" {
+  type        = string
+  description = "Provider API protocol understood by the Agent image."
+}
+
+variable "api_key_env" {
+  type        = string
+  description = "Worker environment variable supplying the provider credential."
+}
+
+variable "base_url" {
+  type        = string
+  description = "Provider API endpoint used by the Agent image."
+}
+
+variable "image" {
+  type        = string
+  description = "OCI image containing the Go toolchain and Agent adapter."
+}
+
+variable "model" {
+  type        = string
+  description = "Provider model identifier for the workflow Agents."
+}
+
+variable "provider" {
+  type        = string
+  description = "Provider name understood by the Agent image."
+}
+
+variable "thinking" {
+  type        = string
+  description = "Reasoning setting passed to the Agent adapter."
+}

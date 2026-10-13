@@ -1,0 +1,4 @@
+interface:
+  display_name: "ACL Style"
+  short_description: "Readable Watts packages, modules, and workflow contracts"
+  default_prompt: "Use $acl-style to review and improve the readability of this Watts ACL package while preserving execution behavior."

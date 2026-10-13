@@ -1,6 +1,0 @@
-name: example
-version: 0.1.0
-description: Base examples of the five workflow resource Kinds
-values:
-  - values.yaml
-templates: templates

@@ -25,13 +25,15 @@ type Reference struct {
 }
 
 type Placement struct {
-	Name        string            `yaml:"name"`
-	Use         Reference         `yaml:"use"`
-	Parameters  map[string]any    `yaml:"parameters,omitempty"`
-	Transitions map[string]string `yaml:"transitions,omitempty"`
-	Next        string            `yaml:"next,omitempty"`
-	OnFailure   string            `yaml:"on_failure,omitempty"`
-	Optional    bool              `yaml:"optional,omitempty"`
+	DependsOn        []string          `yaml:"depends_on,omitempty"`
+	TransitionLimits map[string]int    `yaml:"transition_limits,omitempty"`
+	Name             string            `yaml:"name"`
+	Use              Reference         `yaml:"use"`
+	Parameters       map[string]any    `yaml:"parameters,omitempty"`
+	Transitions      map[string]string `yaml:"transitions,omitempty"`
+	Next             string            `yaml:"next,omitempty"`
+	OnFailure        string            `yaml:"on_failure,omitempty"`
+	Optional         bool              `yaml:"optional,omitempty"`
 }
 
 type WorkflowSpec struct {
@@ -270,6 +272,7 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 		if step.Agent != "" {
 			step.Agent = placement.Name
 		}
+		step.DependsOn, step.TransitionLimits = placement.DependsOn, placement.TransitionLimits
 		step.Parameters = placement.Parameters
 		step.Transitions = placement.Transitions
 		step.Next = placement.Next

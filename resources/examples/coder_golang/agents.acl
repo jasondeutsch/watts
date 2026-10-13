@@ -1,0 +1,322 @@
+agent "specification" {
+  identity   = "watts-agent"
+  config_ref = module.provider.outputs.defaults.name
+  prompt     = file("prompts/specification.md")
+  inputs     = ["SPEC.md"]
+  outputs    = ["SPEC.md"]
+  environment = {
+    GOCACHE    = "/runtime/go-cache"
+    GOMODCACHE = "/runtime/go-mod"
+  }
+
+  container {
+    image     = var.image
+    command   = ["node", "/opt/watts/launcher.mjs"]
+    workspace = "read-only"
+    network   = "bridge"
+    memory_mb = 4096
+    cpus      = 2
+    files = {
+      "launcher.json" = jsonencode({ outputs = ["SPEC.md"] })
+    }
+    resources = {
+      team = package.root
+    }
+  }
+
+  skill "watts-guidance" {
+    source {
+      image_path = "/opt/watts/kit/skills"
+    }
+  }
+
+  skill "go-team-guidance" {
+    source {
+      resource = "team"
+      path     = "skills"
+    }
+  }
+
+  tool "check-spec" {
+    description = "Validate the task spec artifact."
+
+    command {
+      argv            = ["node", "/inputs/resources/team/scripts/check.mjs", "spec", "/runtime/task"]
+      working_dir     = "/runtime/task"
+      timeout_seconds = 30
+    }
+  }
+
+  gate "spec-valid" {
+    tool = "check-spec"
+
+    expect {
+      exit_code = 0
+    }
+  }
+}
+
+agent "planning" {
+  identity   = "watts-agent"
+  config_ref = module.provider.outputs.defaults.name
+  prompt     = file("prompts/planning.md")
+  inputs     = ["SPEC.md"]
+  outputs    = ["PLAN.md"]
+  environment = {
+    GOCACHE    = "/runtime/go-cache"
+    GOMODCACHE = "/runtime/go-mod"
+  }
+
+  container {
+    image     = var.image
+    command   = ["node", "/opt/watts/launcher.mjs"]
+    workspace = "read-only"
+    network   = "bridge"
+    memory_mb = 4096
+    cpus      = 2
+    files = {
+      "launcher.json" = jsonencode({ outputs = ["PLAN.md"] })
+    }
+    resources = {
+      team = package.root
+    }
+  }
+
+  skill "watts-guidance" {
+    source {
+      image_path = "/opt/watts/kit/skills"
+    }
+  }
+
+  skill "go-team-guidance" {
+    source {
+      resource = "team"
+      path     = "skills"
+    }
+  }
+
+  tool "check-plan" {
+    description = "Validate the task plan artifact."
+
+    command {
+      argv            = ["node", "/inputs/resources/team/scripts/check.mjs", "plan", "/runtime/task"]
+      working_dir     = "/runtime/task"
+      timeout_seconds = 30
+    }
+  }
+
+  gate "plan-valid" {
+    tool = "check-plan"
+
+    expect {
+      exit_code = 0
+    }
+  }
+}
+
+agent "build" {
+  identity   = "watts-agent"
+  config_ref = module.provider.outputs.defaults.name
+  prompt     = file("prompts/build.md")
+  inputs     = ["SPEC.md", "PLAN.md"]
+  outputs    = ["STORY_LOG.md"]
+  environment = {
+    GOCACHE    = "/runtime/go-cache"
+    GOMODCACHE = "/runtime/go-mod"
+  }
+
+  container {
+    image     = var.image
+    command   = ["node", "/opt/watts/launcher.mjs"]
+    workspace = "write"
+    network   = "bridge"
+    memory_mb = 4096
+    cpus      = 2
+    files = {
+      "launcher.json" = jsonencode({
+        outputs = ["STORY_LOG.md"]
+        ralph   = true
+      })
+      "ralph.md" = file("prompts/build-ralph.md")
+    }
+    resources = {
+      team = package.root
+    }
+  }
+
+  skill "watts-guidance" {
+    source {
+      image_path = "/opt/watts/kit/skills"
+    }
+  }
+
+  skill "go-team-guidance" {
+    source {
+      resource = "team"
+      path     = "skills"
+    }
+  }
+
+  tool "build" {
+    description = "Compile the project into private runtime storage."
+    command     = module.go-tools.outputs.build
+  }
+
+  tool "test" {
+    description = "Run the project Go tests."
+    command     = module.go-tools.outputs.test
+  }
+
+  tool "vet" {
+    description = "Run Go vet static analysis."
+    command     = module.go-tools.outputs.vet
+  }
+
+  tool "lint" {
+    description = "Check the project against team lint policy."
+    command     = module.go-tools.outputs.lint
+  }
+
+  tool "code-intelligence" {
+    mcp {
+      ref      = module.gopls.outputs.service.name
+      exposure = "deferred"
+    }
+  }
+
+  tool "check-stories" {
+    description = "Validate the task stories artifact."
+
+    command {
+      argv            = ["node", "/inputs/resources/team/scripts/check.mjs", "stories", "/runtime/task"]
+      working_dir     = "/runtime/task"
+      timeout_seconds = 30
+    }
+  }
+
+  gate "build-passes" {
+    tool = "build"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate "test-passes" {
+    tool = "test"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate "vet-passes" {
+    tool = "vet"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate "lint-passes" {
+    tool = "lint"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate "stories-complete" {
+    tool = "check-stories"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate_policy {
+    max_repairs = 2
+  }
+}
+
+agent "review" {
+  identity   = "watts-reviewer"
+  config_ref = module.provider.outputs.defaults.name
+  prompt     = file("prompts/review.md")
+  inputs     = ["SPEC.md", "PLAN.md", "STORY_LOG.md"]
+  outputs    = ["review/VERDICT.md"]
+  environment = {
+    GOCACHE    = "/runtime/go-cache"
+    GOMODCACHE = "/runtime/go-mod"
+  }
+
+  container {
+    image     = var.image
+    command   = ["node", "/opt/watts/launcher.mjs"]
+    workspace = "read-only"
+    network   = "bridge"
+    memory_mb = 4096
+    cpus      = 2
+    files = {
+      "launcher.json" = jsonencode({
+        outputs = ["review/VERDICT.md"]
+        ralph   = true
+        verdict = "review/VERDICT.md"
+      })
+      "ralph.md" = file("prompts/review-ralph.md")
+    }
+    resources = {
+      team = package.root
+    }
+  }
+
+  skill "watts-guidance" {
+    source {
+      image_path = "/opt/watts/kit/skills"
+    }
+  }
+
+  skill "go-team-guidance" {
+    source {
+      resource = "team"
+      path     = "skills"
+    }
+  }
+
+  tool "test" {
+    description = "Run the project Go tests."
+    command     = module.go-tools.outputs.test
+  }
+
+  tool "vet" {
+    description = "Run Go vet static analysis."
+    command     = module.go-tools.outputs.vet
+  }
+
+  tool "lint" {
+    description = "Check the project against team lint policy."
+    command     = module.go-tools.outputs.lint
+  }
+
+  tool "verify-verdict" {
+    description = "Validate the review verdict artifact; PASS and REJECT are both valid decisions."
+
+    command {
+      argv            = ["node", "/inputs/resources/team/scripts/check.mjs", "verdict", "/runtime/task"]
+      working_dir     = "/runtime/task"
+      timeout_seconds = 30
+    }
+  }
+
+  gate "verdict-valid" {
+    tool = "verify-verdict"
+
+    expect {
+      exit_code = 0
+    }
+  }
+
+  gate_policy {
+    max_repairs = 0
+  }
+}

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 	"github.com/jasondeutsch/watts/internal/application"
 	"github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/containerengine"
-	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workload"
@@ -73,16 +73,64 @@ func TestCoordinatorCLILifecycle(t *testing.T) {
 	build := procedure("build", `if grep -m 1 '"attempt":' /inputs/input.json | grep -Eq '"attempt":[[:space:]]*1[,}]'; then echo deliberate-build-failure >&2; exit 7; fi; printf 'hello\n' > /workspace/greeting.txt`)
 	review := procedure("review", `test "$(cat /workspace/greeting.txt)" = hello; printf '# Review\n\nGreeting verified.\n' > /outputs/task/REVIEW.md`)
 	review.Outputs = []string{"REVIEW.md"}
-	definition := orchestration.Definition{Templates: map[string]string{"SPEC.md": "# Initial request\n"}, Steps: []orchestration.Step{draft, {Name: "spec-review", Human: true, Inputs: []string{"SPEC.md"}, Transitions: map[string]string{"rejected": "specification", "approved": "build"}}, build, review}}
 	pkg := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(pkg, "templates"), 0700))
-	require.NoError(t, os.WriteFile(filepath.Join(pkg, "watts.yaml"), []byte("name: coordinator-fixture\nversion: 0.1.0\ntemplates: templates\n"), 0600))
-	data, err := manifest.EncodeWorkflow("coordinator-fixture", definition)
-	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(filepath.Join(pkg, "templates", "workflow.yaml.gotmpl"), data, 0600))
+	source := fmt.Sprintf(`package "coordinator-fixture" {version="0.1.0"}
+procedure "specification" {
+ execution {type="container"}
+ inputs=["SPEC.md"]
+ outputs=["SPEC.md"]
+ container {
+  image="ubuntu:latest"
+  command=["sh","-c",%q]
+  workspace="write"
+  result="exit-code"
+ }
+}
+procedure "spec-review" {
+ execution {type="approval"}
+ inputs=["SPEC.md"]
+}
+procedure "build" {
+ execution {type="container"}
+ container {
+  image="ubuntu:latest"
+  command=["sh","-c",%q]
+  workspace="write"
+  result="exit-code"
+ }
+}
+procedure "review" {
+ execution {type="container"}
+ outputs=["REVIEW.md"]
+ container {
+  image="ubuntu:latest"
+  command=["sh","-c",%q]
+  workspace="write"
+  result="exit-code"
+ }
+}
+workflow "coordinator" {
+ templates={"SPEC.md"="# Initial request\n"}
+ stage "specification" {executor=procedure.specification}
+ stage "spec-review" {
+  executor=procedure.spec-review
+  on "rejected" {
+   return_to=stage.specification.name
+   max_iterations=2
+  }
+  on "approved" {return_to=stage.build.name}
+ }
+ stage "build" {executor=procedure.build}
+ stage "review" {executor=procedure.review}
+}
+`, draft.Container.Command[2], build.Container.Command[2], review.Container.Command[2])
+	require.NoError(t, os.WriteFile(filepath.Join(pkg, "watts.acl"), []byte(source), 0600))
+	artifact := filepath.Join(pkg, "compiled.json")
+	compileCode, _, compileErrors := command(t, "compile", pkg, "-o", artifact)
+	require.Zero(t, compileCode, compileErrors)
 	create := func(slug string) string {
 		t.Helper()
-		code, out, errOut := command(t, "task", "new", slug, "--package", filepath.Join(pkg, "watts.yaml"))
+		code, out, errOut := command(t, "task", "new", slug, "--compiled", artifact)
 		require.Zero(t, code, errOut)
 		fields := strings.Fields(out)
 		require.GreaterOrEqual(t, len(fields), 2)

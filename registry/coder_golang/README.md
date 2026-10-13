@@ -2,7 +2,7 @@
 
 An example team image extending the Pi/Ralph workload with Go 1.27.0,
 gopls v0.23.0, and golangci-lint v2.14.0. Checks and skills remain package
-assets configured in the example's values file.
+assets configured in the example's ACL and variable file.
 
 ```sh
 docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph

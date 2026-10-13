@@ -2,7 +2,7 @@
 
 A user can coordinate Watts through an agent such as Claude Code or another application with shell and file access. Watts owns workflow state, execution, checks, routing, and artifact publication. The supervising agent drafts the initial request, communicates progress, and submits authorized actions. It does not replace workflow stages or require a particular model.
 
-Give the agent the [coordinator skill](../resources/skills/watts-coordinator/SKILL.md), the exact application project path, and the selected package descriptor. The descriptor can live outside the application project. Do not assume the project contains the Watts checkout. Ticket fetching is outside Watts.
+Give the agent the [coordinator skill](../resources/skills/watts-coordinator/SKILL.md), the exact application project path, and the selected ACL package or compiled artifact. The source and artifact can live outside the application project. Do not assume the project contains the Watts checkout. Ticket fetching is outside Watts.
 
 ## Current interface
 
@@ -11,14 +11,15 @@ The CLI is available today; MCP and bounded wait-for-change remain proposed. No 
 From the verified application directory:
 
 ```sh
-wctl task new cancellation-fix --package /path/to/package/watts.yaml
+wctl compile /path/to/package -o /private/path/coding.json
+wctl task new cancellation-fix --compiled /private/path/coding.json
 # Use the returned task path; draft its SPEC.md from the user's request.
-wctl task run <task> --dry-run
-wctl task run <task>
+wctl exec <task> --dry-run
+wctl exec <task>
 wctl task status <task> --json
 ```
 
-Customize source values/templates before task creation. The task's `workflow.yaml` is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according to the selected workflow; the coordinator does not implement the application inside the task directory.
+Customize ACL/modules and variable files, then compile before task creation. The task's `workflow.json` is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according to the selected workflow; the coordinator does not implement the application inside the task directory.
 
 A successful submission returns before completion. Each JSON status includes `task`, `workflow_id`, `run_id`, and `state`, with current stage, attempts, errors, artifact hashes, and history. Read feedback from `state.history`. Failure states such as `waiting_retry` also print valid JSON and return nonzero; connectivity/query errors may provide no JSON. Do not confuse those cases.
 
@@ -54,7 +55,7 @@ Status and history retain the acting coordinator under `approved_by` and the dec
 
 ## Recovery and completion
 
-A workflow waiting for retry is still running. Inspect the failed attempt, address an authorized cause, then use `wctl task run <task>`. A retry uses pinned configuration/images/resources, retains earlier evidence, and creates a new attempt at the current stage. Do not repeatedly retry an unchanged failure or interpret retry as rollback. Exceeding the attempt limit needs explicit authorization through `--ignore-attempt-limit`.
+A workflow waiting for retry is still running. Inspect the failed attempt, address an authorized cause, then use `wctl exec <task>`. A retry uses pinned configuration/images/resources, retains earlier evidence, and creates a new attempt at the current stage. Do not repeatedly retry an unchanged failure or interpret retry as rollback. Exceeding the attempt limit needs explicit authorization through `--ignore-attempt-limit`.
 
 A terminal failed, cancelled, terminated, or timed-out execution cannot be resumed by that command. Discuss a new task to adopt changed configuration or recover an ended execution. If cancellation is requested, use `wctl task cancel <task>` and confirm status.
 

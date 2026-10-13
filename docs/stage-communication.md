@@ -1,16 +1,16 @@
 # Workflow stage communication
 
-Status: proposal for portable execution and publication. Named [Kinds](kinds.md) and local resource resolution exist today; the packages, input bindings, workspace revisions, and distributed lifecycle below remain proposed.
+Status: proposal for portable execution and publication. Named [ACL declarations](language-spec.md) and local resource resolution exist today; the packages, input bindings, workspace revisions, and distributed lifecycle below remain proposed.
 
 ## Purpose
 
-In this proposal, “stage” means a Workflow step executing a referenced Agent or Procedure; it is not an additional Kind. A container workload performs that work using its declared image and command; Pi/Ralph is one image implementation. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
+In this proposal, “stage” means a Workflow step executing a referenced Agent or Procedure; it is not an additional declaration. A container workload performs that work using its declared image and command; Pi/Ralph is one image implementation. Temporal and Watts own scheduling, recorded results, routing, retries, and approvals.
 
 Stages communicate through engine-delivered results and referenced artifacts. They do not launch or call another stage directly. The interface should remain consistent across executor implementations.
 
 ## Isolated workload primitive
 
-The proposed basic execution primitive is an **isolated workload**, analogous to the role of a Pod in Kubernetes. This is an execution abstraction, not a newly implemented Kind or a requirement to run Kubernetes. Agent and executable Procedure attempts specialize the same environment and lifecycle contract.
+The proposed basic execution primitive is an **isolated workload**, analogous to the role of a Pod in Kubernetes. This is an execution abstraction, not a newly implemented language construct or a requirement to run Kubernetes. Agent and executable Procedure attempts specialize the same environment and lifecycle contract.
 
 | Resource | Role in the proposed execution model |
 | --- | --- |
@@ -30,9 +30,9 @@ Authored packages, durable task evidence, and worker working files have separate
 
 ## Authoring, compilation, and execution
 
-Package values and YAML templates are the authoring inputs; a task's `workflow.yaml` is their resolved snapshot. Compilation combines the resolved resources with execution preferences and required resources to produce an immutable, resolved execution plan. Applying the compiled plan persists its identity and starts execution through Temporal.
+ACL packages, variables, modules, and declared assets are authoring inputs. `wctl compile` produces a self-contained JSON execution artifact without contacting runtime services. `wctl exec` creates a task whose `workflow.json` snapshots that definition, then pins image identities and worker preferences at submission and starts execution through Temporal. There is no apply step.
 
-Compilation validates stage contracts and connections, resolves executor settings and MCP definitions, and packages instructions, skills, scripts, and configuration. The source workflow remains available for editing and provenance, but workers do not reread it during that execution. Retries use the same compiled plan; configuration changes require a new compilation and application.
+Compilation validates stage contracts and connections, resolves executor settings and MCP definitions, and packages instructions, skills, scripts, and configuration. The source workflow remains available for editing and provenance, but workers do not reread it during that execution. Retries use the same compiled plan; configuration changes require a new compilation and execution.
 
 The conceptual output is:
 
@@ -181,7 +181,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 | [wiss-014](../issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
 | [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
 | [wiss-003](../issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](../issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
-| [wiss-013](../issues.md#wiss-013-containerized-workloads-across-kinds) | Isolated workloads establish the common execution primitive and container/sandbox lifecycle |
+| [wiss-013](../issues.md#wiss-013-containerized-workloads) | Isolated workloads establish the common execution primitive and container/sandbox lifecycle |
 | [wiss-028](../issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime) | Package authoring, durable task evidence, and worker runtime have separate storage and retention |
 | [wiss-011](../issues.md#wiss-011-evolving-workflow-report) | Recorded results and evidence supply verification, timing, and usage reporting |
 

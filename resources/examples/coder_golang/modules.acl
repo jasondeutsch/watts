@@ -1,0 +1,22 @@
+module "provider" {
+  source  = "./modules/provider"
+  version = "0.1.0"
+  variables = {
+    provider    = var.provider
+    model       = var.model
+    base_url    = var.base_url
+    api         = var.api
+    thinking    = var.thinking
+    api_key_env = var.api_key_env
+  }
+}
+
+module "gopls" {
+  source  = "./modules/gopls"
+  version = "0.1.0"
+}
+
+module "go-tools" {
+  source  = "./modules/go-tools"
+  version = "0.1.0"
+}

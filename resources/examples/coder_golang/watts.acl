@@ -1,0 +1,6 @@
+package "coder-golang" {
+  version     = "0.1.0"
+  description = "Go business applications and web services"
+  var_files   = ["values.wvars"]
+  assets      = ["skills", "scripts", "prompts", ".golangci.yml"]
+}

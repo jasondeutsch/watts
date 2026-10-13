@@ -12,14 +12,14 @@ The current interface is the CLI. MCP and wait-for-change are proposed, not avai
 ## Select the project and package
 
 - Verify the user's intended application directory with `pwd` and a listing. Set that absolute directory explicitly for every command; a previous `cd` may not persist. If needed, use `cd '/verified/project' && wctl ...` in the same invocation.
-- The application project and package/source checkout can be different locations. Select an external descriptor with `--package /verified/package/watts.yaml`. Do not infer the project from this skill's location or rely on ancestor discovery.
+- The application project and package/source checkout can be different locations. Compile an external ACL package with `wctl compile /verified/package -o /private/path/coding.json`, or use a provided compiled artifact. Do not infer the project from this skill's location or rely on ancestor discovery.
 - Resolve documentation links relative to this skill. After a missing-file error, list the nearest known existing directory instead of guessing alternative paths. There is no required `resources/docs` directory.
-- Configure agents, models, tools, skills, and workflow policy in source values/templates **before task creation**. `watts.yaml` describes the package; task `workflow.yaml` is resolved output. Do not edit rendered templates or pinned records to change policy.
+- Configure agents, models, tools, skills, and workflow policy in ACL/modules and variable files, then compile **before task creation**. Task `workflow.json` is a resolved execution contract. Do not edit compiled artifacts or pinned records to change policy.
 
 ## Create the request
 
-1. If the user names an existing task, inspect it. Otherwise run `wctl task new <slug> --package <descriptor>` from the application directory, retain the exact returned task path, and verify it exists beneath the configured task directory before writing.
-2. Read the entire task `workflow.yaml` bundle, following Workflow `use` references to Agent/Procedure resources. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Golang coder or fixed names.
+1. If the user names an existing task, inspect it. Otherwise run `wctl task new <slug> --compiled <artifact.json>` from the application directory, retain the exact returned task path, and verify it exists beneath the configured task directory before writing.
+2. Read the entire task `workflow.json` execution definition. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Golang coder or fixed names.
 3. Preserve existing human content in `SPEC.md`. Draft the requested behavior, scope, constraints, observable acceptance criteria, and unresolved questions using project evidence. A rough request is sufficient; ask only for missing intent. A verified team spec skill or [bundled spec guidance](../../../registry/pi_ralph/kit/skills/spec-template/SKILL.md) may help when available.
 4. SPEC.md describes what and why; PLAN.md describes approach and sequence. Do not create REQUIREMENTS.md, implement the application yourself, or bypass workflow-owned refinement/planning. Application changes belong in the project root; task directories hold documents and evidence.
 
@@ -27,11 +27,11 @@ If the user only requested a draft, stop after drafting. A workflow configuratio
 
 ## Submit and follow progress
 
-Use `wctl doctor --package <descriptor>` for container/image/secret checks; it does not establish Temporal or worker health. A configured Temporal server and a project worker are needed. `wctl start -d` runs the worker/UI; start it only within the user's authorization and avoid duplicate workers. Export required credential sources before starting; a detached worker does not inherit later shell changes.
+Use `wctl doctor --compiled <artifact.json>` for container/image/secret checks; it does not establish Temporal or worker health. A configured Temporal server and a project worker are needed. `wctl start -d` runs the worker/UI; start it only within the user's authorization and avoid duplicate workers. Export required credential sources before starting; a detached worker does not inherit later shell changes.
 
 ```sh
-wctl task run <task> --dry-run
-wctl task run <task>
+wctl exec <task> --dry-run
+wctl exec <task>
 wctl task status <task> --json
 ```
 
@@ -60,9 +60,9 @@ Delegated decisions are bound to the reviewed execution, placement, attempt, and
 
 - `not_started`: submit if authorized. `running`: monitor; do not create another execution.
 - `waiting_approval`: obtain or apply a covered delegated decision. `waiting_event`: report the required integration; the current CLI cannot deliver arbitrary events.
-- `waiting_retry`: diagnose the error, fix only an authorized cause, explain the side effects of retry, and run `wctl task run <task>`. Do not blindly repeat an unchanged failure. Use `--ignore-attempt-limit` only with explicit authorization after inspecting exhaustion.
-- Retry uses the pinned definition, images, resources, and settings. It creates another attempt at the current stage, not an arbitrary stage jump or rollback. Updating a tag or source template does not change that execution.
-- `completed`: report acceptance evidence, published work, checks, rework, available usage, and remaining limitations. `failed`, `cancelled`/`canceled`, `terminated`, and `timed_out`/`timedout`: the execution ended; discuss a new task rather than silently creating one.
+- `waiting_retry`: diagnose the error, fix only an authorized cause, explain the side effects of retry, and run `wctl exec <task>`. Do not blindly repeat an unchanged failure. Use `--ignore-attempt-limit` only with explicit authorization after inspecting exhaustion.
+- Retry uses the pinned definition, images, resources, and settings. It creates another attempt at the current stage, not an arbitrary stage jump or rollback. Updating a tag or ACL source does not change that execution.
+- `completed`: inspect `report.html`, report acceptance evidence, published work, checks, rework, available usage, and remaining limitations. `failed`, `cancelled`/`canceled`, `terminated`, and `timed_out`/`timedout`: the execution ended; discuss a new task rather than silently creating one.
 - On reconnect, recover the task path and execution IDs from task bindings/status, then read history and current evidence. Match identity before acting and reconstruct pending decisions from Watts, not old conversation notes. No event cursor/catch-up API exists yet.
 - If asked to cancel, run `wctl task cancel <task>` and confirm the resulting state. Stop observing separately from canceling execution; a disconnected coordinator does not cancel Watts.
 

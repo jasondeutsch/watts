@@ -150,6 +150,20 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 			stage.Status = "completed"
 			logger.Info("Stage completed", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "elapsed", workflow.Now(ctx).Sub(started).String(), "outcome", result.Outcome)
 		}
+		if limit := step.TransitionLimits[result.Outcome]; limit > 0 {
+			route := step.Name + "/" + result.Outcome
+			if execution.state.Routes == nil {
+				execution.state.Routes = map[string]int{}
+			}
+			if execution.state.Routes[route] >= limit {
+				message := "workflow feedback limit reached: " + route
+				stage.Status, stage.LastError = "failed", message
+				execution.state.History[len(execution.state.History)-1].Error = message
+				execution.state.Status = "failed"
+				return execution.state, errors.New(message)
+			}
+			execution.state.Routes[route]++
+		}
 		logger.Info("Workflow routing", "task", execution.input.Task, "stage", step.Name, "attempt", stage.Attempts, "outcome", result.Outcome, "next_stage", target)
 		if target == "end" {
 			// A failure transition to end is a failure, not a passing completion.

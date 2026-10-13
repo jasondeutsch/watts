@@ -5,13 +5,13 @@ Resources for people and agents working with Watts. Start here for guidance on c
 ## Skills
 
 - [Watts coordinator](skills/watts-coordinator/SKILL.md): create tasks from a user request, prepare a specification, start execution, monitor progress, diagnose failures, and bring decisions to the human.
+- [ACL style](skills/acl-style/SKILL.md): author and review readable ACL packages, modules, and workflow contracts.
 - [Skill setup](skills/readme.md): make the coordinator skill available to your agent application or have the agent read it directly.
 
-## Examples and templates
+## Packages and modules
 
-- [Golang coder team](examples/coder_golang/README.md): values-driven workflow, builder skill, gopls MCP, and lint script.
-- [Base resource templates](../resource-templates/README.md): all six Kinds.
-- [Kinds reference](../docs/kinds.md) and [templating guide](../docs/templates.md).
+- [Golang coder team](examples/coder_golang/README.md): ACL workflow with typed inputs, builder skill, gopls MCP, and lint script.
+- [ACL language specification](../docs/language-spec.md).
 
 ## References
 

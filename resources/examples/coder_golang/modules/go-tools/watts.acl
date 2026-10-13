@@ -1,0 +1,49 @@
+package "go-tools" {
+  version = "0.1.0"
+}
+
+variable "go" {
+  type        = string
+  description = "Go executable available inside the consuming Agent image."
+  default     = "/usr/local/go/bin/go"
+}
+
+variable "timeout_seconds" {
+  type        = number
+  description = "Command timeout in seconds for the shared Go tools."
+  default     = 300
+}
+
+# These are command capabilities for an Agent image, not separate workflow jobs.
+# Consumers provide their team's scripts at the `team` resource mount.
+output "build" {
+  value = {
+    argv            = ["bash", "/inputs/resources/team/scripts/build.sh"]
+    working_dir     = "/workspace"
+    timeout_seconds = var.timeout_seconds
+  }
+}
+
+output "test" {
+  value = {
+    argv            = [var.go, "test", "./..."]
+    working_dir     = "/workspace"
+    timeout_seconds = var.timeout_seconds
+  }
+}
+
+output "vet" {
+  value = {
+    argv            = [var.go, "vet", "./..."]
+    working_dir     = "/workspace"
+    timeout_seconds = var.timeout_seconds
+  }
+}
+
+output "lint" {
+  value = {
+    argv            = ["bash", "/inputs/resources/team/scripts/lint.sh"]
+    working_dir     = "/workspace"
+    timeout_seconds = var.timeout_seconds
+  }
+}

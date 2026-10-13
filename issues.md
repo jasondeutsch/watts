@@ -32,7 +32,7 @@ Long diagnostics can appear repeatedly in the workflow failure and attempt outpu
 
 - Lead with stage, attempt, concise cause, and available action; preserve readable line breaks.
 - Keep full diagnostics accessible through expandable UI details and retained evidence. Preserve nonzero CLI failure status and structured error fields.
-- Explain when retry uses the original pinned configuration/image rather than newly edited templates. Coordinate with wiss-003 and wiss-012.
+- Explain when retry uses the original pinned configuration/image rather than newly edited ACL. Coordinate with wiss-003 and wiss-012.
 
 ### wiss-038: Identify stale locally managed workers
 
@@ -91,7 +91,7 @@ Teams need a practical starting point for supplying architecture notes, conventi
 
 - Extend the Golang coder example with a small versioned context resource and named skill that explicitly tells the Agent how to use it.
 - Demonstrate captured/pinned inputs and keep context subordinate to task scope, approvals, and verification results.
-- Start through existing resources and skills, without adding a memory service or Kind. This is the initial example slice of wiss-033.
+- Start through existing resources and skills, without adding a memory service or declaration. This is the initial example slice of wiss-033.
 
 ### wiss-044: Reconcile issue status with implemented foundations
 
@@ -249,7 +249,7 @@ Local execution pins definitions, images, and resources, but requires worker-loc
 
 Acceptance criteria:
 
-- Orchestrate immutable plans and integrity-checked package/artifact references without rereading authoring templates.
+- Orchestrate immutable plans and integrity-checked package/artifact references without rereading authoring files.
 - Materialize identical inputs on another node without originating-project absolute paths. Keep large content outside Temporal history.
 - Publish a candidate revision before downstream consumption; review and approvals bind to that exact revision.
 - Implement backend launch, observation, cancellation, and recovery over the common contract. A Kubernetes adapter would manage Jobs; Temporal would retain routing and waits.
@@ -288,7 +288,7 @@ Acceptance criteria:
 - Handle repeated mutation requests after a lost response without creating duplicate executions or decisions; coordinate with wiss-022. Reject stale decisions and preserve the authorization boundary in wiss-004 and wiss-012.
 - Keep responses bounded with pagination or evidence references for large output. Return structured failures even when a tool call cannot complete; retain accessible local evidence where possible during infrastructure outages.
 - Test the same application lifecycle through MCP and CLI, plus timeout, reconnect, missed/duplicate events, stale decisions, and unavailable infrastructure. Include an external-agent scenario under wiss-004; do not expose every internal operation.
-- Document client setup and capability limits, including hosts that cannot wait or deliver background updates. This exposes Watts to coordinators; workload tool services remain the separate MCP Kind under wiss-034.
+- Document client setup and capability limits, including hosts that cannot wait or deliver background updates. This exposes Watts to coordinators; workload tool services remain the separate MCP declaration under wiss-034.
 
 ### wiss-011: Evolving workflow report
 
@@ -318,18 +318,18 @@ Workers currently serve one project and depend on local storage. Define a worker
 
 ### wiss-016: Typed workflow resources and compiled execution packages
 
-Workflow, Procedure, Agent, MCP, ConfigMap, and Secret parsing/rendering are implemented, as are reference/default resolution, captured assets, and pinned local execution definitions. Agent/tool behavior remains image-owned. See [Kinds](docs/kinds.md).
+ACL workflow, procedure, agent, mcp, configmap, and secret declarations and compilation are implemented, as are reference/default resolution, captured assets, and pinned local execution definitions. Agent/tool behavior remains image-owned. See [ACL declarations](docs/language-spec.md).
 
 Remaining work:
 
-- Package resolved instructions, skills, scripts, configuration, runtime identities, and integrity metadata for portable execution.
+- Compiled JSON now carries the resolved local definition, captured assets, module provenance, and integrity fingerprint. Extend this into portable workload packages with runtime identities and remote artifact delivery.
 - Define explicit upstream artifact/revision bindings and publication semantics; coordinate with wiss-027 rather than duplicate its transport work.
 - Extend configuration and secret sources only for concrete needs, including protected files or managed stores, scoped delivery, and rotation/revocation. Keep secret values out of packages/history.
-- Define compile/apply interfaces and schema/runtime compatibility. Resource definitions remain separate from execution records; continuous reconciliation is not implied.
+- Extend the implemented compile/exec interfaces and schema/runtime compatibility. Resource definitions remain separate from execution records; continuous reconciliation is not implied.
 
 ### wiss-034: MCP service lifecycle and deployment extensions
 
-**Implemented foundation:** Kind MCP defines a reusable connection, discovery policy, workload requirements, ConfigMap defaults, and Secret bindings. Agents select it through named tools with per-consumer exposure/allowlists. Selected services resolve into pinned inputs with scoped launch bindings; gopls is a separate MCP resource in Golang coder. The image adapter uses Pi's existing MCP library. Parser/renderer/round-trip tests and native gopls/HTTP integration cover reuse, credentials, tool restrictions, readiness, authentication errors, deadlines, cancellation, and process cleanup without model calls.
+**Implemented foundation:** The `mcp` declaration defines a reusable connection, discovery policy, workload requirements, ConfigMap defaults, and Secret bindings. Agents select it through named tools with per-consumer exposure/allowlists. Selected services resolve into pinned inputs with scoped launch bindings; gopls is a separate MCP resource in Golang coder. The image adapter uses Pi's existing MCP library. Parser/renderer/round-trip tests and native gopls/HTTP integration cover reuse, credentials, tool restrictions, readiness, authentication errors, deadlines, cancellation, and process cleanup without model calls.
 
 Current scopes are attempt-local stdio inside the consuming Agent image and externally managed streamable HTTP. Workload OS/architecture, workspace, and network requirements are checked; unsupported transport/lifecycle values are rejected. Tool exposure is client policy within a trusted image, not independent service isolation.
 
@@ -354,13 +354,13 @@ project/
   main.go
   go.mod
   watts/
-    watts.yaml
-    values.yaml       # optional
-    templates/
+    watts.acl
+    values.wvars      # optional
+    modules/
     resources/        # authored skills, scripts, and assets
 ```
 
-A package may define multiple named Workflows and supporting resources; no new grouping Kind or filename semantics are needed. The current runnable-bundle loader selects one Workflow, so explicit/default multi-workflow selection remains work to implement. Preserve external package composition and the separate application root.
+A package may define multiple named Workflows and supporting resources; no new grouping declaration or filename semantics are needed. ACL package entrypoints select one Workflow for each compiled artifact; resource modules can be stitched into independent workflows. Preserve external package composition and the separate application root.
 
 Worker settings are proposed at `~/.watts/config/settings.json`; current operational preferences remain `.watts/settings.yaml`. Durable task/evidence storage is not yet selected. These are design targets, not implemented setup instructions; see [layout proposal](docs/package-runtime-layout.md).
 
@@ -407,7 +407,7 @@ Document readiness and human approval are different. A ready SPEC.md advances on
 
 ### wiss-032: Agent tools, skills, and formal quality gates
 
-Extend the Agent Kind with reusable callable capabilities and explicit completion policy. A tool is something an Agent can call; a gate is a condition that must pass before its result is accepted. A command tool may serve both roles. Skills provide instructions/material, not permission to invoke tools.
+Extend the Agent declaration with reusable callable capabilities and explicit completion policy. A tool is something an Agent can call; a gate is a condition that must pass before its result is accepted. A command tool may serve both roles. Skills provide instructions/material, not permission to invoke tools.
 
 The Go example's separate lint stage duplicated the builder's responsibility and added another environment/handoff. Lint and tests belong in the build Agent's configured toolset and gates, with failures returned to that Agent for repair.
 
@@ -421,18 +421,18 @@ Manifest contract:
 Acceptance criteria:
 
 - Parse, validate, compile, render, and round-trip these fields, rejecting unknown/duplicate references, mixed implementations, escaped paths, unsupported gates, and unbounded limits.
-- Expose command tools through image-owned agent adapters, returning structured status, stdout/stderr, timeout/cancellation information, and retained call evidence. MCP tool references select existing configured servers; the new MCP Kind is separate work under wiss-034.
+- Expose command tools through image-owned agent adapters, returning structured status, stdout/stderr, timeout/cancellation information, and retained call evidence. MCP tool references select existing configured servers; the MCP declaration is separate work under wiss-034.
 - Evaluate required gates after the Agent finishes against the final candidate. Bind gate evidence to execution identity and workspace content/modes; missing, stale, or failed evidence prevents publication.
 - Return failed checks to the same Agent execution for bounded repair, rerun all gates after edits, and fail explicitly when repair is exhausted. Required checks must not mutate the checked workspace; put build products under private runtime storage.
 - Keep commands and native agent integration out of generic orchestration. Gate receipts are trusted-executor evidence, not cryptographic attestations against a malicious workload image.
-- Remove the standalone Golang coder lint stage; demonstrate build/review command tools, gates, named skills, and MCP selection in source values/templates. Document fixed-tool arguments and current limitations.
+- Remove the standalone Golang coder lint stage; demonstrate build/review command tools, gates, named skills, and MCP selection in source ACL/modules. Document fixed-tool arguments and current limitations.
 - Test real command-tool exposure, repair, exhaustion, cancellation/timeouts, and stale/missing evidence without hosted model calls. Follow with a fresh full-workflow eval; do not rewrite the earlier pinned execution.
 
-Implementation now includes the typed contract, explicit templates, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Parser/renderer tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. The fresh [hosted web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed: build final-candidate gates and review verdict validation passed, including internal correction of story/verdict formatting. It also exposed unrelated command-created publication leakage and false semantic review claims (wiss-031/wiss-047). Final-gate repair/exhaustion remain covered by component/integration tests rather than this hosted run. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
+Implementation now includes the typed contract, ACL resources, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Compiler/resource tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. The fresh [hosted web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed: build final-candidate gates and review verdict validation passed, including internal correction of story/verdict formatting. It also exposed unrelated command-created publication leakage and false semantic review claims (wiss-031/wiss-047). Final-gate repair/exhaustion remain covered by component/integration tests rather than this hosted run. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
 
 ## Long-term execution and integrations
 
-### wiss-013: Containerized workloads across Kinds
+### wiss-013: Containerized workloads
 
 The [local container contract](docs/container-workloads.md) is implemented: Agent and executable Procedure attempts share OCI execution, scoped mounts/secrets, private state, and publication. Workflow owns orchestration; ConfigMap/Secret provide inputs. Approval/event waits do not require idle containers.
 
@@ -480,7 +480,7 @@ Preserve useful knowledge as explicit, inspectable inputs while keeping executio
 
 Options to evaluate:
 
-- **Versioned project context:** repository/package-owned architecture notes, decisions, conventions, and known environment constraints mounted as declared resources. This is the simplest starting point and works through existing manifests without a new Kind or service.
+- **Versioned project context:** repository/package-owned architecture notes, decisions, conventions, and known environment constraints mounted as declared resources. This is the simplest starting point and works through existing manifests without a new declaration or service.
 - **Task handover artifacts:** agents publish concise decisions, failed approaches, remaining questions, and evidence references for later attempts/stages. Summarization may be a configured Agent; deterministic Procedures can validate its structure. Keep the summary separate from the raw evidence it cites.
 - **Curated team memory:** promote verified lessons from completed tasks into reviewed/versioned project or team guidance. Require an explicit promotion policy so a transient failure or model conjecture does not become permanent instruction.
 - **External retrieval:** a team-managed store or MCP may retrieve relevant knowledge with project/role access controls. Record the retrieved content and version used by each attempt; a mutable query result alone is not reproducible context. Evaluate this only if file/artifact-based context proves insufficient.

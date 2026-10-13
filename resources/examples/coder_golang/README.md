@@ -1,80 +1,105 @@
-# Golang coder workflow package
+# Golang coder package
 
-A configurable example for Go business applications and web services. The templates define resource envelopes, fields, and wiring, populated by configurable values. They contain no agent, model, MCP, check, or lint policy.
+A team workflow for Go business applications and web services, authored in ACL.
+It demonstrates generic container Agents, human approvals, required quality
+gates, skills, and reusable provider/MCP modules. Source follows the
+[ACL style skill](../../skills/acl-style/SKILL.md).
 
-## Configuration source
+| File | Purpose |
+| --- | --- |
+| `watts.acl` | Package identity, assets, and declared variable files |
+| `variables.acl` | Documented typed package inputs |
+| `modules.acl` | Provider, Go tools, and MCP module composition |
+| `values.wvars` | Image, provider, model, API, reasoning, and credential-source defaults |
+| `agents.acl` | Specification, planning, build, and review Agent contracts |
+| `procedures.acl` | Human spec and plan approval Procedures |
+| `workflow.acl` | Stage order, named artifact connections, and bounded routes |
+| `modules/provider/` | Reusable provider defaults and environment-backed Secret |
+| `modules/gopls/` | Reusable gopls MCP service |
+| `modules/go-tools/` | Command capabilities shared by build and review |
+| `prompts/` | Agent instructions, private Ralph configuration, and task scaffolds |
+| `skills/`, `scripts/`, `.golangci.yml` | Team guidance and quality checks captured in the artifact |
 
-[values.yaml](values.yaml) defines the complete example policy:
+The default image is `watts/coder-golang:0.1.0`; model/provider settings come from
+`values.wvars`. Read and adjust that file before using the example. Credentials
+remain in the worker environment. The compiled artifact records source bindings,
+not key values.
 
-- Workflow order, routes, approval gates, and task document scaffolding.
-- Agent identities, prompts, container image selection, and private Ralph configuration.
-- Model, provider, reasoning settings, and environment-backed credential references.
-- Agent checks, skills, and the reusable gopls MCP resource and builder selection.
-- Callable build/test/vet/lint tools and formal gates inside the build Agent; approval waits remain Procedures.
+## Compile and run
 
-[templates/](templates/) explicitly renders Workflow placements and routes, Agent container and descriptive tool configuration, Procedure execution, MCP connection/lifecycle/tool policy, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution uses the common container contract. The values select the Pi/Ralph image; another image can implement the same interface.
-
-[watts.yaml](watts.yaml) identifies the package, selects its values and templates, and declares scripts, skills, and lint configuration as assets. It contains no agent or tool selection. Keep credential values outside the package.
-
-## Use from another project
-
-For a project next to the Watts checkout, create this project-root `watts.yaml`:
-
-```yaml
-name: my-go-team
-version: 0.1.0
-extends:
-  path: ../watts/resources/examples/coder_golang/watts.yaml
-values:
-  - values.yaml
-```
-
-Create a local `values.yaml` with team overrides:
-
-```yaml
-config_maps:
-  agent-defaults:
-    data:
-      thinking: low
-agents:
-  build:
-    identity: my-team-builder
-```
-
-Render for inspection, then create a task:
+From the Watts checkout, build its selected images as described in
+[the runbook](../../../docs/runbook.md). Compilation is independent of runtime:
 
 ```sh
-wctl template ./watts.yaml
-wctl task new hello-world
+wctl compile ./resources/examples/coder_golang -o /tmp/coding.json
+wctl c ./resources/examples/coder_golang \
+  -var 'model="your-provider/model"' -o /tmp/coding.json
 ```
 
-Base values merge with team overrides; later scalars and lists replace earlier ones, while maps merge recursively. Changing workflow steps therefore replaces the step list. Use an empty mapping in a standalone package to omit a resource Kind; an empty override mapping does not delete inherited resources. Adding or replacing inherited resources through additional templates follows the explicit replacement rules in the [template reference](../../../docs/templates.md).
-
-Task creation resolves templates and captures declared assets. Edit source values or templates, never generated task manifests. Changes apply to newly created tasks; existing tasks retain their resolved definitions. No copied example directory, manually rendered default workflow, or separate project MCP registration is needed.
-
-## Default example
-
-See the [workflow diagram](workflow-diagram.md) for stage order, approval/rework routes, and Agent completion gates.
-
-**Specification → human spec review → planning → human plan review → build → agent review**
-
-The current values select Pi, Ralph for build/review, OpenRouter, a builder skill, gopls MCP, and golangci-lint v2. These are example choices, not template requirements. Specification and planning use required document gates with bounded repair. Build runs its declared build/test/vet/lint and story-completion gates before publication, with up to two gate repair passes. Review has read-only test/vet/lint tools and a required verdict-format gate with no automatic repair; failing application checks can still produce a valid REJECT verdict and return work to build. Review rework returns to build, which reruns its gates. There is no standalone lint stage. Export `OPENROUTER_API_KEY` before starting the worker. The default lint script expects a Go module at the project root.
-
-Build the example images from the Watts checkout before starting the worker:
+From an application project such as `../test`:
 
 ```sh
-docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
-docker build -t watts/coder-golang:0.1.0 registry/coder_golang
+export OPENROUTER_API_KEY='your-key'
+wctl doctor --compiled /tmp/coding.json
+wctl start -d
+wctl task new hello-server --compiled /tmp/coding.json
+# Draft the printed task's SPEC.md, then:
+wctl exec tasks/<printed-task-name>
 ```
 
-The team image contains Pi, Ralph, Go, gopls, and golangci-lint. The currently supported worker backend is local Docker Engine; agent/tool installations belong in the image. Package scripts, lint configuration, and skills are captured and mounted at `/inputs/resources/team`. Private task documents and tool state live under `/runtime`. Application work is performed in a candidate `/workspace` and published after result/check validation. See the [runbook](../../../docs/runbook.md), [image definition](../../../registry/coder_golang/README.md), and [MCP guide](mcp/README.md).
+Or start immediately with `wctl exec /tmp/coding.json --name hello-server
+--request 'Create a minimal Go HTTP server.'`. The artifact includes scripts and
+skills, so execution does not depend on the source checkout remaining available.
+Source edits require recompilation and a new task.
 
-The [lint script](scripts/lint.sh) explicitly uses [.golangci.yml](.golangci.yml), preserves diagnostics and exit status, and does not automatically fix files. The [builder skill](skills/go-builder/SKILL.md) includes attribution and the MIT notice for guidance derived from samber/cc-skills-golang.
+## Workflow
 
-Real MCP readiness/tool calls and transport behavior have deterministic integration coverage. Model-selected MCP use has not been verified, and the workflow is not a performance benchmark. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare configurations over time.
+```mermaid
+flowchart LR
+  S[Specification Agent] --> SA[Human spec review]
+  SA -->|approved| P[Planning Agent]
+  SA -->|rejected: at most 2 returns| S
+  P --> PA[Human plan review]
+  PA -->|approved| B[Build Agent]
+  PA -->|rejected: at most 2 returns| P
+  B --> R[Review Agent]
+  R -->|changes required: at most 2 returns| B
+  R -->|success| E[Complete + report]
+```
 
-### Agent capability configuration
+SPEC describes what and why; PLAN describes approach and sequence. Agents refine
+these documents. Human approvals bind to the exact reviewed attempt and artifact
+hashes. Implemented application code belongs in the project root and its normal
+source directories, not the task directory.
 
-`agents.build.tools` names fixed commands and the `gopls` MCP reference; `agents.build.gates` names required checks and expected exit codes. `gate_policy.max_repairs` bounds repairs inside that Agent execution. `skills` selects image-owned guidance or captured resource directories independently of tool access. Templates render each field explicitly. See [Agent tools, gates, and skills](../../../docs/kinds.md#agent-tools-gates-and-skills).
+The builder runs compile, Go tests, vet, golangci-lint, and story validation as
+Agent tools and formal gates. There is no separate lint stage. The review Agent
+has a read-only workspace and verifies the candidate. The image supplies Go,
+lint, Pi/Ralph, and gopls; Watts does not install host software.
 
-The [build script](scripts/build.sh) puts compilation products under `/runtime/build` so verification does not publish a Linux executable into the developer's source tree. Declared command tools use the original image PATH; private replacement binaries do not override these checks. Other agent shell capabilities remain subject to the image's policy.
+## Reuse and customization
+
+Use the whole package as a local module with an explicit entrypoint:
+
+```hcl
+package "team" {
+  version    = "0.1.0"
+  entrypoint = module.coder.workflow.coding
+}
+
+module "coder" {
+  source    = "../watts/resources/examples/coder_golang"
+  version   = "0.1.0"
+  variables = { model = "your-provider/model" }
+}
+```
+
+A team can also export selected Agents from its own module and stitch them into
+an independent workflow. Named outputs connect task artifacts; routing controls
+feedback separately. Edit Agent contracts and team policy directly in ACL.
+See [the ACL language specification](../../../docs/language-spec.md).
+
+Current limits: local modules and Docker execution only; model/cost/tool telemetry
+may be incomplete. Gate success and workflow completion do not replace independent
+acceptance evaluation. Use [comparable evals](../../../evals/go-workflow/README.md)
+to assess changes to this team's configuration over time.

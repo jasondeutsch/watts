@@ -125,7 +125,7 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 			spec = ProcedureSpec{Contract: contract, Execution: execution}
 		}
 		documents = append(documents, Document[any]{Kind: kind, SchemaVersion: SchemaVersion, Name: step.Name, Spec: spec})
-		workflow.Steps = append(workflow.Steps, Placement{Name: step.Name, Use: Reference{Kind: kind, Name: step.Name}, Parameters: step.Parameters, Transitions: step.Transitions, Next: step.Next, OnFailure: step.OnFailure, Optional: step.Optional})
+		workflow.Steps = append(workflow.Steps, Placement{DependsOn: step.DependsOn, TransitionLimits: step.TransitionLimits, Name: step.Name, Use: Reference{Kind: kind, Name: step.Name}, Parameters: step.Parameters, Transitions: step.Transitions, Next: step.Next, OnFailure: step.OnFailure, Optional: step.Optional})
 	}
 	var output bytes.Buffer
 	encoder := yaml.NewEncoder(&output)

@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	"github.com/jasondeutsch/watts/cli/internal/devtools"
+	"github.com/jasondeutsch/watts/cli/internal/language"
 	"github.com/jasondeutsch/watts/cli/internal/settings"
 	"github.com/jasondeutsch/watts/cli/internal/setup"
 	"github.com/jasondeutsch/watts/cli/internal/tasks"
-	"github.com/jasondeutsch/watts/cli/internal/templates"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
 )
 
@@ -35,7 +35,9 @@ func (n *node) child(name string) *node {
 
 // tree is the command structure shown by `wctl help`.
 var tree = []*node{
-	{name: "template", summary: "Render a YAML template package (-f values file, -o output directory)", run: templates.Template},
+	{name: "compile", summary: "Compile ACL packages and modules into a frozen JSON artifact", run: language.Compile},
+	{name: "c", summary: "Alias for compile", run: language.Compile},
+	{name: "exec", summary: "Execute a compiled artifact or continue an existing task", needsRepo: true, run: language.Exec},
 	{name: "doctor", summary: "Validate selected manifests, Docker images, and required secret sources", needsRepo: true, run: setup.Doctor},
 	{name: "config", summary: "Inspect packages and manage local worker preferences", needsRepo: true, children: []*node{
 		{name: "show", summary: "Print worker preferences and the selected workflow", needsRepo: true, run: settings.Show},
@@ -44,7 +46,7 @@ var tree = []*node{
 	{name: "start", summary: "Start worker and web UI; -d runs detached", needsRepo: true, run: setup.Start},
 	{name: "stop", summary: "Stop this project's worker and web UI", needsRepo: true, run: setup.Stop},
 	{name: "task", summary: "Create and run tasks", needsRepo: true, children: []*node{
-		{name: "new", summary: "Create a task: wctl task new <slug>", needsRepo: true, run: tasks.New},
+		{name: "new", summary: "Scaffold a task: wctl task new <slug> --compiled <artifact.json>", needsRepo: true, run: tasks.New},
 		{name: "decide", summary: "Approve or reject a pending Temporal human stage: task decide [task] [stage] [--reject] [--feedback text]; delegation: --actor, --authorized-by, --reviewed-status", needsRepo: true, run: tasks.Decide},
 		{name: "run", summary: "Start or continue a task; retry its failed stage", needsRepo: true, run: tasks.Run},
 		{name: "status", summary: "Temporal workflow progress and attempt history (--json)", needsRepo: true, run: tasks.Status},
@@ -127,14 +129,15 @@ func usage() string {
 	var b strings.Builder
 	b.WriteString("wctl " + version + ": declarative agent workflows\n\n")
 	b.WriteString("Usage: wctl <command> [subcommand] [flags] [arguments]\n\n")
-	b.WriteString("Create a package with `wctl template new <name>` and select its watts.yaml. Task arguments are folders such as tasks/2026-10-03-http-retry,\nor just the folder name.\n")
+	b.WriteString("Compile a watts.acl package with `wctl compile` (or `wctl c`), then execute its JSON artifact with `wctl exec`.\nTask arguments are folders under tasks/, or just the folder name.\n")
 	sections := []struct {
 		title string
 		names []string
 	}{
+		{"Authoring", []string{"compile", "exec"}},
 		{"Setup", []string{"doctor", "config"}},
 		{"Tasks", []string{"task", "start", "stop"}},
-		{"Other", []string{"template", "dev", "version"}},
+		{"Other", []string{"dev", "version"}},
 	}
 	for _, sec := range sections {
 		fmt.Fprintf(&b, "\n%s:\n", sec.title)

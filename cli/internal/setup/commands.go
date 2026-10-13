@@ -3,9 +3,9 @@ package setup
 import (
 	"context"
 	"errors"
+	"github.com/jasondeutsch/watts/internal/workflowlang"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
@@ -15,24 +15,24 @@ import (
 
 func Doctor(a *terminal.Context, args []string) error {
 	fs := arguments.NewFlags(a.ErrorOutput, "doctor")
-	descriptor := fs.String("package", "", "path to the workflow package descriptor")
+	compiled := fs.String("compiled", "", "compiled workflow artifact to check")
 
 	asJSON := fs.Bool("json", false, "print the checks as JSON")
 	if _, err := arguments.Parse(fs, args); err != nil {
 		return arguments.UsageError(err)
 	}
-	if *descriptor != "" {
-		a.Root = a.WorkingDirectory
-		path, err := filepath.Abs(*descriptor)
-		if err != nil {
-			return err
-		}
-		a.PackageDescriptor = path
+	if *compiled == "" {
+		return errors.New("doctor requires --compiled <artifact.json>")
 	}
-	cfg, err := a.LoadConfig()
+	pkg, err := workflowlang.ReadCompiled(*compiled)
 	if err != nil {
 		return err
 	}
+	cfg, err := a.LoadServiceConfig()
+	if err != nil {
+		return err
+	}
+	cfg.Workflow = &pkg.Definition
 	return a.DoctorWith(cfg, true, terminal.DoctorOptions{JSON: *asJSON})
 }
 

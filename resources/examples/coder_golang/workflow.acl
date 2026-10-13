@@ -1,0 +1,74 @@
+workflow "coding" {
+  max_transitions = 100
+  templates = {
+    ".gitignore"   = file("prompts/task-.gitignore")
+    "PLAN.md"      = file("prompts/task-PLAN.md")
+    "SPEC.md"      = file("prompts/task-SPEC.md")
+    "STORY_LOG.md" = file("prompts/task-STORY_LOG.md")
+  }
+
+  stage "specification" {
+    executor = agent.specification
+    inputs   = ["SPEC.md"]
+    outputs  = { spec = "SPEC.md" }
+  }
+
+  stage "spec-review" {
+    executor = procedure.spec-review
+    inputs   = [stage.specification.outputs.spec]
+
+    on "approved" {
+      return_to = stage.planning.name
+    }
+
+    on "rejected" {
+      return_to      = stage.specification.name
+      max_iterations = 2
+    }
+  }
+
+  stage "planning" {
+    executor = agent.planning
+    inputs   = [stage.specification.outputs.spec]
+    outputs  = { plan = "PLAN.md" }
+  }
+
+  stage "plan-review" {
+    executor = procedure.plan-review
+    inputs   = [stage.specification.outputs.spec, stage.planning.outputs.plan]
+
+    on "approved" {
+      return_to = stage.build.name
+    }
+
+    on "rejected" {
+      return_to      = stage.planning.name
+      max_iterations = 2
+    }
+  }
+
+  stage "build" {
+    executor = agent.build
+    inputs   = [stage.specification.outputs.spec, stage.planning.outputs.plan]
+    outputs  = { stories = "STORY_LOG.md" }
+  }
+
+  stage "review" {
+    executor = agent.review
+    inputs = [
+      stage.specification.outputs.spec,
+      stage.planning.outputs.plan,
+      stage.build.outputs.stories,
+    ]
+    outputs = { verdict = "review/VERDICT.md" }
+
+    on "changes-required" {
+      return_to      = stage.build.name
+      max_iterations = 2
+    }
+
+    on "success" {
+      return_to = "end"
+    }
+  }
+}

@@ -13,7 +13,7 @@
 <rect x="40" y="167" width="255" height="215" rx="12" class="box"/>
 <text x="60" y="200" class="small">DEFINE</text>
 <text x="60" y="231" class="title">Watts package</text>
-<text x="60" y="267" class="body">Manifests · values · templates</text>
+<text x="60" y="267" class="body">ACL · variables · modules</text>
 <text x="60" y="297" class="body">Agents · tools · skills</text>
 <text x="60" y="327" class="body">Checks · approvals · routing</text>
 <text x="60" y="360" class="small">Review and version the process</text>
@@ -56,8 +56,8 @@
 
 <rect x="620" y="477" width="540" height="112" rx="12" class="future"/>
 <text x="640" y="509" class="title">Proposed capabilities</text>
-<text x="640" y="542" class="body">Complete usage/cost accounting · portable packages</text>
-<text x="640" y="569" class="body">Isolated Agent/Procedure workloads · containers/sandboxes</text>
+<text x="640" y="542" class="body">Complete accounting · distributed execution</text>
+<text x="640" y="569" class="body">Hardened isolation · remote module registries</text>
 
 <text x="40" y="631" class="small">0.1.0 proof of concept · generic OCI workloads · Pi/Ralph example image · eval scaffold available</text>
 <text x="40" y="655" class="small">Declarative configuration makes decisions visible; it does not guarantee identical outputs or better outcomes.</text>

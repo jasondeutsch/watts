@@ -59,7 +59,7 @@ outputs are still validated. Agent workloads always require a result file.
 
 ## Agent capabilities and gate evidence
 
-The Agent input also carries `tools`, `gates`, `gate_policy`, and `skills`; see [the manifest fields](kinds.md#agent-tools-gates-and-skills). Workload adapters expose tools/skills natively and implement gate repair. Watts core does not register Pi tools or interpret Ralph state.
+The Agent input also carries `tools`, `gates`, `gate_policy`, and `skills`; see [the manifest fields](language-spec.md#agent-tools-gates-and-skills). Workload adapters expose tools/skills natively and implement gate repair. Watts core does not register Pi tools or interpret Ralph state.
 
 When gates are declared, the executor must run every gate against a stable final candidate and write `/outputs/gates.json`:
 
