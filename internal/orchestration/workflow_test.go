@@ -23,6 +23,7 @@ func environment(exec func(context.Context, ActivityInput) (Result, error)) *tes
 		return Result{Artifacts: []Artifact{{Path: in.Step.Inputs[0], SHA256: fmt.Sprint(in.Attempt)}}}, nil
 	}, activity.RegisterOptions{Name: HashActivity})
 	env.RegisterActivityWithOptions(func(context.Context, ActivityInput) error { return nil }, activity.RegisterOptions{Name: ValidateActivity})
+	env.RegisterActivityWithOptions(func(context.Context, ReportInput) error { return nil }, activity.RegisterOptions{Name: ReportActivity})
 	return env
 }
 func queryState(t *testing.T, env *testsuite.TestWorkflowEnvironment) State {
@@ -210,4 +211,61 @@ func TestDelegatedDecisionProvenanceSurvivesRejectionAndApproval(t *testing.T) {
 	require.Len(t, decisions, 2)
 	require.Equal(t, "rejected", decisions[0].Outcome)
 	require.Equal(t, "approved", decisions[1].Outcome)
+}
+
+func TestCompletionReportIncludesActualAttemptsAndTiming(t *testing.T) {
+	env := environment(func(_ context.Context, in ActivityInput) (Result, error) {
+		if in.Attempt == 1 {
+			return Result{}, errors.New("compile failed")
+		}
+		return Result{Outcome: "success"}, nil
+	})
+	var reports []ReportInput
+	env.RegisterActivityWithOptions(func(_ context.Context, request ReportInput) error { reports = append(reports, request); return nil }, activity.RegisterOptions{Name: ReportActivity})
+	env.RegisterDelayedCallback(func() {
+		env.UpdateWorkflowNoRejection(RetryUpdate, "retry-report", t, Retry{Step: "build", Attempt: 1})
+	}, time.Second)
+	env.ExecuteWorkflow(Run, Input{Task: "tasks/report", Definition: Definition{Steps: []Step{{Name: "build", Container: fixtureContainer("build")}}}})
+	require.NoError(t, env.GetWorkflowError())
+	require.Len(t, reports, 1)
+	require.Equal(t, "completed", reports[0].State.Status)
+	require.Len(t, reports[0].State.History, 2)
+	require.Contains(t, reports[0].State.History[0].Error, "compile failed")
+	require.False(t, reports[0].State.StartedAt.IsZero())
+	require.False(t, reports[0].State.History[0].FinishedAt.IsZero())
+	require.NotEmpty(t, reports[0].RunID)
+}
+
+func TestFailedReportPreservesWorkflowResultAndExposesError(t *testing.T) {
+	env := environment(func(context.Context, ActivityInput) (Result, error) { return Result{}, nil })
+	env.RegisterActivityWithOptions(func(context.Context, ReportInput) error { return errors.New("disk full") }, activity.RegisterOptions{Name: ReportActivity})
+	env.ExecuteWorkflow(Run, Input{Definition: Definition{Steps: []Step{{Name: "build", Container: fixtureContainer("build")}}}})
+	state := resultState(t, env)
+	require.Equal(t, "completed", state.Status)
+	require.Contains(t, state.ReportError, "disk full")
+}
+
+func TestTerminalFailureAndCancellationGenerateReports(t *testing.T) {
+	for _, cancelled := range []bool{false, true} {
+		t.Run(fmt.Sprint("cancelled=", cancelled), func(t *testing.T) {
+			env := environment(func(context.Context, ActivityInput) (Result, error) { return Result{}, errors.New("broken build") })
+			var reports []ReportInput
+			env.RegisterActivityWithOptions(func(_ context.Context, request ReportInput) error { reports = append(reports, request); return nil }, activity.RegisterOptions{Name: ReportActivity})
+			step := Step{Name: "build", Container: fixtureContainer("build"), OnFailure: "end"}
+			if cancelled {
+				step.OnFailure = ""
+				env.RegisterDelayedCallback(env.CancelWorkflow, time.Second)
+			}
+			env.ExecuteWorkflow(Run, Input{Task: "tasks/terminal", Definition: Definition{Steps: []Step{step}}})
+			require.Error(t, env.GetWorkflowError())
+			require.Len(t, reports, 1)
+			require.NotEmpty(t, reports[0].Error)
+			require.Len(t, reports[0].State.History, 1)
+			if cancelled {
+				require.Equal(t, "cancelled", reports[0].State.Status)
+			} else {
+				require.Equal(t, "failed", reports[0].State.Status)
+			}
+		})
+	}
 }

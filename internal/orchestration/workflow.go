@@ -29,7 +29,7 @@ func Run(ctx workflow.Context, input Input) (State, error) {
 	if err := input.Definition.Validate(); err != nil {
 		return State{}, err
 	}
-	execution := workflowExecution{input: input, state: State{Status: "running"}, acceptedEvents: map[string]bool{}}
+	execution := workflowExecution{input: input, state: State{Status: "running", StartedAt: workflow.Now(ctx)}, acceptedEvents: map[string]bool{}}
 	for _, step := range input.Definition.Steps {
 		execution.state.Stages = append(execution.state.Stages, Stage{Name: step.Name, Status: "pending"})
 	}
@@ -38,6 +38,13 @@ func Run(ctx workflow.Context, input Input) (State, error) {
 	}
 	workflow.GetLogger(ctx).Info("Workflow started", "task", input.Task)
 	state, err := execution.runStages(ctx)
+	state.FinishedAt = workflow.Now(ctx)
+	if temporal.IsCanceledError(err) {
+		state.Status = "cancelled"
+	}
+	execution.state = state
+	execution.writeReport(ctx, err)
+	state = execution.state
 	logger := workflow.GetLogger(ctx)
 	if temporal.IsCanceledError(err) {
 		logger.Warn("Workflow cancelled", "task", input.Task, "next_action", "Inspect task evidence before creating a new task")
@@ -102,7 +109,7 @@ func (execution *workflowExecution) runStages(ctx workflow.Context) (State, erro
 			stageErr = transitionErr
 		}
 		stage.Outcome = result.Outcome
-		record := StageResult{Step: step.Name, Attempt: stage.Attempts, Result: result}
+		record := StageResult{Step: step.Name, Attempt: stage.Attempts, Result: result, StartedAt: started, FinishedAt: workflow.Now(ctx)}
 		if stageErr != nil {
 			record.Error = failureMessage(stageErr)
 		}
@@ -238,3 +245,26 @@ func quotedTask(task string) string {
 }
 
 func retryCommand(task string) string { return "wctl task run " + quotedTask(task) }
+
+// A disconnected context lets graceful cancellation still leave a final report.
+// Versioning keeps existing workflow histories replayable across this addition.
+func (execution *workflowExecution) writeReport(ctx workflow.Context, runError error) {
+	if workflow.GetVersion(ctx, "task-report", workflow.DefaultVersion, 1) == workflow.DefaultVersion {
+		return
+	}
+	reportContext, cancel := workflow.NewDisconnectedContext(ctx)
+	defer cancel()
+	reportContext = workflow.WithActivityOptions(reportContext, workflow.ActivityOptions{
+		StartToCloseTimeout: time.Minute, RetryPolicy: &temporal.RetryPolicy{MaximumAttempts: 3},
+	})
+	info := workflow.GetInfo(ctx)
+	request := ReportInput{Input: execution.input, State: execution.state,
+		WorkflowID: info.WorkflowExecution.ID, RunID: info.WorkflowExecution.RunID, GeneratedAt: workflow.Now(ctx)}
+	if runError != nil {
+		request.Error = failureMessage(runError)
+	}
+	if err := workflow.ExecuteActivity(reportContext, ReportActivity, request).Get(reportContext, nil); err != nil {
+		execution.state.ReportError = failureMessage(err)
+		workflow.GetLogger(ctx).Error("Task report failed", "task", execution.input.Task, "error", execution.state.ReportError)
+	}
+}

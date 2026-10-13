@@ -103,11 +103,11 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	if err := os.MkdirAll(app.Wd(), 0700); err != nil {
 		return "", err
 	}
-	taskPath := filepath.ToSlash(filepath.Join(cfg.TasksDir, time.Now().Format("2006-01-02")+"-"+slug))
 	if err := os.MkdirAll(app.TasksPath(cfg), 0755); err != nil {
 		return "", err
 	}
-	if err := os.Mkdir(filepath.Join(app.Root, taskPath), 0755); err != nil {
+	taskPath, err := createTaskDirectory(app.Root, cfg.TasksDir, slug, time.Now())
+	if err != nil {
 		return "", err
 	}
 	replacer := strings.NewReplacer("__NAME__", filepath.Base(taskPath), "__TASKS__", cfg.TasksDir, "tasks/<date>-<slug>/", taskPath+"/")
@@ -130,4 +130,22 @@ func (app *Service) CreateTask(cfg projectconfig.Config, slug, workflowName stri
 	}
 	app.say("Created %s. Draft SPEC.md, then run: wctl task run %s", taskPath, taskPath)
 	return taskPath, nil
+}
+
+// Mkdir arbitrates concurrent creation. Advance one millisecond on a same-name
+// collision so repeated requests never reuse an existing task directory.
+func createTaskDirectory(root, tasksDir, slug string, timestamp time.Time) (string, error) {
+	for {
+		name := strings.ReplaceAll(timestamp.UTC().Format("2006-01-02t150405.000z"), ".", "-") + "-" + slug
+		taskPath := filepath.ToSlash(filepath.Join(tasksDir, name))
+		err := os.Mkdir(filepath.Join(root, taskPath), 0755)
+		if errors.Is(err, os.ErrExist) {
+			timestamp = timestamp.Add(time.Millisecond)
+			continue
+		}
+		if err != nil {
+			return "", err
+		}
+		return taskPath, nil
+	}
 }

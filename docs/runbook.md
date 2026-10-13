@@ -61,7 +61,9 @@ wctl task new hello-server --package ./team-workflow/watts.yaml
 
 Task creation uses the invocation directory as the application root when a
 package is explicitly selected. It does not implement application code. Use the
-printed task path. In a coding package, write your request or rough notes in
+printed task path. Names use a sortable UTC timestamp with millisecond resolution,
+for example `tasks/2026-10-12t153042-127z-hello-server`. Concurrent requests for
+the same slug reserve distinct directories. In a coding package, write your request or rough notes in
 `SPEC.md`; agents refine the spec and create `PLAN.md` as declared by the workflow.
 Customize workflow policy in the package's source values/templates before task creation.
 The task's `workflow.yaml` is a resolved snapshot; do not edit rendered output.
@@ -129,3 +131,27 @@ retry. See [Temporal](temporal.md) for restart and execution-state details.
 - Publication conflict: a live project file changed since capture. Watts preserves it and retains the candidate.
 - Docker permission or mount failure: verify the worker can access its local engine and attempt filesystem.
 - Temporal unavailable: start the service and inspect the configured endpoint/namespace/queue.
+
+## Completion report
+
+When a workflow closes successfully, fails terminally, or is gracefully cancelled,
+the worker writes `<task>/report.html`. Open it in a browser; it is a self-contained,
+offline HTML report with links to retained task evidence.
+
+The report contains the actual attempt sequence (including feedback loops and
+retries), timing including human waits, errors, decisions, artifact hashes, gate
+results, token and cost breakdowns by stage and attempt, and run/configuration
+identity. It distinguishes observed models from configured models and lists
+available tools, MCP services, skills, and pinned container images. Declared
+capabilities do not prove invocation; workflow completion does not replace an eval.
+
+Token totals include failed attempts and rework. Missing counters or costs are
+**unknown**, and partial totals show measurement coverage. Cache counts appear
+separately and are not added to input + output again. Raw logs and credential
+configuration are not embedded. Evidence links work while their files are retained.
+
+Report writes are atomic and retryable. A report write failure appears as
+`report_error` in workflow state and in worker logs, without changing the workload
+outcome. The worker must remain running for finalization. Forced Temporal
+termination cannot run this activity, and already closed tasks are not backfilled.
+Reports are currently final snapshots; live report refresh is tracked in wiss-011.

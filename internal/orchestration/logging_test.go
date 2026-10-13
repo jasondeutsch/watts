@@ -23,6 +23,7 @@ func loggingEnvironment(output *bytes.Buffer, execute func(context.Context, Acti
 		return Result{Artifacts: []Artifact{{Path: "SPEC.md", SHA256: "spec-hash"}}}, nil
 	}, activity.RegisterOptions{Name: HashActivity})
 	env.RegisterActivityWithOptions(func(context.Context, ActivityInput) error { return nil }, activity.RegisterOptions{Name: ValidateActivity})
+	env.RegisterActivityWithOptions(func(context.Context, ReportInput) error { return nil }, activity.RegisterOptions{Name: ReportActivity})
 	return env
 }
 

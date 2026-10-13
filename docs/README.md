@@ -2,7 +2,7 @@
 
 | Guide | Use it for |
 | --- | --- |
-| [Runbook](runbook.md) | Install, configure a project, run tasks, approve, and recover |
+| [Runbook](runbook.md) | Install, configure a project, run tasks, approve, recover, and read completion reports |
 | [External coordinators](coordinators.md) | Drive tasks through an agent, report progress, and record delegated decisions |
 | [Kinds](kinds.md) | Workflow, Procedure, Agent, MCP, ConfigMap, and Secret fields and references |
 | [Workflow execution](workflows.md) | Routing, results, events, and MCP selection |

@@ -292,6 +292,13 @@ Acceptance criteria:
 
 ### wiss-011: Evolving workflow report
 
+Implemented foundation: the worker generates task-local `report.html` on completion,
+terminal failure, or graceful cancellation. It includes actual attempts and rework,
+timings, usage coverage, models, capabilities, gates, artifacts, and run provenance.
+Remaining work is updating that same report during execution and exposing it to
+coordinators and the web UI. Forced termination and crashes still need recovery
+reporting and durable telemetry (wiss-025).
+
 Create a readable task report early and update it at stage/attempt boundaries, waits, failures, retries, and completion.
 
 - Include configuration identity, current state, elapsed time, artifacts, verification, errors, next actions, and cumulative reported usage/cost.

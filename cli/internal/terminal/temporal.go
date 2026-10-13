@@ -3,6 +3,8 @@ package terminal
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -21,6 +23,9 @@ func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
 				break
 			}
 		}
+	}
+	if state.ReportError != "" && failure == nil {
+		failure = fmt.Errorf("TASK REPORT FAILED: %s: %s", taskPath, state.ReportError)
 	}
 	if jsonOut {
 		if err := Encoder(app.Output).Encode(view); err != nil {
@@ -46,6 +51,12 @@ func (app *Context) TemporalStatus(taskPath string, jsonOut bool) error {
 		app.Say("Next: wctl task run %s", taskPath)
 	case "waiting_approval":
 		app.Say("Next: inspect the stage inputs, then wctl task decide %s (or --reject --feedback text)", taskPath)
+	}
+	if state.ReportError != "" {
+		app.Say("Report generation failed: %s", state.ReportError)
+	}
+	if _, err := os.Stat(filepath.Join(app.Root, taskPath, "report.html")); err == nil {
+		app.Say("Report: %s/report.html", taskPath)
 	}
 	return failure
 }

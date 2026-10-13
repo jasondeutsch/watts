@@ -23,6 +23,7 @@ func (app *Service) NewTemporalWorker(temporalClient client.Client, queue string
 	workflowWorker.RegisterActivityWithOptions(app.ExecuteWorkflowStage, activity.RegisterOptions{Name: orchestration.ExecuteActivity})
 	workflowWorker.RegisterActivityWithOptions(app.CaptureApprovalArtifacts, activity.RegisterOptions{Name: orchestration.HashActivity})
 	workflowWorker.RegisterActivityWithOptions(app.ValidateApprovalArtifacts, activity.RegisterOptions{Name: orchestration.ValidateActivity})
+	workflowWorker.RegisterActivityWithOptions(app.WriteTaskReport, activity.RegisterOptions{Name: orchestration.ReportActivity})
 	return workflowWorker
 }
 

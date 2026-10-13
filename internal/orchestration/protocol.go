@@ -1,10 +1,13 @@
 package orchestration
 
+import "time"
+
 const (
 	WorkflowName     = "watts.workflow.v1"
 	ExecuteActivity  = "watts.execute.v1"
 	HashActivity     = "watts.hash.v1"
 	ValidateActivity = "watts.validate-approval.v1"
+	ReportActivity   = "watts.report.v1"
 	StatusQuery      = "status"
 	DecisionUpdate   = "decision"
 	RetryUpdate      = "retry"
@@ -45,6 +48,9 @@ type Stage struct {
 	Outcome      string     `json:"outcome,omitempty"`
 }
 type State struct {
+	StartedAt   time.Time     `json:"started_at,omitempty"`
+	FinishedAt  time.Time     `json:"finished_at,omitempty"`
+	ReportError string        `json:"report_error,omitempty"`
 	Status      string        `json:"status"`
 	Current     string        `json:"current,omitempty"`
 	Stages      []Stage       `json:"stages"`
@@ -80,8 +86,10 @@ func sameArtifacts(a, b []Artifact) bool {
 
 // StageResult retains every attempt, including rework, and supplies context to the next stage.
 type StageResult struct {
-	Step    string `json:"step"`
-	Attempt int    `json:"attempt"`
+	StartedAt  time.Time `json:"started_at,omitempty"`
+	FinishedAt time.Time `json:"finished_at,omitempty"`
+	Step       string    `json:"step"`
+	Attempt    int       `json:"attempt"`
 	Result
 	Error string `json:"error,omitempty"`
 }
@@ -94,4 +102,14 @@ type Event struct {
 	Outcome  string         `json:"outcome"`
 	Feedback string         `json:"feedback,omitempty"`
 	Data     map[string]any `json:"data,omitempty"`
+}
+
+// ReportInput snapshots authoritative state; rendering and evidence reads happen in an activity.
+type ReportInput struct {
+	Input       Input
+	State       State
+	WorkflowID  string
+	RunID       string
+	GeneratedAt time.Time
+	Error       string
 }

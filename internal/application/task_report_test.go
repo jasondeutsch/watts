@@ -1,0 +1,45 @@
+package application
+
+import (
+	"context"
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/stretchr/testify/require"
+)
+
+func TestTaskDirectoryOrderingAndCollisions(t *testing.T) {
+	root := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(root, "tasks"), 0755))
+	timestamp := time.Date(2026, 10, 12, 8, 9, 10, 123000000, time.FixedZone("local", -5*3600))
+	first, err := createTaskDirectory(root, "tasks", "example", timestamp)
+	require.NoError(t, err)
+	second, err := createTaskDirectory(root, "tasks", "example", timestamp)
+	require.NoError(t, err)
+	third, err := createTaskDirectory(root, "tasks", "example", timestamp.Add(2*time.Millisecond))
+	require.NoError(t, err)
+	require.Equal(t, "tasks/2026-10-12t130910-123z-example", first)
+	require.Less(t, first, second)
+	require.Less(t, second, third)
+	require.NotEqual(t, first, second)
+}
+
+func TestTaskReportActivityReplacesWholeDocument(t *testing.T) {
+	app := &Service{Root: t.TempDir()}
+	task := "tasks/demo"
+	require.NoError(t, os.MkdirAll(filepath.Join(app.Root, task), 0755))
+	request := orchestration.ReportInput{Input: orchestration.Input{Task: task}, State: orchestration.State{Status: "completed"}}
+	require.NoError(t, app.WriteTaskReport(context.Background(), request))
+	target := filepath.Join(app.Root, task, "report.html")
+	require.Contains(t, readFile(t, target), "Status: completed")
+	request.State.Status = "cancelled"
+	require.NoError(t, app.WriteTaskReport(context.Background(), request))
+	require.Contains(t, readFile(t, target), "Status: cancelled")
+	require.NotContains(t, readFile(t, target), "Status: completed")
+	require.NoError(t, os.Remove(target))
+	require.NoError(t, os.Symlink(filepath.Join(app.Root, "outside.html"), target))
+	require.ErrorContains(t, app.WriteTaskReport(context.Background(), request), "symlink")
+}

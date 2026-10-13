@@ -14,7 +14,12 @@ func WriteJSONAtomically(artifactPath string, v any) error {
 	if err != nil {
 		return err
 	}
-	if err = os.MkdirAll(filepath.Dir(artifactPath), 0700); err != nil {
+	return WriteFileAtomically(artifactPath, append(data, '\n'))
+}
+
+// WriteFileAtomically replaces a complete file in the same directory.
+func WriteFileAtomically(artifactPath string, data []byte) error {
+	if err := os.MkdirAll(filepath.Dir(artifactPath), 0700); err != nil {
 		return err
 	}
 	file, err := os.CreateTemp(filepath.Dir(artifactPath), ".watts-*.tmp")
@@ -23,7 +28,7 @@ func WriteJSONAtomically(artifactPath string, v any) error {
 	}
 	name := file.Name()
 	defer os.Remove(name)
-	if _, err = file.Write(append(data, '\n')); err == nil {
+	if _, err = file.Write(data); err == nil {
 		err = file.Sync()
 	}
 	closeErr := file.Close()
