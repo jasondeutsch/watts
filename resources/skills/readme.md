@@ -1,4 +1,6 @@
-# Coordinator skills
+# Authoring and coordination skills
+
+[acl-style/SKILL.md](acl-style/SKILL.md) guides ACL package authors through formatting, naming, module organization, and contract review.
 
 [watts-coordinator/SKILL.md](watts-coordinator/SKILL.md) is the portable coordination contract for an interactive agent working with Watts. A user or team can install it using their agent application's skill discovery mechanism, or tell the agent to read this file directly.
 

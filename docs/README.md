@@ -4,9 +4,8 @@
 | --- | --- |
 | [Runbook](runbook.md) | Install, configure a project, run tasks, approve, recover, and read completion reports |
 | [External coordinators](coordinators.md) | Drive tasks through an agent, report progress, and record delegated decisions |
-| [Kinds](kinds.md) | Workflow, Procedure, Agent, MCP, ConfigMap, and Secret fields and references |
 | [Workflow execution](workflows.md) | Routing, results, events, and MCP selection |
-| [Templating](templates.md) | Values files, package rendering, validation, and output selection |
+| [ACL language specification](language-spec.md) | Syntax, declarations, typed contracts, modules, routing, and compiled artifacts |
 | [Temporal](temporal.md) | Server operations, worker responsibilities, and stored state |
 | [Architecture](workflow-design.md) | Authoring-to-execution flow and package responsibilities |
 | [Stage communication proposal](stage-communication.md) | Future portable packages, isolated workspaces, and publication |

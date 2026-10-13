@@ -58,7 +58,7 @@ timeout, missing tools, or platform mismatch before model invocation.
 Pi owns session connections and stdio process-group cleanup; the probe is always
 closed. Stdio services run inside this image/derived images, with per-attempt
 scope. External streamable HTTP endpoints are not launched or stopped by Watts.
-See [MCP fields](../../docs/kinds.md#mcp) for scope and isolation limits.
+See [MCP fields](../../docs/language-spec.md#mcp) for scope and isolation limits.
 
 Run adapter unit tests with `node --test registry/pi_ralph/mcp.test.mjs`.
 For native integration, mount this directory at `/test`, a small Go module at

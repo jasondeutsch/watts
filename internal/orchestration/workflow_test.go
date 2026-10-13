@@ -269,3 +269,22 @@ func TestTerminalFailureAndCancellationGenerateReports(t *testing.T) {
 		})
 	}
 }
+
+func TestFeedbackRouteBudgetStopsRepeatedRework(t *testing.T) {
+	env := environment(func(_ context.Context, in ActivityInput) (Result, error) {
+		if in.Step.Name == "review" {
+			return Result{Outcome: "changes-requested"}, nil
+		}
+		return Result{Outcome: "success"}, nil
+	})
+	env.ExecuteWorkflow(Run, Input{Task: "tasks/feedback", Definition: Definition{Steps: []Step{
+		{Name: "build", Container: fixtureContainer("build")},
+		{Name: "review", Container: fixtureContainer("review"), Transitions: map[string]string{"changes-requested": "build"}, TransitionLimits: map[string]int{"changes-requested": 1}},
+	}}})
+	require.ErrorContains(t, env.GetWorkflowError(), "feedback limit reached")
+	state := queryState(t, env)
+	require.Equal(t, "failed", state.Status)
+	require.Len(t, state.History, 4)
+	require.Equal(t, 1, state.Routes["review/changes-requested"])
+	require.Contains(t, state.History[3].Error, "feedback limit")
+}

@@ -59,7 +59,7 @@ completed activities and durable waits are recovered from history.
 
 ## Stored state
 
-- `<task>/workflow.yaml`: resolved task snapshot; author changes in source values/templates before creating a new task.
+- `<task>/workflow.json`: resolved task snapshot; recompile ACL source changes before creating a new task.
 - `<task>/.watts-state/temporal.json`: execution binding and pinned definition.
 - `<task>/.watts-state/workflow-config.json`: hash-verified runtime preferences.
 - `<task>/.watts-state/resources/`: captured workload resources.

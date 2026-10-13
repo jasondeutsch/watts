@@ -5,17 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
 	"github.com/jasondeutsch/watts/internal/application"
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/workflowlang"
 )
 
 func New(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "task new")
-	descriptor := flags.String("package", "", "path to the workflow package descriptor")
+	compiled := flags.String("compiled", "", "frozen JSON artifact produced by wctl compile")
 	positionals, err := arguments.Parse(flags, args)
 	if err != nil {
 		return arguments.UsageError(err)
@@ -24,18 +24,19 @@ func New(app *terminal.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	if *descriptor != "" {
-		app.Root = app.WorkingDirectory
-		app.PackageDescriptor, err = filepath.Abs(*descriptor)
-		if err != nil {
-			return err
-		}
+	if *compiled == "" {
+		return fmt.Errorf("task new requires --compiled <artifact.json>; compile the package first")
 	}
-	cfg, err := app.LoadConfig()
+	app.Root = app.WorkingDirectory
+	pkg, err := workflowlang.ReadCompiled(*compiled)
 	if err != nil {
 		return err
 	}
-	_, err = app.CreateTask(cfg, slug, "")
+	cfg, err := app.LoadServiceConfig()
+	if err != nil {
+		return err
+	}
+	_, err = app.CreateCompiledTask(cfg, slug, pkg)
 	return err
 }
 

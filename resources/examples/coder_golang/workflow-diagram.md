@@ -1,19 +1,19 @@
 # Golang coder workflow
 
-This diagram represents the default policy in [values.yaml](values.yaml). Teams can change the stages and routes through source values/templates before creating a task.
+This diagram represents the default policy in [workflow.acl](workflow.acl). Teams can change the stages and routes through ACL/modules before compiling a new artifact.
 
 ```mermaid
 flowchart LR
     Request["Initial request in SPEC.md"] --> Spec["Specification · Agent<br/>Refine SPEC.md<br/>Required gate: spec-valid"]
     Spec --> SpecReview{"Spec review · Procedure<br/>Human decision on SPEC.md"}
     SpecReview -->|approved| Plan["Planning · Agent<br/>Write PLAN.md<br/>Required gate: plan-valid"]
-    SpecReview -->|rejected + feedback| Spec
+    SpecReview -->|rejected + feedback: max 2 returns| Spec
     Plan --> PlanReview{"Plan review · Procedure<br/>Human decision on SPEC.md + PLAN.md"}
     PlanReview -->|approved| Build["Build · Agent<br/>Implement in the project workspace<br/>Publish STORY_LOG.md<br/>Required gates: build, test, vet, lint, stories"]
-    PlanReview -->|rejected + feedback| Plan
+    PlanReview -->|rejected + feedback: max 2 returns| Plan
     Build --> Review["Review · Agent<br/>Inspect the application read-only<br/>Publish review/VERDICT.md<br/>Required gate: verdict-valid"]
     Review -->|"success · PASS"| Complete["Workflow completed"]
-    Review -->|"changes-required · REJECT + findings"| Build
+    Review -->|"changes-required · REJECT: max 2 returns"| Build
 
     classDef agent fill:#f3f6f8,stroke:#536879,color:#202830;
     classDef approval fill:#faf7ef,stroke:#8a7954,color:#202830;
@@ -33,7 +33,7 @@ There are **six workflow stages**. Specification, planning, build, and review ar
 
 ## Errors and decisions
 
-Execution errors, missing/invalid artifacts, or exhausted gate repair fail the current stage. These default placements declare no `on_failure` route, so Watts waits for an explicit retry (`waiting_retry`). `wctl task run <task>` creates another attempt at that stage using the pinned configuration. It does not jump to an arbitrary stage or reload edited templates.
+Execution errors, missing/invalid artifacts, or exhausted gate repair fail the current stage. These default placements declare no `on_failure` route, so Watts waits for an explicit retry (`waiting_retry`). `wctl exec <task>` creates another attempt at that stage using the pinned configuration. It does not jump to an arbitrary stage or reload edited ACL.
 
 Human decisions are bound to the pending placement, attempt, and input hashes. Rejection returns to the declared authoring stage with feedback; it is different from an execution error. Review's valid REJECT maps to `changes-required`, while PASS maps to `success`.
 

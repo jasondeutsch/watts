@@ -11,15 +11,15 @@ project/
   main.go
   go.mod
   watts/
-    watts.yaml
-    values.yaml       # optional
-    templates/
+    watts.acl
+    values.wvars       # optional
+    modules/
     resources/        # authored skills, scripts, and other assets
 ```
 
-`watts.yaml` describes package identity and composition. Values fill templates; templates define typed resources. The package contains authored workflow design, not tasks, execution output, worker configuration, or tool-private state. External package references and extension remain supported. The application's workspace is the project root, independent of the package's location.
+`watts.acl` describes package identity and composition. Typed variables customize reusable ACL modules; compilation resolves their resources and artifact connections. The package contains authored workflow design, not tasks, execution output, worker configuration, or tool-private state. Local modules compose packages; compiled artifacts capture their inputs for execution. The application's workspace is the project root, independent of the package's location.
 
-One Watts package may contain multiple named Workflows and their supporting Agents, Procedures, ConfigMaps, and Secrets. Select a Workflow explicitly or through a declared default; filenames have no semantic meaning. No additional grouping Kind is needed. The current runnable-bundle loader's one-Workflow restriction must change before this selection model is available.
+One Watts package may contain multiple named Workflows and their supporting Agents, Procedures, ConfigMaps, and Secrets. Select a Workflow explicitly or through a declared default; filenames have no semantic meaning. No additional grouping declaration is needed. ACL package entrypoints select the workflow for each compiled artifact.
 
 ## Tasks and durable execution evidence
 
@@ -43,4 +43,4 @@ An Agent owns its runtime and tools: Pi may implement that runtime, and Ralph ma
 
 Moving execution files does not move the application workspace. Build writes a candidate workspace; review inspects the specified revision and publishes reports separately. Adapter-owned evidence must be published before the environment is removed.
 
-Container/sandbox execution is tracked in [wiss-013](../issues.md#wiss-013-containerized-workloads-across-kinds); recovery and publication are covered by [Temporal integration issues](../issues.md#temporal-integration-completion).
+Container/sandbox execution is tracked in [wiss-013](../issues.md#wiss-013-containerized-workloads); recovery and publication are covered by [Temporal integration issues](../issues.md#orchestration-and-recovery).

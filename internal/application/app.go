@@ -17,20 +17,17 @@ type Service struct {
 	Release string
 	Report  func(Event)
 
-	packageDefinitionHash string
-	resolvedPackage       *WorkflowSelection
-	PackageDescriptor     string // Explicit descriptor path; identity comes from its contents.
-	Root                  string // absolute, symlinks resolved
-	WorkingDirectory      string
-	Output                io.Writer
-	ErrorOutput           io.Writer
-	Input                 io.Reader
+	Root             string // absolute, symlinks resolved
+	WorkingDirectory string
+	Output           io.Writer
+	ErrorOutput      io.Writer
+	Input            io.Reader
 
 	// TimeoutUnit is the length of one limits.max_minutes unit. Tests shorten it.
 	TimeoutUnit time.Duration
 }
 
-// Locate finds the project root: the nearest folder above the current one that holds watts.yaml
+// Locate finds the project root: the nearest folder above the current one that holds watts.acl
 // or .watts; failing that, the invocation directory is the workspace. It never asks git.
 func (a *Service) Locate() error {
 	cwd, err := os.Getwd()

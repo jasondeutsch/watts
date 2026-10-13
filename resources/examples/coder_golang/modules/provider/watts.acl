@@ -1,0 +1,55 @@
+package "provider" {
+  version = "0.1.0"
+}
+
+variable "api" {
+  type        = string
+  description = "Provider API protocol understood by the Agent image."
+}
+
+variable "api_key_env" {
+  type        = string
+  description = "Worker environment variable supplying the provider credential."
+}
+
+variable "base_url" {
+  type        = string
+  description = "Provider API endpoint used by the Agent image."
+}
+
+variable "model" {
+  type        = string
+  description = "Provider model identifier for the workflow Agents."
+}
+
+variable "provider" {
+  type        = string
+  description = "Provider name understood by the Agent image."
+}
+
+variable "thinking" {
+  type        = string
+  description = "Reasoning setting passed to the Agent adapter."
+}
+
+secret "credentials" {
+  env = { api_key = var.api_key_env }
+}
+
+configmap "defaults" {
+  data = {
+    provider = var.provider
+    model    = var.model
+    base_url = var.base_url
+    api      = var.api
+    thinking = var.thinking
+    auth = {
+      env    = var.api_key_env
+      secret = secret.credentials.keys.api_key
+    }
+  }
+}
+
+output "defaults" {
+  value = configmap.defaults
+}

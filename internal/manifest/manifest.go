@@ -1,5 +1,5 @@
-// Package manifest encodes human-authored, typed YAML resources.
-// Runtime bindings and executor protocols remain JSON.
+// Package manifest validates and resolves typed workload resources.
+// ACL is the authoring language; compiled artifacts and executor protocols are JSON.
 package manifest
 
 import (

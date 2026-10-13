@@ -24,7 +24,7 @@ can access and print its explicitly scoped credentials. Enforce appropriate host
 Docker daemon, image, and provider trust. Strong network policy, microVMs, workload
 identities, and distinct-node artifact delivery remain proposed work.
 
-See [wiss-013](../issues.md#wiss-013-containerized-workloads-across-kinds) and
+See [wiss-013](../issues.md#wiss-013-containerized-workloads) and
 [local developer workspaces](../issues.md#wiss-017-sandboxed-execution-in-a-developers-local-environment).
 
 Research inputs include [Docker Sandboxes](https://docs.docker.com/ai/sandboxes/),

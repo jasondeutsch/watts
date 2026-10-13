@@ -1,9 +1,9 @@
 # Workflow execution
 
-A package defines resources, references, and routing. Task creation resolves them
-into a task's `workflow.yaml`. First submission pins the plan, image IDs, captured
+Compilation resolves ACL resources, references, and routing into a frozen JSON artifact.
+Task creation copies its definition into `workflow.json`. First submission pins the plan, image IDs, captured
 resources, and worker preferences. Temporal interprets the ordered graph; the
-worker executes container workloads. See [Kinds](kinds.md) for the YAML fields
+worker executes container workloads. See [ACL declarations](language-spec.md) for the resource fields
 and [the workload interface](container-workloads.md) for inputs/results.
 
 ## Routes and feedback
@@ -14,22 +14,25 @@ otherwise the workflow waits for an explicit retry. A terminal route is `end`.
 
 Use exhaustive outcome routes for a build/review loop:
 
-```yaml
-steps:
-  - name: build
-    use: {kind: Agent, name: builder}
-  - name: qa
-    use: {kind: Procedure, name: qa}
-    transitions:
-      changes-required: build
-      passed: end
+```hcl
+workflow "coding" {
+  stage "build" { executor = agent.builder }
+  stage "qa" {
+    executor = procedure.qa
+    on "changes-required" {
+      return_to      = stage.build.name
+      max_iterations = 2
+    }
+    on "passed" { return_to = "end" }
+  }
+}
 ```
 
 The QA image writes a structured result such as
 `{"outcome":"changes-required","feedback":"Add the empty-input case"}`.
 The next workload receives the preceding result and feedback in `input.json`.
-Unknown outcomes fail; they cannot jump to arbitrary stages. `max_transitions`
-bounds rework, and attempt history retains each visit.
+Unknown outcomes fail; they cannot jump to arbitrary stages. Per-route `max_iterations` and global `max_transitions`
+bound rework, and attempt history retains each visit.
 
 A deterministic Procedure can use an ordinary image and `result: exit-code`.
 A Procedure returning custom outcomes uses the same result-file interface as an
@@ -50,9 +53,9 @@ can use the application API. No idle container is kept for either kind of wait.
 
 ## Agent tools, gates, skills, and MCPs
 
-Agent manifests declare callable command tools, required gates, named skill sources, and selected MCP services. Gates run inside the Agent execution and return failures for bounded repair; they do not require separate workflow stages. Gate acceptance binds to the final candidate, not an earlier successful tool call. See [Agent fields](kinds.md#agent-tools-gates-and-skills).
+Agent manifests declare callable command tools, required gates, named skill sources, and selected MCP services. Gates run inside the Agent execution and return failures for bounded repair; they do not require separate workflow stages. Gate acceptance binds to the final candidate, not an earlier successful tool call. See [Agent fields](language-spec.md#agent-tools-gates-and-skills).
 
-MCP tools reference named MCP resources; the compiler resolves only selected services into the pinned Agent input, including configuration and credential-source bindings. The image resolves those connections inside its environment. See [MCP fields and lifecycle](kinds.md#mcp). A subprocess MCP, such as gopls, must be
+MCP tools reference named MCP resources; the compiler resolves only selected services into the pinned Agent input, including configuration and credential-source bindings. The image resolves those connections inside its environment. See [MCP fields and lifecycle](language-spec.md#mcp). A subprocess MCP, such as gopls, must be
 installed in the image; skills can be baked into it or mounted from captured
 package resources. The Pi/Ralph example image writes its own private MCP and Pi
 settings and forwards those settings to Ralph children.

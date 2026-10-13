@@ -1,13 +1,10 @@
 package manifest_test
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/jasondeutsch/watts/internal/manifest"
-	"github.com/jasondeutsch/watts/internal/render"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,50 +95,6 @@ func TestResourceValidation(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			_, err := manifest.CompileWorkflow([]byte(test.source))
 			require.ErrorContains(t, err, test.message)
-		})
-	}
-}
-
-func TestTemplatesForEveryKindAndCoderGolang(t *testing.T) {
-	for _, directory := range []string{"resource-templates", "resources/examples/coder_golang"} {
-		t.Run(directory, func(t *testing.T) {
-			root, err := os.OpenRoot(filepath.Join("..", "..", directory))
-			require.NoError(t, err)
-			defer root.Close()
-			rendered, err := render.Render(root.FS())
-			require.NoError(t, err)
-			var sources [][]byte
-			kinds := map[string]bool{}
-			for _, file := range rendered.Files {
-				sources = append(sources, file.Data)
-			}
-			data, err := manifest.JoinDocuments(sources...)
-			require.NoError(t, err)
-			bundle, err := manifest.ParseResources(data)
-			require.NoError(t, err)
-			for _, resource := range bundle.Resources {
-				kinds[resource.Kind] = true
-			}
-			require.Len(t, kinds, 6)
-			definition, err := bundle.Compile()
-			require.NoError(t, err)
-			require.NotEmpty(t, definition.Steps)
-			override := render.ValuesSource{Name: "team.yaml", Data: []byte("config_maps:\n  agent-defaults:\n    data:\n      model: team/coding-model\n")}
-			customized, err := render.Render(root.FS(), override)
-			require.NoError(t, err)
-			sources = nil
-			for _, file := range customized.Files {
-				sources = append(sources, file.Data)
-			}
-			data, err = manifest.JoinDocuments(sources...)
-			require.NoError(t, err)
-			changed, err := manifest.CompileWorkflow(data)
-			require.NoError(t, err)
-			for _, step := range changed.Steps {
-				if step.Agent != "" {
-					require.Equal(t, "team/coding-model", step.Model)
-				}
-			}
 		})
 	}
 }

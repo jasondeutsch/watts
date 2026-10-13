@@ -1,0 +1,32 @@
+package "gopls" {
+  version = "0.1.0"
+}
+
+mcp "service" {
+  description = "Go workspace navigation, symbols, references, and diagnostics"
+  lifecycle   = "attempt"
+
+  connection {
+    transport       = "stdio"
+    timeout_seconds = 60
+
+    command {
+      argv        = ["gopls", "mcp"]
+      working_dir = "/workspace"
+    }
+  }
+
+  requirements {
+    arch      = ["amd64", "arm64"]
+    os        = ["linux"]
+    workspace = "read-only"
+  }
+
+  tools {
+    discovery = "all"
+  }
+}
+
+output "service" {
+  value = mcp.service
+}

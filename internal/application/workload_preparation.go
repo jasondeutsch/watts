@@ -10,7 +10,7 @@ import (
 	"github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/containerengine"
 	"github.com/jasondeutsch/watts/internal/storage"
-	"github.com/jasondeutsch/watts/internal/workflowpackage"
+	"github.com/jasondeutsch/watts/internal/workflowlang"
 	"github.com/jasondeutsch/watts/internal/workload"
 )
 
@@ -109,7 +109,7 @@ func (app *Service) protectPackageSources(taskPath string, cfg *config.Config) e
 	if err != nil {
 		return err
 	}
-	var metadata workflowpackage.Metadata
+	var metadata workflowlang.Metadata
 	if err = json.Unmarshal(data, &metadata); err != nil {
 		return err
 	}

@@ -31,7 +31,7 @@ type TemporalSettings struct {
 }
 
 const ConfigVersion = 1
-const Filename = "watts.yaml"
+const Filename = "watts.acl"
 const DefaultTasksDir = "tasks"
 
 func Default() Config { return Config{Version: ConfigVersion, TasksDir: DefaultTasksDir} }

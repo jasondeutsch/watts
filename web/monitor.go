@@ -136,11 +136,16 @@ func (m *monitor) readSnapshot(ctx context.Context, task string) snapshot {
 			s.RunID = binding.RunID
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		data, err = root.ReadFile("workflow.yaml")
+		data, err = root.ReadFile("workflow.json")
 		if err == nil {
-			document, decodeErr := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
-			err = decodeErr
-			s.Definition = document.Spec
+			err = json.Unmarshal(data, &s.Definition)
+		} else if errors.Is(err, os.ErrNotExist) {
+			data, err = root.ReadFile("workflow.yaml")
+			if err == nil {
+				document, decodeErr := manifest.Decode(data, manifest.Workflow, orchestration.Definition{})
+				err = decodeErr
+				s.Definition = document.Spec
+			}
 		}
 	}
 	if err == nil {
