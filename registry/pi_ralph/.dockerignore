@@ -1,6 +1,7 @@
 *
 !Dockerfile
 !launcher.mjs
+!mcp.mjs
 !protocol.mjs
 !protocol.test.mjs
 !telemetry.ts

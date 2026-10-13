@@ -59,12 +59,6 @@ agents:
         inputs:
             - SPEC.md
             - PLAN.md
-        mcp_servers:
-            gopls:
-                args:
-                    - mcp
-                command: gopls
-                cwd: .
         outputs:
             - STORY_LOG.md
         prompt: /ralph --path /runtime/task
@@ -113,6 +107,7 @@ agents:
               name: lint
             - mcp:
                 ref: gopls
+                exposure: deferred
               name: code-intelligence
             - command:
                 argv:
@@ -568,3 +563,20 @@ workflow:
 
                 Append DONE US-### only after the story's checks pass.
         version: 1
+
+mcps:
+    gopls:
+        description: Go workspace navigation, symbols, references, and diagnostics
+        connection:
+            transport: stdio
+            command:
+                argv: [gopls, mcp]
+                working_dir: /workspace
+            timeout_seconds: 60
+        lifecycle: attempt
+        tools:
+            discovery: all
+        requirements:
+            os: [linux]
+            arch: [amd64, arm64]
+            workspace: read-only

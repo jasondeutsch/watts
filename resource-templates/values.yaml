@@ -71,3 +71,20 @@ workflow:
 
                 Describe the requested change, constraints, and acceptance criteria.
         version: 1
+
+mcps:
+    gopls:
+        description: Go workspace navigation, symbols, references, and diagnostics
+        connection:
+            transport: stdio
+            command:
+                argv: [gopls, mcp]
+                working_dir: /workspace
+            timeout_seconds: 60
+        lifecycle: attempt
+        tools:
+            discovery: all
+        requirements:
+            os: [linux]
+            arch: [amd64, arm64]
+            workspace: read-only

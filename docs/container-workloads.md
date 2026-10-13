@@ -39,7 +39,7 @@ are added to the image environment.
 `input.json` contains `version: 1`, an opaque `execution` identity, `task`, `step`,
 `attempt`, optional `parameters`, hashed `inputs`, declared `outputs`, and
 `previous` result/feedback. Agents additionally receive an `agent` object with
-name, identity, provider, model, prompt, selected MCPs, and descriptive settings.
+name, identity, provider, model, prompt, resolved `mcp_services`, and descriptive settings. Selected MCP service configuration and scoped Secret bindings are pinned; credential values are supplied only at launch. The workload adapter must honor transport, discovery/consumer restrictions, request limits, and cleanup.
 The `task` field is a logical project identifier; use mounted paths for file access.
 
 The command reads its configuration, performs work, and writes `/outputs/result.json`:

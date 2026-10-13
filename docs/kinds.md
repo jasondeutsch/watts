@@ -9,7 +9,8 @@ and hyphens. References are bundle-local. A runnable bundle contains one Workflo
 | Workflow | Ordered placements, routing, and task scaffolds |
 | Procedure | Container execution, approval, or external-event wait |
 | Agent | A container workload with identity, model, prompt, skills, and MCP configuration |
-| ConfigMap | Named nonsecret defaults for Agent or Procedure specifications |
+| MCP | Reusable tool-service connection, lifecycle, discovery, and workload requirements |
+| ConfigMap | Named nonsecret defaults for Agent, Procedure, or MCP specifications |
 | Secret | Named worker environment-variable sources; never literal credentials |
 
 Agent specializes the executable Procedure contract. Watts runs both through
@@ -144,16 +145,12 @@ spec:
     secret: {name: credentials, key: api-key}
 ```
 
-Optional descriptive fields are `base_url`, `api`, `thinking`, `skills_dirs`,
-`mcps`, and `mcp_servers`. Watts sends these in the common input envelope;
-the image interprets them. Watts does not generate Pi settings or enforce a
-particular agent's tools. Skill paths must be available inside the image or a
-declared resource mount. `identity` is an evidence label, not authenticated access
-control. Build and review may use the same model.
-
-`mcps` selects names from `mcp_servers`. Each server may declare `command`,
-`args`, `cwd`, `env`, `url`, `headers`, `exposure`, and `description`. A local MCP
-executable belongs in the workload image. See the [Go example MCP guidance](../resources/examples/coder_golang/mcp/README.md).
+Optional descriptive fields are `base_url`, `api`, `thinking`, and `skills_dirs`.
+Watts sends these in the common input envelope; the image interprets them.
+Skill paths must be available inside the image or a declared resource mount.
+`identity` is an evidence label, not authenticated access control. Build and
+review may use the same model. MCP connections belong in named MCP resources;
+Agents select them through their `tools` entries.
 
 ## Agent tools, gates, and skills
 
@@ -185,11 +182,109 @@ skills:
 
 Command arguments are fixed arrays, not model-supplied shell strings. Scripts use an explicit interpreter. `working_dir` defaults to `/workspace` and must remain inside `/workspace` or `/runtime`; timeout defaults to 300 seconds and is capped at 86,400. Tools inherit workload permissions and explicitly bound environment/credentials. Native file/edit/shell tools remain an image policy; declaring these capabilities is not a complete sandbox or tool allowlist.
 
-An `mcp.ref` currently selects a name from the Agent's `mcp_servers`. It may expose multiple native MCP tools; it is a service selection, not a renamed single command. A separate MCP Kind is proposed in wiss-034. MCP gate predicates and model-selected command arguments are not supported yet.
+An `mcp.ref` selects a bundle-local MCP resource. It may expose multiple native tools. Optional `exposure` (`direct`, `deferred`, or `codemode`) selects how the image presents them; the Pi adapter defaults to `deferred`. `allow_tools`, when provided, must be a nonempty list of exact tool names; omission inherits the service policy. It narrows that policy and cannot broaden an MCP allowlist. Select each service only once per Agent; reuse across Agents is supported. Missing references, conflicting selections, and incompatible access requirements are errors. MCP gate predicates and model-selected command arguments are not supported yet.
 
 All declared gates are required and currently accept command-tool exit codes (default zero, configurable 0–255). The image executor runs them after Agent completion and returns failures for repair inside the same execution. `max_repairs` excludes the initial pass; omission allows two repairs, zero allows none, and the maximum is ten. Each command timeout and the enclosing stage deadline still apply. Gates must leave application files unchanged; a mutation invalidates the suite. Command results and a final workspace-bound gate report are required before Watts accepts publication.
 
 A skill selects one source: an absolute `image_path` outside workload mounts, or a `resource` key declared under `container.resources` plus a relative `path`. Captured resource hashes pin package-owned skills; the pinned image supplies image-owned skills. Source directories must exist when the executor loads them. The adapter exposes them through the runtime's native skill mechanism. These fields supplement the existing descriptive settings; the [Go example](../resources/examples/coder_golang/values.yaml) uses named skills and tools.
+
+## MCP
+
+```yaml
+kind: MCP
+schema_version: 1
+name: gopls
+spec:
+  description: Go workspace navigation and diagnostics
+  connection:
+    transport: stdio
+    command:
+      argv: [gopls, mcp]
+      working_dir: /workspace
+    timeout_seconds: 60
+  lifecycle: attempt
+  tools: {discovery: all}
+  requirements:
+    os: [linux]
+    arch: [amd64, arm64]
+    workspace: read-only
+---
+kind: Agent
+schema_version: 1
+name: builder
+spec:
+  # Other required Agent fields omitted from this excerpt.
+  tools:
+    - name: code-intelligence
+      mcp:
+        ref: gopls
+        exposure: deferred
+        allow_tools: [go_workspace, go_search]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `connection.transport` | `stdio` or `streamable-http`; legacy SSE is unsupported |
+| `connection.command` | Stdio `argv` and optional `working_dir`; executable belongs in the consumer image |
+| `connection.url` | External HTTP(S) endpoint, without URL credentials or fragment |
+| `connection.timeout_seconds` | Required 1–3600 seconds; bounded readiness probe and native request timeout |
+| `lifecycle` | `attempt` for stdio, `external` for remote endpoints |
+| `tools.discovery` | `all` discovers server tools; `allowlist` requires a nonempty `allow` of exact names |
+| `environment`, `secrets` | Stdio server literals and `{name, key}` Secret references |
+| `headers`, `header_secrets` | HTTP header literals and `{secret: {name, key}, prefix}` credential bindings |
+| `requirements` | Optional allowed workload `os`/`arch`, minimum `workspace` access, and outbound `network` requirement |
+| `config_ref` | ConfigMap supplying shallow defaults |
+
+Stdio runs inside the selected Agent image and inherits its workspace/container
+permissions. It does not use a host-installed program or an independently
+selected server image. `requirements.workspace` declares minimum access, not a
+new isolated mount: `none` imposes no workspace requirement, `read-only` works
+with either consumer mode, and `write` requires `container.workspace: write`.
+Remote endpoints and services requiring networking need `container.network:
+bridge`. OS/architecture checks use the actual workload image, not the Docker
+host; a macOS worker may therefore run Linux gopls normally. Remote requirements
+refer to the consuming client environment, not unverifiable remote-server facts.
+
+The current adapter probes initialize/tool discovery before invoking the model,
+fails on connection/authentication/timeout/unavailable-tool errors, and closes
+the probe. Pi's MCP library owns actual session connections, tool exposure,
+request handling, and process-group shutdown. A Ralph attempt can open multiple
+session connections; servers must support restart. Stdio children are confined
+to that attempt and stopped with their sessions/container. Watts does not stop
+an externally managed HTTP service. Shared execution-wide services, separately
+managed server containers, and interactive OAuth enrollment are not implemented;
+unsupported lifecycle values fail validation.
+
+For example, a remote service can bind credentials without embedding them:
+
+```yaml
+kind: MCP
+schema_version: 1
+name: team-docs
+spec:
+  connection:
+    transport: streamable-http
+    url: https://docs.example.com/mcp
+    timeout_seconds: 30
+  lifecycle: external
+  tools: {discovery: allowlist, allow: [search_docs]}
+  header_secrets:
+    Authorization:
+      secret: {name: team-credentials, key: docs-token}
+      prefix: 'Bearer '
+```
+
+The compiler resolves selected services into the pinned Agent input and records
+scoped credential-source bindings; the worker reads values only at launch. The
+adapter writes environment placeholders into private native configuration.
+Literal environment/headers cannot use `${...}` or `!command` interpolation;
+use Secret bindings instead. Pinning a remote URL/configuration does not freeze
+its implementation or responses. Tool exposure limits what the MCP client
+presents, not what an arbitrary trusted workload image could do. Credentials
+and native shell/file tools share that image's trust boundary; separate service
+isolation remains future runtime work.
+
+See the [Golang coder MCP example](../resources/examples/coder_golang/mcp/README.md).
 
 ## ConfigMap and Secret
 

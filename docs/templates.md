@@ -51,7 +51,7 @@ wctl template new go-team
 wctl template ./go-team
 ```
 
-The first command creates a new directory containing `watts.yaml`, `values.yaml`, and templates for Workflow, Agent, Procedure, ConfigMap, and Secret. The package and workflow names use the directory name. Use lowercase letters, digits, and hyphens, starting with a letter. Existing directories are never overwritten. No worker starts and no task is submitted.
+The first command creates a new directory containing `watts.yaml`, `values.yaml`, and templates for Workflow, Agent, Procedure, MCP, ConfigMap, and Secret. The package and workflow names use the directory name. Use lowercase letters, digits, and hyphens, starting with a letter. Existing directories are never overwritten. No worker starts and no task is submitted.
 
 Edit values and source templates to customize the package. The starter includes a builder Agent, a `go vet ./...` Procedure, shared Agent defaults, and an environment-backed Secret. It uses `OPENROUTER_API_KEY`; credentials are never written into the package.
 
@@ -87,7 +87,7 @@ wctl task new hello-world --package ./go-team/watts.yaml
 
 A project-root `watts.yaml` is the default selection. Task creation resolves the package, captures declared assets, and saves the task's workflow and package provenance. Existing tasks retain their resolved workflow. Rendering with `wctl template` is useful for inspection and does not install assets. Operational preferences belong in `.watts/settings.yaml`, separate from the portable package descriptor.
 
-The base values file contains `workflow: {name, spec}` and `agents`, `procedures`, `config_maps`, and `secrets` mappings keyed by resource name. Templates explicitly select and render the supported fields from each mapping; they do not insert whole specifications. The shipped `values.schema.json` rejects unsupported fields and invalid value types before rendering. Common inputs, outputs, checks, limits, and environment bindings use a shared `_contract.tpl` helper. Omit unused resource mappings or supply empty mappings. ConfigMap data and workflow parameters intentionally remain open mappings because those Kinds support user-defined data. See the [Go team example](../resources/examples/coder_golang/README.md) for a complete setup.
+The base values file contains `workflow: {name, spec}` and `agents`, `procedures`, `mcps`, `config_maps`, and `secrets` mappings keyed by resource name. Templates explicitly select and render the supported fields from each mapping; they do not insert whole specifications. The shipped `values.schema.json` rejects unsupported fields and invalid value types before rendering. Common inputs, outputs, checks, limits, and environment bindings use a shared `_contract.tpl` helper. Omit unused resource mappings or supply empty mappings. ConfigMap data and workflow parameters intentionally remain open mappings because those Kinds support user-defined data. See the [Go team example](../resources/examples/coder_golang/README.md) for a complete setup.
 
 ## Implementation boundary
 

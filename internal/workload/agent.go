@@ -20,7 +20,9 @@ type CommandTool struct {
 	TimeoutSeconds int      `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
 }
 type MCPTool struct {
-	Ref string `json:"ref" yaml:"ref"`
+	Ref        string   `json:"ref" yaml:"ref"`
+	Exposure   string   `json:"exposure,omitempty" yaml:"exposure,omitempty"`
+	AllowTools []string `json:"allow_tools,omitempty" yaml:"allow_tools,omitempty"`
 }
 type Gate struct {
 	Name   string          `json:"name" yaml:"name"`

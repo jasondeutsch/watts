@@ -62,7 +62,7 @@ func decodeDocument[T any](data []byte, kind string, defaults T) (Document[T], e
 }
 
 func Encode[T any](kind, name string, spec T) ([]byte, error) {
-	if kind != Project && kind != Workflow && kind != Procedure && kind != Agent && kind != ConfigMap && kind != Secret {
+	if kind != Project && kind != Workflow && kind != Procedure && kind != Agent && kind != ConfigMap && kind != Secret && kind != MCP {
 		return nil, fmt.Errorf("unsupported manifest kind %q", kind)
 	}
 	if strings.TrimSpace(name) == "" {

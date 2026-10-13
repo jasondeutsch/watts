@@ -4,6 +4,7 @@ import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSyn
 import { dirname, join, relative } from 'node:path';
 
 import { evaluateGates, recordEvent } from './tools.mjs';
+import { mcpConfigurations, verifyMCPs } from './mcp.mjs';
 
 const input = JSON.parse(readFileSync(process.env.WATTS_INPUT, 'utf8'));
 const settingsPath = '/inputs/config/launcher.json';
@@ -79,12 +80,8 @@ try {
     const provider = { baseUrl: settings.base_url, api: settings.api || 'openai-completions', apiKey: `$${settings.api_key_env}`, models: [{ id: agent.model, name: agent.model, reasoning: true, input: ['text'], contextWindow: 128000, maxTokens: 16000, ...options.model_config }] };
     writeFileSync(join(agentDirectory, 'models.json'), JSON.stringify({ providers: { [agent.provider]: provider } }), { mode: 0o600 });
   }
-  const servers = {};
-  for (const name of new Set([...(agent.mcps || []), ...(agent.tools || []).filter(tool => tool.mcp).map(tool => tool.mcp.ref)])) {
-    if (!settings.mcp_servers?.[name]) throw new Error(`MCP ${name} has no server configuration`);
-    servers[name] = { ...settings.mcp_servers[name] };
-    if (servers[name].cwd === '.') servers[name].cwd = '/workspace';
-  }
+  const servers = mcpConfigurations(agent, environment);
+  await verifyMCPs(agent, servers, environment, event);
   writeFileSync(join(agentDirectory, 'mcp.json'), JSON.stringify({ mcpServers: servers }), { mode: 0o600 });
   const args = ['--mode', 'json', '--print', '--offline', '--no-approve', '--no-context-files', '--no-extensions', '--provider', agent.provider, '--model', agent.model, '--session-dir', sessionDirectory, '-e', '/opt/watts/telemetry.ts', '-e', '/opt/watts/tools.ts'];
   if (settings.thinking) args.push('--thinking', settings.thinking);

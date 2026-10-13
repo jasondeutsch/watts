@@ -311,7 +311,7 @@ Workers currently serve one project and depend on local storage. Define a worker
 
 ### wiss-016: Typed workflow resources and compiled execution packages
 
-Workflow, Procedure, Agent, ConfigMap, and Secret parsing/rendering are implemented, as are reference/default resolution, captured assets, and pinned local execution definitions. Agent/tool behavior remains image-owned. See [Kinds](docs/kinds.md).
+Workflow, Procedure, Agent, MCP, ConfigMap, and Secret parsing/rendering are implemented, as are reference/default resolution, captured assets, and pinned local execution definitions. Agent/tool behavior remains image-owned. See [Kinds](docs/kinds.md).
 
 Remaining work:
 
@@ -320,24 +320,21 @@ Remaining work:
 - Extend configuration and secret sources only for concrete needs, including protected files or managed stores, scoped delivery, and rotation/revocation. Keep secret values out of packages/history.
 - Define compile/apply interfaces and schema/runtime compatibility. Resource definitions remain separate from execution records; continuous reconciliation is not implied.
 
-### wiss-034: MCP Kind for reusable tool services
+### wiss-034: MCP service lifecycle and deployment extensions
 
-Introduce **Kind: MCP** as a named, reusable tool-service resource. Agents reference the service instead of embedding its connection and deployment details in each Agent's `mcp_servers` configuration. The current [Go example](resources/examples/coder_golang/mcp/README.md) embeds gopls directly; it should demonstrate the new reference model.
+**Implemented foundation:** Kind MCP defines a reusable connection, discovery policy, workload requirements, ConfigMap defaults, and Secret bindings. Agents select it through named tools with per-consumer exposure/allowlists. Selected services resolve into pinned inputs with scoped launch bindings; gopls is a separate MCP resource in Golang coder. The image adapter uses Pi's existing MCP library. Parser/renderer/round-trip tests and native gopls/HTTP integration cover reuse, credentials, tool restrictions, readiness, authentication errors, deadlines, cancellation, and process cleanup without model calls.
 
-Think of the resource as a virtual service boundary, optionally implemented by a gateway/BFF. It describes the MCP interface, configuration, and execution constraints independently of whether Watts, the team, or a third party supplies it. Ownership/provenance may inform policy, but must not require a different Kind or Agent integration. A virtual service does not necessarily require Watts to proxy every call or launch another container.
+Current scopes are attempt-local stdio inside the consuming Agent image and externally managed streamable HTTP. Workload OS/architecture, workspace, and network requirements are checked; unsupported transport/lifecycle values are rejected. Tool exposure is client policy within a trusted image, not independent service isolation.
 
-Acceptance criteria:
+Remaining work:
 
-- Define and validate an MCP resource schema covering connection/transport, configuration, declared tools or discovery policy, and platform requirements. Distinguish an externally managed endpoint from a Watts-managed server.
-- Support explicit Agent references with validation of missing services and conflicting names. Allow reuse across Agents while retaining per-consumer tool exposure and access restrictions.
-- Represent local stdio servers and remote MCP endpoints without assuming a host-installed executable. Declare managed-server image/command and location requirements where applicable; make workspace access, networking, OS/architecture constraints, and required capabilities explicit.
-- Define service lifecycle and scope: per attempt, shared within an execution, or externally managed. Specify readiness, timeouts, failure reporting, cancellation, and cleanup; service lifetime must not create another workflow engine.
-- Reuse ConfigMap/Secret bindings for configuration and credentials. Resolve scoped consumer bindings without storing credential values in rendered packages, logs, or Temporal history.
-- Compile references into resolved execution inputs, recording service/configuration identity and runtime bindings. Pin what Watts controls; do not imply that pinning a remote endpoint freezes its implementation or responses.
-- Fail clearly when a selected backend cannot satisfy a service's requirements. Distinguish connection, authentication, unavailable tools, and platform incompatibility from agent/model errors.
-- Keep native client integration in workload images/adapters rather than introduce Pi-specific code in core. Add templates, values/schema support, documentation, and a Golang coder gopls example, with tests for reuse, bindings, lifecycle, and unsupported platforms.
+- Define separately managed MCP workloads with their own image/command, identity, workspace bindings, and readiness contract. Choose supported placement/backends explicitly; do not fall back to host executables.
+- Support shared execution-wide service scopes when needed, including concurrent consumers, access policy, cancellation ownership, cleanup, and interrupted-worker recovery. Temporal still owns workflow execution.
+- Add independently isolated service credentials/workspace access rather than relying on co-location within an Agent's container.
+- Define remote credential enrollment/refresh where required; interactive OAuth is not part of the current noninteractive adapter.
+- Evaluate model-selected gopls use in a fresh workflow run; native protocol/tool integration tests do not establish that an Agent uses the service effectively.
 
-This resource describes MCPs **used by workloads**. It is distinct from wiss-010, which exposes Watts operations to coordinator clients. Coordinate with wiss-013, wiss-016, and wiss-027 for managed services and distributed placement. Transport details, gateway behavior, and the initial supported lifecycle scopes need design before implementation.
+The resource abstracts workload tool services independently of ownership. It is distinct from wiss-010, which exposes Watts operations to coordinators. Coordinate managed/shared lifecycle work with wiss-013, wiss-016, wiss-027, and context delivery under wiss-033.
 
 ### wiss-028: Separate Watts packages, task executions, and worker runtime
 

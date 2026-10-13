@@ -1,24 +1,50 @@
-# Golang coder MCP configuration
+# Golang coder MCP service
 
-The gopls connection is defined in [values.yaml](../values.yaml), under `agents.build.mcp_servers.gopls`. The same Agent selects it through `tools: [{name: code-intelligence, mcp: {ref: gopls}}]`. There is no separate MCP configuration fragment to merge into a project descriptor.
+[values.yaml](../values.yaml) defines `mcps.gopls`, rendered as **Kind: MCP** by
+[50-mcps.yaml.gotmpl](../templates/50-mcps.yaml.gotmpl). The build Agent selects
+that resource through `tools[].mcp.ref: gopls`; connection details are not
+embedded in the Agent.
 
 ```yaml
+mcps:
+  gopls:
+    description: Go workspace navigation, symbols, references, and diagnostics
+    connection:
+      transport: stdio
+      command:
+        argv: [gopls, mcp]
+        working_dir: /workspace
+      timeout_seconds: 60
+    lifecycle: attempt
+    tools: {discovery: all}
+    requirements:
+      os: [linux]
+      arch: [amd64, arm64]
+      workspace: read-only
 agents:
   build:
     tools:
       - name: code-intelligence
-        mcp: {ref: gopls}
-    mcp_servers:
-      gopls:
-        command: gopls
-        args: [mcp]
-        cwd: .
+        mcp: {ref: gopls, exposure: deferred}
 ```
 
-This is an excerpt, not a consumer override replacing the entire tool list. A full list override must retain the command tools referenced by the Agent's gates or change those gates too.
+This is an excerpt, not an override replacing the entire builder tool list.
+List overrides must retain the command tools referenced by its required gates.
+Another Agent can select the same resource with its own exposure and narrower
+`allow_tools` list. An MCP service allowlist sets the maximum exposed tool set;
+consumer selections cannot widen it.
 
-The example team image installs gopls v0.23.0 with MCP support; see the [Go instructions](https://go.dev/gopls/features/mcp). It runs over stdio inside the container from `/workspace`. Teams may override the connection and selection in their own values file. To remove MCP use from the builder, replace `agents.build.tools` with the desired command tools, omitting the MCP entry. List overrides replace the entire list.
+The [team image](../../../../registry/coder_golang/Dockerfile) supplies gopls.
+The MCP server runs in the Agent's candidate `/workspace`, inside Linux even
+when Docker is hosted on macOS. No host installation or project `.pi/mcp.json`
+is needed. The adapter uses Pi's existing MCP library, checks readiness and
+selected tool availability before the model starts, and closes attempt-local
+sessions. The current backend does not launch a separate gopls container or
+share its process across workflow stages.
 
-The Pi/Ralph image prepares selected connections in `/runtime/pi/mcp.json`; Ralph children inherit them. This is image behavior, not worker or template logic. The resolved task captures the connection configuration.
-
-Verify an actual gopls tool call in a builder transcript. Interactive registration alone does not establish that workflow execution used the server. This example's model-backed MCP execution has not yet been verified.
+Change connection/policy values before creating a task; existing task definitions
+remain pinned. For transports, Secret bindings, restrictions, and runtime limits,
+see [MCP manifest fields](../../../../docs/kinds.md#mcp). Real gopls tool calls,
+remote HTTP auth, allowlist exposure, timeout, cancellation, and process cleanup
+have deterministic integration coverage without provider/model calls. Actual
+model choices about when to use gopls remain subject to workflow evaluation.

@@ -50,6 +50,17 @@ func (runtime *activityRuntime) prepareWorkspace(engine *containerengine.Engine,
 	if err = json.Unmarshal(input, &envelope); err != nil {
 		return err
 	}
+	if envelope.Agent != nil && len(envelope.Agent.MCPServices) > 0 {
+		operatingSystem, architecture, err := engine.Platform(runtime.context, image)
+		if err != nil {
+			return err
+		}
+		for name, service := range envelope.Agent.MCPServices {
+			if err := service.ValidatePlatform(operatingSystem, architecture); err != nil {
+				return fmt.Errorf("MCP %s: platform: %w", name, err)
+			}
+		}
+	}
 	for _, artifact := range envelope.Inputs {
 		data, mode, err := workload.ReadFile(runtime.project.Root, filepath.Join(runtime.request.Input.Task, artifact.Path), workload.MaximumFileBytes)
 		if err != nil {

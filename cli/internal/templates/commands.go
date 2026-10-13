@@ -97,7 +97,7 @@ func New(a *terminal.Context, args []string) error {
 	if err := workflowpackage.Scaffold(directory); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.Output, "Created %s with watts.yaml, values.yaml, and templates for Workflow, Agent, Procedure, ConfigMap, and Secret.\n", directory)
+	fmt.Fprintf(a.Output, "Created %s with watts.yaml, values.yaml, and templates for Workflow, Agent, Procedure, MCP, ConfigMap, and Secret.\n", directory)
 	return nil
 }
 

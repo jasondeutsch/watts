@@ -45,3 +45,22 @@ The launcher loads named skill sources and exposes fixed command tools using an 
 After the Agent finishes, the launcher runs required gates against the final candidate. Failure returns detailed feedback to a new bounded repair pass in the same container/workspace. Every pass reruns all gates; exhaustion fails without publishing application changes. The final gate report binds checks to candidate hashes/modes and is validated by Watts before publication. `gate_policy.max_repairs` defaults to two. Ralph helper metadata is prepared privately; repair loop history remains under `/runtime/ralph-history`.
 
 Declared command tools/gates use the image's original PATH, excluding Pi's private binary overrides. This does not prohibit all installations or constrain native shell access; stronger workload policy remains separate work. The image implements the generic [Agent capability contract](../../docs/container-workloads.md#agent-capabilities-and-gate-evidence).
+
+## MCP resource adapter
+
+`mcp.mjs` translates resolved `agent.mcp_services` into private Pi MCP settings.
+It uses the MCP library bundled with pinned Pi for initialize/discovery probes;
+it does not implement the protocol. Exact service/consumer allowlists become
+native tool-exposure restrictions, and Secret placeholders keep credential values
+out of configuration/evidence. Readiness errors identify connection, authentication,
+timeout, missing tools, or platform mismatch before model invocation.
+
+Pi owns session connections and stdio process-group cleanup; the probe is always
+closed. Stdio services run inside this image/derived images, with per-attempt
+scope. External streamable HTTP endpoints are not launched or stopped by Watts.
+See [MCP fields](../../docs/kinds.md#mcp) for scope and isolation limits.
+
+Run adapter unit tests with `node --test registry/pi_ralph/mcp.test.mjs`.
+For native integration, mount this directory at `/test`, a small Go module at
+`/workspace`, and run `node --test /test/mcp.integration.test.mjs` inside
+`watts/coder-golang:0.1.0` with `WATTS_MCP_INTEGRATION=1`. No model calls are made.

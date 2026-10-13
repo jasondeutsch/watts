@@ -19,6 +19,12 @@
 {{ with (get . "mcp") }}
       mcp:
         ref: {{ .ref | quote }}
+{{ if hasKey . "exposure" }}
+        exposure: {{ .exposure | quote }}
+{{ end }}
+{{ if hasKey . "allow_tools" }}
+        allow_tools: {{ .allow_tools | toYaml | nindent 10 }}
+{{ end }}
 {{ end }}
 {{ end }}
 {{ end }}

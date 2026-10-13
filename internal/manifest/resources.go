@@ -16,6 +16,7 @@ const Procedure = "Procedure"
 const Agent = "Agent"
 const ConfigMap = "ConfigMap"
 const Secret = "Secret"
+const MCP = "MCP"
 
 // Reference identifies an authoring resource, not a running execution.
 type Reference struct {
@@ -79,18 +80,16 @@ type AgentSpec struct {
 	Skills     []workload.Skill     `yaml:"skills,omitempty"`
 	GatePolicy *workload.GatePolicy `yaml:"gate_policy,omitempty"`
 	Contract   `yaml:",inline"`
-	Identity   string                             `yaml:"identity"`
-	Provider   string                             `yaml:"provider"`
-	Model      string                             `yaml:"model"`
-	Prompt     string                             `yaml:"prompt"`
-	Auth       *Auth                              `yaml:"auth,omitempty"`
-	BaseURL    string                             `yaml:"base_url,omitempty"`
-	API        string                             `yaml:"api,omitempty"`
-	Thinking   string                             `yaml:"thinking,omitempty"`
-	SkillsDirs []string                           `yaml:"skills_dirs,omitempty"`
-	MCPs       []string                           `yaml:"mcps,omitempty"`
-	MCPServers map[string]orchestration.MCPServer `yaml:"mcp_servers,omitempty"`
-	ConfigRef  string                             `yaml:"config_ref,omitempty"`
+	Identity   string   `yaml:"identity"`
+	Provider   string   `yaml:"provider"`
+	Model      string   `yaml:"model"`
+	Prompt     string   `yaml:"prompt"`
+	Auth       *Auth    `yaml:"auth,omitempty"`
+	BaseURL    string   `yaml:"base_url,omitempty"`
+	API        string   `yaml:"api,omitempty"`
+	Thinking   string   `yaml:"thinking,omitempty"`
+	SkillsDirs []string `yaml:"skills_dirs,omitempty"`
+	ConfigRef  string   `yaml:"config_ref,omitempty"`
 }
 
 type ConfigMapSpec struct {
@@ -126,7 +125,7 @@ func ParseResources(data []byte) (Bundle, error) {
 			return bundle, fmt.Errorf("resource document %d: %w", len(bundle.Resources)+1, err)
 		}
 		switch resource.Kind {
-		case Workflow, Procedure, Agent, ConfigMap, Secret:
+		case Workflow, Procedure, Agent, ConfigMap, Secret, MCP:
 		default:
 			return bundle, fmt.Errorf("unsupported resource kind %q", resource.Kind)
 		}
@@ -214,6 +213,21 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 			secrets[resource.Name] = spec.Env
 		}
 	}
+	services := map[string]workload.MCPService{}
+	for _, original := range bundle.Resources {
+		if original.Kind != MCP {
+			continue
+		}
+		resource := original
+		if err := applyConfig(&resource, configs); err != nil {
+			return orchestration.Definition{}, err
+		}
+		service, err := compileMCP(resource, secrets)
+		if err != nil {
+			return orchestration.Definition{}, fmt.Errorf("MCP %s: %w", resource.Name, err)
+		}
+		services[resource.Name] = service
+	}
 	for _, original := range bundle.Resources {
 		resource := original
 		switch resource.Kind {
@@ -230,7 +244,7 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 			if err := applyConfig(&resource, configs); err != nil {
 				return orchestration.Definition{}, err
 			}
-			step, err := compileWork(resource, secrets)
+			step, err := compileWork(resource, secrets, services)
 			if err != nil {
 				return orchestration.Definition{}, err
 			}
@@ -245,6 +259,9 @@ func (bundle Bundle) resolve(requireWorkflow bool) (orchestration.Definition, er
 	}
 	definition := orchestration.Definition{Version: workflow.Version, Templates: workflow.Templates, MaxTransitions: workflow.MaxTransitions}
 	for _, placement := range workflow.Steps {
+		if placement.Use.Kind != Agent && placement.Use.Kind != Procedure {
+			return definition, fmt.Errorf("step %s must use Agent or Procedure, found %s", placement.Name, placement.Use.Kind)
+		}
 		step, ok := work[placement.Use]
 		if !ok {
 			return definition, fmt.Errorf("step %s references unknown %s %s", placement.Name, placement.Use.Kind, placement.Use.Name)
@@ -293,7 +310,7 @@ func applyConfig(resource *Resource, configs map[string]map[string]any) error {
 	return resource.Spec.Encode(merged)
 }
 
-func compileWork(resource Resource, secrets map[string]map[string]string) (orchestration.Step, error) {
+func compileWork(resource Resource, secrets map[string]map[string]string, services map[string]workload.MCPService) (orchestration.Step, error) {
 	step := orchestration.Step{Name: resource.Name}
 	var contract Contract
 	if resource.Kind == Agent {
@@ -307,8 +324,8 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 		step.Agent = resource.Name
 		step.Tools, step.Gates, step.Skills, step.GatePolicy = spec.Tools, spec.Gates, spec.Skills, spec.GatePolicy
 		step.Identity = spec.Identity
-		step.Provider, step.Model, step.Prompt, step.MCPs = spec.Provider, spec.Model, spec.Prompt, spec.MCPs
-		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API, MCPServers: spec.MCPServers}
+		step.Provider, step.Model, step.Prompt = spec.Provider, spec.Model, spec.Prompt
+		step.AgentSettings = &orchestration.AgentSettings{Thinking: spec.Thinking, SkillsDirs: spec.SkillsDirs, BaseURL: spec.BaseURL, API: spec.API}
 		contract = spec.Contract
 		if spec.Auth != nil {
 			if contract.Secrets == nil {
@@ -379,8 +396,11 @@ func compileWork(resource Resource, secrets map[string]map[string]string) (orche
 	}
 
 	if step.Agent != "" {
+		if err := bindMCPs(&step, services); err != nil {
+			return step, err
+		}
 		mcps := map[string]bool{}
-		for name := range step.AgentSettings.MCPServers {
+		for name := range step.MCPServices {
 			mcps[name] = true
 		}
 		if err := workload.ValidateAgentCapabilities(step.Tools, step.Gates, step.Skills, step.GatePolicy, step.Container.Resources, mcps); err != nil {

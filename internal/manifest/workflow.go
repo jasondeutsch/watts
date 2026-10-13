@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"maps"
+	"reflect"
+	"slices"
 
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/workload"
 	"gopkg.in/yaml.v3"
 )
 
@@ -59,6 +63,7 @@ func LoadWorkflow(data []byte) (Document[orchestration.Definition], error) {
 func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, error) {
 	workflow := WorkflowSpec{Version: definition.Version, Templates: definition.Templates, MaxTransitions: definition.MaxTransitions}
 	documents := []any{}
+	services := map[string]workload.MCPService{}
 	for _, step := range definition.Steps {
 		kind := Procedure
 		contract := Contract{Container: step.Container, Inputs: step.Inputs, Outputs: step.Outputs, Checks: step.Checks, PreChecks: step.PreChecks, TimeoutSeconds: step.TimeoutSeconds, MaxAttempts: step.MaxAttempts, Environment: step.Environment}
@@ -75,14 +80,13 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 		var spec any
 		if step.Agent != "" {
 			kind = Agent
-			agent := AgentSpec{Contract: contract, Identity: step.Identity, Provider: step.Provider, Model: step.Model, Prompt: step.Prompt, MCPs: step.MCPs}
+			agent := AgentSpec{Contract: contract, Identity: step.Identity, Provider: step.Provider, Model: step.Model, Prompt: step.Prompt}
 			agent.Tools, agent.Gates, agent.Skills, agent.GatePolicy = step.Tools, step.Gates, step.Skills, step.GatePolicy
 			if agent.Identity == "" {
 				agent.Identity = step.Agent
 			}
 			if settings := step.AgentSettings; settings != nil {
 				agent.Thinking, agent.SkillsDirs, agent.BaseURL, agent.API = settings.Thinking, settings.SkillsDirs, settings.BaseURL, settings.API
-				agent.MCPServers = settings.MCPServers
 				if settings.APIKeyEnv != "" {
 					ref, ok := agent.Secrets[settings.APIKeyEnv]
 					if !ok {
@@ -91,6 +95,21 @@ func EncodeWorkflow(name string, definition orchestration.Definition) ([]byte, e
 					agent.Auth = &Auth{Secret: ref, Env: settings.APIKeyEnv}
 					delete(agent.Secrets, settings.APIKeyEnv)
 				}
+			}
+			for _, serviceName := range slices.Sorted(maps.Keys(step.MCPServices)) {
+				service := step.MCPServices[serviceName]
+				if existing, ok := services[serviceName]; ok {
+					if !reflect.DeepEqual(existing, service) {
+						return nil, fmt.Errorf("conflicting MCP resource %s", serviceName)
+					}
+					continue
+				}
+				serviceSpec, err := encodeMCP(serviceName, service, step)
+				if err != nil {
+					return nil, err
+				}
+				documents = append(documents, Document[MCPSpec]{Kind: MCP, SchemaVersion: SchemaVersion, Name: serviceName, Spec: serviceSpec})
+				services[serviceName] = service
 			}
 			spec = agent
 		} else {

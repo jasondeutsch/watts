@@ -40,17 +40,17 @@ type StepInput struct {
 
 // AgentInput is descriptive configuration. Only the workload image interprets it.
 type AgentInput struct {
-	Tools      []workload.Tool              `json:"tools,omitempty"`
-	Gates      []workload.Gate              `json:"gates,omitempty"`
-	Skills     []workload.Skill             `json:"skills,omitempty"`
-	GatePolicy *workload.GatePolicy         `json:"gate_policy,omitempty"`
-	Name       string                       `json:"name"`
-	Identity   string                       `json:"identity"`
-	Provider   string                       `json:"provider"`
-	Model      string                       `json:"model"`
-	Prompt     string                       `json:"prompt"`
-	MCPs       []string                     `json:"mcps,omitempty"`
-	Settings   *orchestration.AgentSettings `json:"settings,omitempty"`
+	MCPServices map[string]workload.MCPService `json:"mcp_services,omitempty"`
+	Tools       []workload.Tool                `json:"tools,omitempty"`
+	Gates       []workload.Gate                `json:"gates,omitempty"`
+	Skills      []workload.Skill               `json:"skills,omitempty"`
+	GatePolicy  *workload.GatePolicy           `json:"gate_policy,omitempty"`
+	Name        string                         `json:"name"`
+	Identity    string                         `json:"identity"`
+	Provider    string                         `json:"provider"`
+	Model       string                         `json:"model"`
+	Prompt      string                         `json:"prompt"`
+	Settings    *orchestration.AgentSettings   `json:"settings,omitempty"`
 }
 
 func (app *Service) stepInputPath(request orchestration.ActivityInput) string {
@@ -76,7 +76,7 @@ func (runtime *activityRuntime) prepareInput() (StepInput, error) {
 	}
 	input := StepInput{Version: 1, Execution: runtime.executionIdentity(), Task: request.Input.Task, Step: request.Step.Name, Attempt: request.Attempt, Parameters: request.Step.Parameters, Inputs: artifacts, Outputs: request.Step.Outputs, Previous: request.Previous}
 	if request.Step.Agent != "" {
-		input.Agent = &AgentInput{Tools: request.Step.Tools, Gates: request.Step.Gates, Skills: request.Step.Skills, GatePolicy: request.Step.GatePolicy, Name: request.Step.Agent, Identity: request.Step.Identity, Provider: request.Step.Provider, Model: request.Step.Model, Prompt: request.Step.Prompt, MCPs: request.Step.MCPs, Settings: request.Step.AgentSettings}
+		input.Agent = &AgentInput{MCPServices: request.Step.MCPServices, Tools: request.Step.Tools, Gates: request.Step.Gates, Skills: request.Step.Skills, GatePolicy: request.Step.GatePolicy, Name: request.Step.Agent, Identity: request.Step.Identity, Provider: request.Step.Provider, Model: request.Step.Model, Prompt: request.Step.Prompt, Settings: request.Step.AgentSettings}
 	}
 	return input, storage.WriteJSONAtomically(runtime.project.stepInputPath(request), input)
 }

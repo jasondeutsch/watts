@@ -4,7 +4,7 @@ Watts separates authoring, durable orchestration, generic execution, and image-o
 agent behavior. The CLI and web UI call the application layer; neither owns a runner.
 
 1. A local package captures descriptors, values, templates, schemas, and assets.
-2. Rendering produces typed Workflow, Agent, Procedure, ConfigMap, and Secret resources.
+2. Rendering produces typed Workflow, Agent, Procedure, MCP, ConfigMap, and Secret resources.
 3. Compilation resolves references/defaults into a graph and workload contracts.
 4. Submission freezes image identities, resources, and worker preferences.
 5. Temporal schedules activities and retains routes, waits, attempts, and outcomes.

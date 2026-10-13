@@ -1,0 +1,81 @@
+{{ range $name, $settings := (get .Values "mcps" | default dict) }}
+---
+kind: MCP
+schema_version: 1
+name: {{ $name | quote }}
+spec:
+{{ if hasKey $settings "config_ref" }}
+  config_ref: {{ $settings.config_ref | quote }}
+{{ end }}
+{{ if hasKey $settings "description" }}
+  description: {{ $settings.description | quote }}
+{{ end }}
+{{ if hasKey $settings "connection" }}
+  connection:
+{{ with $settings.connection }}
+    transport: {{ .transport | quote }}
+    timeout_seconds: {{ .timeout_seconds }}
+{{ if hasKey . "url" }}
+    url: {{ .url | quote }}
+{{ end }}
+{{ with (get . "command") }}
+    command:
+      argv: {{ .argv | toYaml | nindent 8 }}
+{{ if hasKey . "working_dir" }}
+      working_dir: {{ .working_dir | quote }}
+{{ end }}
+{{ end }}
+{{ end }}
+{{ end }}
+{{ if hasKey $settings "lifecycle" }}
+  lifecycle: {{ $settings.lifecycle | quote }}
+{{ end }}
+{{ with (get $settings "tools") }}
+  tools:
+    discovery: {{ .discovery | quote }}
+{{ if hasKey . "allow" }}
+    allow: {{ .allow | toYaml | nindent 6 }}
+{{ end }}
+{{ end }}
+{{ with (get $settings "requirements") }}
+  requirements:
+{{ if hasKey . "os" }}
+    os: {{ .os | toYaml | nindent 6 }}
+{{ end }}
+{{ if hasKey . "arch" }}
+    arch: {{ .arch | toYaml | nindent 6 }}
+{{ end }}
+{{ if hasKey . "workspace" }}
+    workspace: {{ .workspace | quote }}
+{{ end }}
+{{ if hasKey . "network" }}
+    network: {{ .network }}
+{{ end }}
+{{ end }}
+{{ if hasKey $settings "environment" }}
+  environment: {{ $settings.environment | toYaml | nindent 4 }}
+{{ end }}
+{{ if hasKey $settings "headers" }}
+  headers: {{ $settings.headers | toYaml | nindent 4 }}
+{{ end }}
+{{ with (get $settings "secrets") }}
+  secrets:
+{{ range $target, $reference := . }}
+    {{ $target | quote }}:
+      name: {{ $reference.name | quote }}
+      key: {{ $reference.key | quote }}
+{{ end }}
+{{ end }}
+{{ with (get $settings "header_secrets") }}
+  header_secrets:
+{{ range $header, $binding := . }}
+    {{ $header | quote }}:
+      secret:
+        name: {{ $binding.secret.name | quote }}
+        key: {{ $binding.secret.key | quote }}
+{{ if hasKey $binding "prefix" }}
+      prefix: {{ $binding.prefix | quote }}
+{{ end }}
+{{ end }}
+{{ end }}
+{{ end }}

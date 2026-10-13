@@ -1,6 +1,6 @@
 # Base resource templates
 
-This package renders all five Watts [Kinds](../docs/kinds.md): Workflow, Agent, Procedure, ConfigMap, and Secret. Start from [values.yaml](values.yaml) and supply team overrides rather than editing the templates.
+This package renders all six Watts [Kinds](../docs/kinds.md): Workflow, Agent, Procedure, MCP, ConfigMap, and Secret. Start from [values.yaml](values.yaml) and supply team overrides rather than editing the templates.
 
 ```sh
 wctl template new team-workflow
@@ -15,9 +15,12 @@ Scaffolding uses this package's descriptor, values, and templates as its source.
 | `workflow` | `name` and `spec`, including ordered steps and routes |
 | `agents` | Resource names mapped to Agent specifications |
 | `procedures` | Resource names mapped to Procedure specifications |
+| `mcps` | Named tool services with connection, lifecycle, tool policy, and requirements |
 | `config_maps` | Resource names mapped to `{data: ...}` specifications |
 | `secrets` | Resource names mapped to `{env: ...}` credential-source specifications |
 
-Templates render explicit fields rather than accepting a whole resource specification as opaque YAML. The bundled `values.schema.json` checks configurable fields; unsupported properties fail before rendering. `_contract.tpl` shares execution-contract fields between Agents and Procedures; `_agent.tpl` renders named tools, gates, repair policy, and skill sources. Unused resource mappings may be omitted or empty. Shared defaults use `config_ref`; explicit fields on an Agent or Procedure replace those defaults. Credentials are environment source names, never key contents. These templates generate manifests rather than execution containers.
+Templates render explicit fields rather than accepting a whole resource specification as opaque YAML. The bundled `values.schema.json` checks configurable fields; unsupported properties fail before rendering. `_contract.tpl` shares execution-contract fields between Agents and Procedures; `_agent.tpl` renders named tools, gates, repair policy, and skill sources. Unused resource mappings may be omitted or empty. Shared defaults use `config_ref`; explicit fields on an Agent, Procedure, or MCP replace those defaults. Credentials are environment source names, never key contents. These templates generate manifests rather than execution containers.
 
 The default example builds from the task specification and runs `go vet ./...`. The [Golang coder package](../resources/examples/coder_golang/README.md) demonstrates a fuller SDLC, lint configuration, skills, and MCP tools. See [templating](../docs/templates.md) for merging values, output behavior, and validation.
+
+The starter includes an unselected gopls MCP as a configuration example. It does not connect unless an Agent tool references it; that Agent image must contain gopls.

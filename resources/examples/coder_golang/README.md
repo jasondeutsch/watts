@@ -9,10 +9,10 @@ A configurable example for Go business applications and web services. The templa
 - Workflow order, routes, approval gates, and task document scaffolding.
 - Agent identities, prompts, container image selection, and private Ralph configuration.
 - Model, provider, reasoning settings, and environment-backed credential references.
-- Agent checks, skills, and the builder's gopls MCP connection.
+- Agent checks, skills, and the reusable gopls MCP resource and builder selection.
 - Callable build/test/vet/lint tools and formal gates inside the build Agent; approval waits remain Procedures.
 
-[templates/](templates/) explicitly renders Workflow placements and routes, Agent container and descriptive tool configuration, Procedure execution, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution uses the common container contract. The values select the Pi/Ralph image; another image can implement the same interface.
+[templates/](templates/) explicitly renders Workflow placements and routes, Agent container and descriptive tool configuration, Procedure execution, MCP connection/lifecycle/tool policy, ConfigMap data, and Secret source bindings. `_contract.tpl` shares inputs, outputs, checks, limits, and environment bindings between Agents and Procedures. [values.schema.json](values.schema.json) validates configurable fields and rejects typos before rendering. Empty resource mappings produce no resources of that Kind. Change the values to select different tools or define different work; rendering itself does not require Pi, Ralph, or model credentials. Execution uses the common container contract. The values select the Pi/Ralph image; another image can implement the same interface.
 
 [watts.yaml](watts.yaml) identifies the package, selects its values and templates, and declares scripts, skills, and lint configuration as assets. It contains no agent or tool selection. Keep credential values outside the package.
 
@@ -71,7 +71,7 @@ The team image contains Pi, Ralph, Go, gopls, and golangci-lint. The currently s
 
 The [lint script](scripts/lint.sh) explicitly uses [.golangci.yml](.golangci.yml), preserves diagnostics and exit status, and does not automatically fix files. The [builder skill](skills/go-builder/SKILL.md) includes attribution and the MIT notice for guidance derived from samber/cc-skills-golang.
 
-This example's model-backed MCP execution has not been verified, and the workflow is not an evaluated benchmark. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare configurations over time.
+Real MCP readiness/tool calls and transport behavior have deterministic integration coverage. Model-selected MCP use has not been verified, and the workflow is not a performance benchmark. Use the [Go workflow eval](../../../evals/go-workflow/README.md) to compare configurations over time.
 
 ### Agent capability configuration
 

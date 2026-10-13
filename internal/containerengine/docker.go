@@ -40,6 +40,15 @@ func (engine *Engine) Pin(ctx context.Context, ref string) (string, error) {
 	return data.ID, nil
 }
 
+// Platform describes the workload image, not the machine hosting Docker.
+func (engine *Engine) Platform(ctx context.Context, ref string) (string, string, error) {
+	image, _, err := engine.client.ImageInspectWithRaw(ctx, ref)
+	if err != nil {
+		return "", "", err
+	}
+	return image.Os, image.Architecture, nil
+}
+
 type Request struct {
 	Identity                                      string
 	Spec                                          workload.Spec

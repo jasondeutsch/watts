@@ -122,7 +122,7 @@ func TestTemplatesForEveryKindAndCoderGolang(t *testing.T) {
 			for _, resource := range bundle.Resources {
 				kinds[resource.Kind] = true
 			}
-			require.Len(t, kinds, 5)
+			require.Len(t, kinds, 6)
 			definition, err := bundle.Compile()
 			require.NoError(t, err)
 			require.NotEmpty(t, definition.Steps)
@@ -183,8 +183,6 @@ spec:
       command: {argv: [lint], timeout_seconds: 30}
     - name: symbols
       mcp: {ref: gopls}
-  mcp_servers:
-    gopls: {command: gopls, args: [mcp]}
   gates:
     - name: lint-clean
       tool: lint
@@ -193,6 +191,17 @@ spec:
   skills:
     - name: team-guidance
       source: {resource: team, path: skills/go}
+---
+kind: MCP
+schema_version: 1
+name: gopls
+spec:
+  connection:
+    transport: stdio
+    command: {argv: [gopls, mcp]}
+    timeout_seconds: 30
+  lifecycle: attempt
+  tools: {discovery: all}
 `)
 	definition, err := manifest.CompileWorkflow(data)
 	require.NoError(t, err)

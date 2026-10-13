@@ -226,13 +226,16 @@ func TestCoderGolangValuesControlExplicitManifestFields(t *testing.T) {
       - name: team-lint-passes
         tool: team-lint
         expect: {exit_code: 0}
-    mcp_servers:
-      symbols:
-        command: team-language-server
-        args: [serve]
-        cwd: .
     checks:
       - command: [team-check, --team]
+mcps:
+  symbols:
+    connection:
+      transport: stdio
+      command: {argv: [team-language-server, serve]}
+      timeout_seconds: 30
+    lifecycle: attempt
+    tools: {discovery: all}
 config_maps:
   agent-defaults:
     data:
@@ -252,7 +255,7 @@ config_maps:
 			require.Equal(t, 90, step.Tools[0].Command.TimeoutSeconds)
 			require.Equal(t, "symbols", step.Tools[1].MCP.Ref)
 			require.Equal(t, "team-lint", step.Gates[0].Tool)
-			require.Equal(t, "team-language-server", step.AgentSettings.MCPServers["symbols"].Command)
+			require.Equal(t, "team-language-server", step.MCPServices["symbols"].Connection.Command.Argv[0])
 			require.Equal(t, []string{"team-check", "--team"}, step.Checks[0].Command)
 		}
 		require.NotEqual(t, "lint", step.Name)

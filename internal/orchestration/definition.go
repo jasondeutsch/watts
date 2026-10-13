@@ -21,55 +21,43 @@ type Check struct {
 	Command []string `json:"command" yaml:"command"`
 }
 
-type MCPServer struct {
-	Command     string            `json:"command,omitempty" yaml:"command,omitempty"`
-	Args        []string          `json:"args,omitempty" yaml:"args,omitempty"`
-	URL         string            `json:"url,omitempty" yaml:"url,omitempty"`
-	Env         map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Cwd         string            `json:"cwd,omitempty" yaml:"cwd,omitempty"`
-	Exposure    string            `json:"exposure,omitempty" yaml:"exposure,omitempty"`
-	Description string            `json:"description,omitempty" yaml:"description,omitempty"`
-}
-
 type AgentSettings struct {
-	MCPServers map[string]MCPServer `json:"mcp_servers,omitempty" yaml:"mcp_servers,omitempty"`
-	Thinking   string               `json:"thinking,omitempty" yaml:"thinking,omitempty"`
-	SkillsDirs []string             `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
-	BaseURL    string               `json:"base_url,omitempty" yaml:"base_url,omitempty"`
-	API        string               `json:"api,omitempty" yaml:"api,omitempty"`
-	APIKeyEnv  string               `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
+	Thinking   string   `json:"thinking,omitempty" yaml:"thinking,omitempty"`
+	SkillsDirs []string `json:"skills_dirs,omitempty" yaml:"skills_dirs,omitempty"`
+	BaseURL    string   `json:"base_url,omitempty" yaml:"base_url,omitempty"`
+	API        string   `json:"api,omitempty" yaml:"api,omitempty"`
+	APIKeyEnv  string   `json:"api_key_env,omitempty" yaml:"api_key_env,omitempty"`
 }
 
 type Step struct {
-	Tools             []workload.Tool      `json:"tools,omitempty" yaml:"tools,omitempty"`
-	Gates             []workload.Gate      `json:"gates,omitempty" yaml:"gates,omitempty"`
-	Skills            []workload.Skill     `json:"skills,omitempty" yaml:"skills,omitempty"`
-	GatePolicy        *workload.GatePolicy `json:"gate_policy,omitempty" yaml:"gate_policy,omitempty"`
-	Container         *workload.Spec       `json:"container,omitempty" yaml:"container,omitempty"`
-	AgentSettings     *AgentSettings       `json:"agent_settings,omitempty" yaml:"agent_settings,omitempty"`
-	Environment       map[string]string    `json:"environment,omitempty" yaml:"environment,omitempty"`
-	SecretEnvironment map[string]string    `json:"secret_environment,omitempty" yaml:"secret_environment,omitempty"`
-	MCPs              []string             `json:"mcps,omitempty" yaml:"mcps,omitempty"`
-	Name              string               `json:"name" yaml:"name"`
-	Parameters        map[string]any       `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Event             bool                 `json:"event,omitempty" yaml:"event,omitempty"`
-	Transitions       map[string]string    `json:"transitions,omitempty" yaml:"transitions,omitempty"`
-	Identity          string               `json:"identity,omitempty" yaml:"identity,omitempty"`
-	Provider          string               `json:"provider,omitempty" yaml:"provider,omitempty"`
-	Model             string               `json:"model,omitempty" yaml:"model,omitempty"`
-	Agent             string               `json:"agent,omitempty" yaml:"agent,omitempty"`
-	Prompt            string               `json:"prompt,omitempty" yaml:"prompt,omitempty"`
-	Human             bool                 `json:"human,omitempty" yaml:"human,omitempty"`
-	Optional          bool                 `json:"optional,omitempty" yaml:"optional,omitempty"`
-	Inputs            []string             `json:"inputs,omitempty" yaml:"inputs,omitempty"`
-	Outputs           []string             `json:"outputs,omitempty" yaml:"outputs,omitempty"`
-	PreChecks         []Check              `json:"pre_checks,omitempty" yaml:"pre_checks,omitempty"`
-	Checks            []Check              `json:"checks,omitempty" yaml:"checks,omitempty"`
-	Next              string               `json:"next,omitempty" yaml:"next,omitempty"`
-	OnFailure         string               `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
-	TimeoutSeconds    int                  `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
-	MaxAttempts       int                  `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
+	MCPServices       map[string]workload.MCPService `json:"mcp_services,omitempty" yaml:"mcp_services,omitempty"`
+	Tools             []workload.Tool                `json:"tools,omitempty" yaml:"tools,omitempty"`
+	Gates             []workload.Gate                `json:"gates,omitempty" yaml:"gates,omitempty"`
+	Skills            []workload.Skill               `json:"skills,omitempty" yaml:"skills,omitempty"`
+	GatePolicy        *workload.GatePolicy           `json:"gate_policy,omitempty" yaml:"gate_policy,omitempty"`
+	Container         *workload.Spec                 `json:"container,omitempty" yaml:"container,omitempty"`
+	AgentSettings     *AgentSettings                 `json:"agent_settings,omitempty" yaml:"agent_settings,omitempty"`
+	Environment       map[string]string              `json:"environment,omitempty" yaml:"environment,omitempty"`
+	SecretEnvironment map[string]string              `json:"secret_environment,omitempty" yaml:"secret_environment,omitempty"`
+	Name              string                         `json:"name" yaml:"name"`
+	Parameters        map[string]any                 `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Event             bool                           `json:"event,omitempty" yaml:"event,omitempty"`
+	Transitions       map[string]string              `json:"transitions,omitempty" yaml:"transitions,omitempty"`
+	Identity          string                         `json:"identity,omitempty" yaml:"identity,omitempty"`
+	Provider          string                         `json:"provider,omitempty" yaml:"provider,omitempty"`
+	Model             string                         `json:"model,omitempty" yaml:"model,omitempty"`
+	Agent             string                         `json:"agent,omitempty" yaml:"agent,omitempty"`
+	Prompt            string                         `json:"prompt,omitempty" yaml:"prompt,omitempty"`
+	Human             bool                           `json:"human,omitempty" yaml:"human,omitempty"`
+	Optional          bool                           `json:"optional,omitempty" yaml:"optional,omitempty"`
+	Inputs            []string                       `json:"inputs,omitempty" yaml:"inputs,omitempty"`
+	Outputs           []string                       `json:"outputs,omitempty" yaml:"outputs,omitempty"`
+	PreChecks         []Check                        `json:"pre_checks,omitempty" yaml:"pre_checks,omitempty"`
+	Checks            []Check                        `json:"checks,omitempty" yaml:"checks,omitempty"`
+	Next              string                         `json:"next,omitempty" yaml:"next,omitempty"`
+	OnFailure         string                         `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
+	TimeoutSeconds    int                            `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
+	MaxAttempts       int                            `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
 }
 
 func ValidName(name string) bool { return namePattern.MatchString(name) && name != "end" }
@@ -162,13 +150,45 @@ func (step Step) validateExecution() error {
 			return fmt.Errorf("step %s: tools, skills and gates require an Agent", step.Name)
 		}
 		mcps := map[string]bool{}
-		if step.AgentSettings != nil {
-			for name := range step.AgentSettings.MCPServers {
-				mcps[name] = true
-			}
+		for name := range step.MCPServices {
+			mcps[name] = true
 		}
 		if err := workload.ValidateAgentCapabilities(step.Tools, step.Gates, step.Skills, step.GatePolicy, step.Container.Resources, mcps); err != nil {
 			return fmt.Errorf("step %s: %w", step.Name, err)
+		}
+	}
+	for name, service := range step.MCPServices {
+		if !ValidName(name) || step.Agent == "" {
+			return fmt.Errorf("step %s has invalid MCP service %s", step.Name, name)
+		}
+		if err := service.Validate(); err != nil {
+			return fmt.Errorf("MCP %s: %w", name, err)
+		}
+		selected := false
+		for _, tool := range step.Tools {
+			if tool.MCP == nil || tool.MCP.Ref != name {
+				continue
+			}
+			if selected {
+				return fmt.Errorf("step %s selects MCP %s twice", step.Name, name)
+			}
+			selected = true
+			if err := service.ValidateConsumer(step.Container, *tool.MCP); err != nil {
+				return fmt.Errorf("MCP %s: %w", name, err)
+			}
+		}
+		if !selected {
+			return fmt.Errorf("step %s has unselected MCP %s", step.Name, name)
+		}
+		for _, alias := range service.SecretEnvironment {
+			if step.SecretEnvironment[alias] == "" {
+				return fmt.Errorf("MCP %s has missing secret launch binding", name)
+			}
+		}
+		for _, secret := range service.SecretHeaders {
+			if step.SecretEnvironment[secret.Environment] == "" {
+				return fmt.Errorf("MCP %s has missing header launch binding", name)
+			}
 		}
 	}
 	executors := 0
@@ -183,16 +203,6 @@ func (step Step) validateExecution() error {
 	}
 	if executors != 1 {
 		return fmt.Errorf("step %s must declare exactly one container, approval or event", step.Name)
-	}
-	if len(step.MCPs) > 0 && step.Agent == "" {
-		return fmt.Errorf("step %s: mcps require an agent executor", step.Name)
-	}
-	seenMCPs := map[string]bool{}
-	for _, name := range step.MCPs {
-		if !ValidName(name) || seenMCPs[name] {
-			return fmt.Errorf("step %s has invalid or duplicate mcp %q", step.Name, name)
-		}
-		seenMCPs[name] = true
 	}
 	if step.Identity != "" && (step.Agent == "" || strings.ContainsAny(step.Identity, "\x00\r\n")) {
 		return fmt.Errorf("step %s has an invalid agent identity", step.Name)

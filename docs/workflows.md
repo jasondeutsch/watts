@@ -52,8 +52,7 @@ can use the application API. No idle container is kept for either kind of wait.
 
 Agent manifests declare callable command tools, required gates, named skill sources, and selected MCP services. Gates run inside the Agent execution and return failures for bounded repair; they do not require separate workflow stages. Gate acceptance binds to the final candidate, not an earlier successful tool call. See [Agent fields](kinds.md#agent-tools-gates-and-skills).
 
-The image resolves
-those settings inside its environment. A subprocess MCP, such as gopls, must be
+MCP tools reference named MCP resources; the compiler resolves only selected services into the pinned Agent input, including configuration and credential-source bindings. The image resolves those connections inside its environment. See [MCP fields and lifecycle](kinds.md#mcp). A subprocess MCP, such as gopls, must be
 installed in the image; skills can be baked into it or mounted from captured
 package resources. The Pi/Ralph example image writes its own private MCP and Pi
 settings and forwards those settings to Ralph children.
