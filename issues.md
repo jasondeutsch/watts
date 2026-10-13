@@ -105,6 +105,59 @@ Suggested order: configuration guidance and atomic scaffolding; log/failure visi
 
 ## Observed issues
 
+### wiss-048: Prevent secrets leaking into logs, telemetry, and exported evidence
+
+**Priority: high — observed credential disclosure.** GitHub push protection rejected
+an OpenRouter API key in the test project's committed `.watts/service.log`
+(commit `fa2e79ae66c644cf535964533527f784867f1040`). Inspection found that an Agent
+printed its environment, including `OPENROUTER_API_KEY`; that output was retained
+in the worker log and the CSS eval's specification-attempt log. The project-level
+`.watts/` directory was tracked by Git. The blocked push prevented that branch
+update; it does not establish that the credential was never exposed elsewhere.
+Do not include the key value or the secret-unblock URL in issue evidence.
+
+There are two failures: credential-bearing output reached retained evidence, and
+private runtime files were easy to include in a repository. Ignoring runtime files
+alone does not protect CLI/UI output, model context, logs, or exported reports.
+
+Acceptance criteria:
+
+- Identify the earliest capture/logging boundaries for stdout/stderr, tool results,
+  nested-agent events, exception diagnostics, and SDK/debug logs. Redact declared
+  secret values before persistence or presentation, including worker/service logs,
+  task logs, normalized telemetry, and report/eval exports. Avoid dumping complete
+  environments or launch configurations in diagnostics.
+- Use the generic workload's resolved secret bindings to supply redaction context;
+  keep agent-specific interception inside image adapters. Where tool output would
+  return credentials to the model, adapters must sanitize that output before model
+  context ingestion as well as protecting Watts's retained copy.
+- Handle streaming chunk boundaries, repeated values, and common structured/escaped
+  representations. Do not expose secrets in a redactor's own error messages. State
+  the limits: matching known values cannot guarantee detection of arbitrary encoded
+  or transformed credentials, and redaction is not a sandbox or complete data-loss
+  prevention system. Do not weaken agent or tool isolation to implement it.
+- Keep redaction data private and scoped to the execution; do not place credential
+  values in compiled packages, Temporal payloads/history, or persisted redaction
+  configuration. Preserve useful diagnostics with explicit redaction markers.
+- Make worker/runtime storage private and clearly excluded from source publication.
+  Evaluate an appropriate project ignore/scaffold mechanism for `.watts/`, service
+  logs, and private task state without hiding authored `watts/` ACL packages or
+  intentionally retained, sanitized task reports. Ignore rules do not remove files
+  already tracked or clean existing commit history; document those distinctions.
+- Define safe incident/export handling: require sanitization before an eval archive
+  or report bundle is shared; retain sanitized evidence without rewriting the
+  original outcome. Document credential revocation/rotation and Git history cleanup
+  for existing leaks rather than recommending a push-protection bypass.
+- Verify with synthetic credentials, never real provider keys: an environment dump,
+  tool failure, nested Agent output, SDK log, split stream chunks, and an exported
+  evidence bundle must not expose the test secret. Include a real container/worker
+  path and a Git-tracking check, and confirm ordinary diagnostics remain usable.
+
+Related: wiss-003 and wiss-025 for progress/telemetry, wiss-011 for reports,
+wiss-028 for storage/publication boundaries, and wiss-032/wiss-034 for Agent/MCP
+credential delivery. The [CSS eval](evals/go-workflow/runs/2026-10-13-tic-tac-toe-css/README.md)
+provides the incident context; use redacted observations for follow-up verification.
+
 ### wiss-003: Web UI status and execution output
 
 The container eval's builder actively edited files and ran tools while its durable attempt log contained only a 133-byte session header. Private progress/usage events were absent from the web snapshot. Completed drafting logs also contained 44,419- and 56,663-byte JSON events: the API's 32 KiB tail discarded those partial records, leaving only `agent_settled` and the check result. See [log shape](evals/go-workflow/runs/2026-10-12-tic-tac-toe/log-shape.json) and [web snapshot](evals/go-workflow/runs/2026-10-12-tic-tac-toe/web-build-snapshot.sse).

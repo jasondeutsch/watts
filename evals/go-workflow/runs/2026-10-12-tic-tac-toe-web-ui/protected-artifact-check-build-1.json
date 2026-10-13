@@ -1,6 +1,0 @@
-{
-  "expected_sha256": "a8a8a86d5e8f84adefce9fcbd0c99272846a64aa413d421beaf4658289ac04b9",
-  "exists": false,
-  "passed": false,
-  "attribution": "Original binary present in specification-2 workspace receipt; absent from planning-1 baseline. The deleting actor/operation is not established. Build published a separate Linux binary."
-}

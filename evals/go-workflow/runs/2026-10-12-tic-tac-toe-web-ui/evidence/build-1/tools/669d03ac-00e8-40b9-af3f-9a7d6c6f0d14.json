@@ -1,1 +1,0 @@
-{"tool":"check-stories","argv":["node","/inputs/resources/team/scripts/check.mjs","stories","/runtime/task"],"working_dir":"/runtime/task","status":"exited","exit_code":0,"stdout":"stories: OK\n","stderr":"","truncated":false,"evidence":"tools/669d03ac-00e8-40b9-af3f-9a7d6c6f0d14.json","duration_ms":37}

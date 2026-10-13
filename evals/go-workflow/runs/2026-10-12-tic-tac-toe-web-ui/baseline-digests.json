@@ -1,8 +1,0 @@
-{
-  "main.go": "58f8ced5b6d6114d96d946de7a7a01153ae2ca6b263a403c1aaf7af360618d0a",
-  "main_test.go": "ec2f6af77b9d575c63ee02e468980e6a6f8f4bae9298768e34fe3fed41ff4c56",
-  "go.mod": "50df9f122965a7f01bac0b071a21fdb17bec58132537c5c9065efa618b34f9e0",
-  "watts.yaml": "a3e0c6d99aa0110a4d4d180dd12fcecbc0fcba91ce9225a38172b773447f1004",
-  "values.yaml": "5e5c9c5cdf2b80189e242c310b39cf47a94105d2e4bbb2f4eddca5395d63d478",
-  "ttt": "a8a8a86d5e8f84adefce9fcbd0c99272846a64aa413d421beaf4658289ac04b9"
-}
