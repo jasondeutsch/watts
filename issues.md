@@ -1,6 +1,6 @@
 # Watts issues and proposed improvements
 
-Watts remains a proof of concept at **0.1.0**. This backlog contains open work; completed items move to [issues.done.yaml](issues.done.yaml) without reusing their numbers. Record the changes, verification, and remaining limitations when closing an issue. Each issue distinguishes observed failures, implemented foundations, and proposed capabilities. A passing component test does not establish full workflow completion.
+Watts remains a proof of concept at **0.1.0**. This backlog contains open work; completed items move to [issues.done.md](issues.done.md) without reusing their numbers. Record the changes, verification, and remaining limitations when closing an issue. Each issue distinguishes observed failures, implemented foundations, and proposed capabilities. A passing component test does not establish full workflow completion.
 
 Watts core executes a generic workload contract. Agent/tool integrations belong in images; Temporal owns durable orchestration. Currently, only local Docker Engine execution is supported. Podman and Kubernetes remain possible future backends.
 
