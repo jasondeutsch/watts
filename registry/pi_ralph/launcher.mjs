@@ -1,3 +1,4 @@
+import { redactor } from './redact.mjs';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
@@ -6,6 +7,7 @@ import { dirname, join, relative } from 'node:path';
 import { evaluateGates, recordEvent } from './tools.mjs';
 import { mcpConfigurations, verifyMCPs } from './mcp.mjs';
 
+const secrets = redactor();
 const input = JSON.parse(readFileSync(process.env.WATTS_INPUT, 'utf8'));
 const settingsPath = '/inputs/config/launcher.json';
 const options = existsSync(settingsPath) ? JSON.parse(readFileSync(settingsPath, 'utf8')) : {};
@@ -17,7 +19,7 @@ const outputs = input.outputs || [];
 
 function event(type, message) {
   const id = createHash('sha256').update(`${input.execution}:${type}:${message}`).digest('hex');
-  appendFileSync(eventFile, JSON.stringify({ id, type, message }) + '\n', { mode: 0o600 });
+  appendFileSync(eventFile, JSON.stringify(secrets.data({ id, type, message })) + '\n', { mode: 0o600 });
 }
 function pathIn(root, name) {
   const target = join(root, name);
@@ -45,11 +47,16 @@ function publishTaskOutputs() {
   }
 }
 async function runPi(args, prompt, environment) {
-  const child = spawn('pi', [...args, prompt], { cwd: process.env.WATTS_WORKSPACE, env: environment, stdio: 'inherit' });
+  const child = spawn('pi', [...args, prompt], { cwd: process.env.WATTS_WORKSPACE, env: environment, stdio: ['ignore', 'pipe', 'pipe'] });
+  const stdout = secrets.stream(), stderr = secrets.stream();
+  child.stdout.pipe(stdout).pipe(process.stdout, { end: false });
+  child.stderr.pipe(stderr).pipe(process.stderr, { end: false });
+  const drained = Promise.all([stdout, stderr].map(stream => new Promise(resolve => stream.on('end', resolve))));
   const term = () => child.kill('SIGTERM'), interrupt = () => child.kill('SIGINT');
   process.on('SIGTERM', term); process.on('SIGINT', interrupt);
   try {
     const exit = await new Promise((resolve, reject) => { child.on('error', reject); child.on('exit', (code, signal) => resolve({ code, signal })); });
+    await drained;
     if (exit.code !== 0) throw new Error(`Pi exited ${exit.code ?? exit.signal}`);
   } finally {
     process.removeListener('SIGTERM', term); process.removeListener('SIGINT', interrupt);
@@ -83,7 +90,7 @@ try {
   const servers = mcpConfigurations(agent, environment);
   await verifyMCPs(agent, servers, environment, event);
   writeFileSync(join(agentDirectory, 'mcp.json'), JSON.stringify({ mcpServers: servers }), { mode: 0o600 });
-  const args = ['--mode', 'json', '--print', '--offline', '--no-approve', '--no-context-files', '--no-extensions', '--provider', agent.provider, '--model', agent.model, '--session-dir', sessionDirectory, '-e', '/opt/watts/telemetry.ts', '-e', '/opt/watts/tools.ts'];
+  const args = ['--mode', 'json', '--print', '--offline', '--no-approve', '--no-context-files', '--no-extensions', '--provider', agent.provider, '--model', agent.model, '--session-dir', sessionDirectory, '-e', '/opt/watts/redaction.ts', '-e', '/opt/watts/telemetry.ts', '-e', '/opt/watts/tools.ts'];
   if (settings.thinking) args.push('--thinking', settings.thinking);
   for (const skill of skills) args.push('--skill', skill);
   let prompt = agent.prompt.replaceAll('{task}', task);
@@ -149,10 +156,10 @@ try {
     if (!/VERDICT: (PASS|REJECT)\s*$/.test(verdict)) throw new Error('Review must end with VERDICT: PASS or VERDICT: REJECT');
     if (/VERDICT: REJECT\s*$/.test(verdict)) { outcome = 'changes-required'; feedback = verdict; }
   }
-  writeFileSync(process.env.WATTS_RESULT, JSON.stringify({ outcome, feedback, artifacts: outputs }) + '\n', { mode: 0o600 });
+  writeFileSync(process.env.WATTS_RESULT, JSON.stringify(secrets.data({ outcome, feedback, artifacts: outputs })) + '\n', { mode: 0o600 });
   event('progress', 'Agent result published');
 } catch (error) {
   event('error', error.message);
-  console.error(`Agent workload failed: ${error.message}`);
+  console.error(secrets.text(`Agent workload failed: ${error.message}`));
   process.exitCode = 1;
 }

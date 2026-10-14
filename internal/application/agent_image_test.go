@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/jasondeutsch/watts/internal/orchestration"
@@ -21,12 +22,14 @@ import (
 // No paid calls, host agent installation, or user project is involved.
 func TestAgentImageContract(t *testing.T) {
 	requireDocker(t)
-	for _, mode := range []string{"pi", "ralph", "provider-error"} {
+	for _, mode := range []string{"pi", "ralph", "provider-error", "secret", "ralph-secret"} {
 		t.Run(mode, func(t *testing.T) {
+			var sanitizedToolReturned atomic.Bool
 			server := httptest.NewUnstartedServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 				var body struct {
 					Messages []struct {
-						Role string `json:"role"`
+						Role    string `json:"role"`
+						Content any    `json:"content"`
 					} `json:"messages"`
 				}
 				require.NoError(t, json.NewDecoder(request.Body).Decode(&body))
@@ -34,18 +37,25 @@ func TestAgentImageContract(t *testing.T) {
 				if mode == "provider-error" {
 					response.Header().Set("Content-Type", "application/json")
 					response.WriteHeader(429)
-					fmt.Fprint(response, `{"error":{"message":"fixture provider rate limited","code":429}}`)
+					fmt.Fprint(response, `{"error":{"message":"fixture provider rate limited: fixture-key","code":429}}`)
 					return
 				}
 				hasTool := false
 				for _, message := range body.Messages {
 					if message.Role == "tool" {
 						hasTool = true
+						if strings.Contains(mode, "secret") {
+							encoded, marshalErr := json.Marshal(message.Content)
+							require.NoError(t, marshalErr)
+							require.NotContains(t, string(encoded), "fixture-key")
+							require.Contains(t, string(encoded), "[REDACTED]")
+							sanitizedToolReturned.Store(true)
+						}
 					}
 				}
 				delta := map[string]any{"role": "assistant", "content": "Hello"}
 				finish := "stop"
-				if mode == "ralph" {
+				if mode == "ralph" || mode == "ralph-secret" {
 					if hasTool {
 						delta["content"] = "<promise>DONE</promise>"
 					} else {
@@ -53,6 +63,11 @@ func TestAgentImageContract(t *testing.T) {
 						finish = "tool_calls"
 						delta["tool_calls"] = []any{map[string]any{"index": 0, "id": "write-1", "type": "function", "function": map[string]any{"name": "write", "arguments": `{"path":"/workspace/hello.txt","content":"hello"}`}}}
 					}
+				}
+				if strings.Contains(mode, "secret") && !hasTool {
+					delete(delta, "content")
+					finish = "tool_calls"
+					delta["tool_calls"] = []any{map[string]any{"index": 0, "id": "env-1", "type": "function", "function": map[string]any{"name": "bash", "arguments": `{"command":"env; printf hello > /workspace/hello.txt"}`}}}
 				}
 				writeFixtureCompletion(response, delta, finish)
 			}))
@@ -64,13 +79,13 @@ func TestAgentImageContract(t *testing.T) {
 			port := listener.Addr().(*net.TCPAddr).Port
 			options := `{}`
 			files := map[string]string{}
-			if mode == "ralph" {
+			if mode == "ralph" || mode == "ralph-secret" {
 				options = `{"ralph":true}`
 				files["ralph.md"] = "---\nmax_iterations: 1\ntimeout: 30\ncompletion_promise: DONE\ncompletion_gate: required\nstop_on_error: true\n---\nWrite hello.txt in /workspace, then emit <promise>DONE</promise>.\n"
 			}
 			files["launcher.json"] = options
 			step := orchestration.Step{Name: "agent", Agent: "fixture", Identity: "fixture", Provider: "fixture", Model: "fixture-model", Prompt: "Say hello", Container: &workload.Spec{Image: "watts/pi-ralph:0.1.0", Command: []string{"node", "/opt/watts/launcher.mjs"}, Network: "bridge", Workspace: "write", Files: files}, AgentSettings: &orchestration.AgentSettings{BaseURL: fmt.Sprintf("http://host.docker.internal:%d/v1", port), API: "openai-completions", APIKeyEnv: "FIXTURE_PROVIDER_KEY"}, SecretEnvironment: map[string]string{"FIXTURE_PROVIDER_KEY": "FIXTURE_SOURCE_KEY"}}
-			if mode == "ralph" {
+			if mode == "ralph" || mode == "ralph-secret" {
 				step.Tools = []workload.Tool{{Name: "verify", Command: &workload.CommandTool{Argv: []string{"sh", "-c", "test -f /workspace/hello.txt"}}}}
 				step.Gates = []workload.Gate{{Name: "hello-exists", Tool: "verify"}}
 				step.GatePolicy = &workload.GatePolicy{MaxRepairs: 0}
@@ -82,12 +97,36 @@ func TestAgentImageContract(t *testing.T) {
 			app.Output = &output
 			app.ErrorOutput = &output
 			result, err := executeBound(t, app, request)
+			require.NotContains(t, output.String(), "fixture-key")
+			if err != nil {
+				require.NotContains(t, err.Error(), "fixture-key")
+			}
 			if mode == "provider-error" {
 				require.ErrorContains(t, err, "fixture provider rate limited")
 				require.NoFileExists(t, filepath.Join(app.Root, "hello.txt"))
 				return
 			}
 			require.NoError(t, err, output.String())
+			if strings.Contains(mode, "secret") {
+				require.True(t, sanitizedToolReturned.Load(), "the fake provider must receive a sanitized tool result")
+			}
+			if mode == "secret" {
+				require.Contains(t, output.String(), "[REDACTED]")
+			}
+			require.NoError(t, filepath.WalkDir(app.StateDir(request.Input.Task), func(path string, entry os.DirEntry, walkErr error) error {
+				if walkErr != nil {
+					return walkErr
+				}
+				if entry.IsDir() {
+					return nil
+				}
+				data, readErr := os.ReadFile(path)
+				if readErr != nil {
+					return readErr
+				}
+				require.NotContains(t, string(data), "fixture-key", path)
+				return nil
+			}))
 			require.Equal(t, "success", result.Outcome)
 			events, err := workload.ReadEvents(filepath.Join(filepath.Dir(app.stepInputPath(request)), "workload-events.jsonl"))
 			require.NoError(t, err)
@@ -96,7 +135,7 @@ func TestAgentImageContract(t *testing.T) {
 			require.NotNil(t, usage.Input)
 			require.Greater(t, *usage.Input, int64(0))
 			require.Nil(t, usage.Cost)
-			if mode == "ralph" {
+			if mode == "ralph" || mode == "ralph-secret" {
 				require.Equal(t, "hello", readFile(t, filepath.Join(app.Root, "hello.txt")))
 				require.NoDirExists(t, filepath.Join(app.Root, ".ralph-runner"))
 			}

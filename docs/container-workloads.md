@@ -32,7 +32,10 @@ No live project mount, Docker socket, or worker home directory is exposed.
 The environment names the interface with `WATTS_INPUT`, `WATTS_OUTPUTS`,
 `WATTS_RESULT`, `WATTS_EVENTS`, and `WATTS_WORKSPACE`. `HOME=/runtime/home` and
 `TMPDIR=/runtime/tmp`. Only explicitly declared environment and secret bindings
-are added to the image environment.
+are added to the image environment. `WATTS_SECRET_ENV_NAMES` contains their secret
+environment names as a JSON array, never credential values. Adapters use these
+bindings to sanitize tool results before model ingestion and evidence writes.
+See [secret protection](secret-protection.md) for capture, publication, and limits.
 
 ## Input and result
 

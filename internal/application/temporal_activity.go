@@ -146,9 +146,11 @@ func (app *Service) ValidateApprovalArtifacts(ctx context.Context, request orche
 func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestration.ActivityInput) (result orchestration.Result, err error) {
 	defer startActivityHeartbeat(ctx)()
 	logger := activity.GetLogger(ctx)
+	secrets := (&activityRuntime{request: request}).secretRedaction()
 	started := time.Now()
 	logger.Info("Attempt execution started", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt)
 	defer func() {
+		err = secrets.Error(err)
 		if errors.Is(err, context.Canceled) {
 			logger.Warn("Attempt execution cancelled", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "elapsed", time.Since(started).Round(time.Second).String(), "next_action", "Inspect task status before retrying or creating a new task")
 		} else if err != nil {

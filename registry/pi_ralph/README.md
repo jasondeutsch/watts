@@ -64,3 +64,13 @@ Run adapter unit tests with `node --test registry/pi_ralph/mcp.test.mjs`.
 For native integration, mount this directory at `/test`, a small Go module at
 `/workspace`, and run `node --test /test/mcp.integration.test.mjs` inside
 `watts/coder-golang:0.1.0` with `WATTS_MCP_INTEGRATION=1`. No model calls are made.
+
+## Secret redaction
+
+The worker supplies secret environment names through `WATTS_SECRET_ENV_NAMES`.
+Image-owned hooks sanitize tool results and provider context in Pi and nested
+Ralph sessions. Command tools filter output before truncation and persistence;
+the launcher and telemetry extension sanitize console/event output. Credentials
+remain in memory rather than a redaction configuration file. Rebuild this image
+and derived images after changing the adapter. See [secret protection](../../docs/secret-protection.md)
+for matching limits, engine/runtime exposure, and safe evidence sharing.

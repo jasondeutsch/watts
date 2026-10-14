@@ -82,6 +82,9 @@ func (app *Service) createTask(cfg projectconfig.Config, slug string, selected T
 	if slug == "" || strings.Trim(slug, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
 		return "", errors.New("slug may contain only lowercase letters, digits and dashes")
 	}
+	if err := app.ProtectRuntimeFiles(); err != nil {
+		return "", err
+	}
 	// A private state marker keeps later commands rooted in this workspace even
 	// when its descriptor is external and an ancestor is another Watts project.
 	if err := os.MkdirAll(app.Wd(), 0700); err != nil {

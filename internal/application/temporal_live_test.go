@@ -13,9 +13,11 @@ import (
 	"github.com/jasondeutsch/watts/internal/manifest"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/testsuite"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // Exercises an actual persistent Temporal service and ordinary containers.
@@ -105,15 +107,27 @@ func TestTemporalLive(t *testing.T) {
 	require.Equal(t, "Human Tester", state.Stages[1].ApprovedBy)
 	require.Equal(t, "xx", readFile(t, filepath.Join(root, "draft-calls")))
 	require.Equal(t, "proposal", readFile(t, filepath.Join(root, binding.Input.Task, "result.md")))
+	const secret = "synthetic-temporal-credential-123"
+	t.Setenv("FIXTURE_TEMPORAL_KEY", secret)
 	retry := containerStep("true")
+	retry.SecretEnvironment = map[string]string{"TOKEN": "FIXTURE_TEMPORAL_KEY"}
 	retry.Container.Image = "node:22.22.1-bookworm-slim@sha256:4f77a690f2f8946ab16fe1e791a3ac0667ae1c3575c3e4d0d4589e9ed5bfaf3d"
-	retry.Container.Command = []string{"node", "-e", `const fs=require('fs');const input=JSON.parse(fs.readFileSync('/inputs/input.json'));if(input.attempt===1){console.error('recoverable-error');process.exit(7)}fs.writeFileSync('/outputs/task/result.md','recovered')`}
+	retry.Container.Command = []string{"node", "-e", `const fs=require('fs');const input=JSON.parse(fs.readFileSync('/inputs/input.json'));if(input.attempt===1){console.error('recoverable-error: '+process.env.TOKEN);process.exit(7)}fs.writeFileSync('/outputs/task/result.md','recovered')`}
 	retry.Name = "recover"
 	retry.Outputs = []string{"result.md"}
 	recovery := submit("retry", retry)
 	state = await(recovery, func(state orchestration.State) bool { return state.Status == "waiting_retry" })
 	require.Equal(t, 1, state.Stages[0].Attempts)
 	require.Contains(t, state.Stages[0].LastError, "recoverable-error")
+	require.Contains(t, state.Stages[0].LastError, "[REDACTED]")
+	require.NotContains(t, state.Stages[0].LastError, secret)
+	require.NotContains(t, readFile(t, filepath.Join(app.StateDir(recovery.Input.Task), "logs", "recover-1.log")), secret)
+	history := server.Client().GetWorkflowHistory(ctx, recovery.WorkflowID, recovery.RunID, false, enums.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
+	for history.HasNext() {
+		event, err := history.Next()
+		require.NoError(t, err)
+		require.NotContains(t, prototext.Format(event), secret, "Temporal history must not retain credential-bearing error causes or payloads")
+	}
 	require.NoError(t, app.RunTask(cfg, recovery.Input.Task, &RunOptions{}))
 	await(recovery, func(state orchestration.State) bool { return state.Status == "completed" })
 	require.Equal(t, "recovered", readFile(t, filepath.Join(root, recovery.Input.Task, "result.md")))

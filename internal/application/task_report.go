@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/redact"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/taskreport"
 	"github.com/jasondeutsch/watts/internal/workspace"
@@ -30,5 +31,11 @@ func (app *Service) WriteTaskReport(ctx context.Context, request orchestration.R
 	if err := taskreport.Render(&document, root, request); err != nil {
 		return err
 	}
-	return storage.WriteFileAtomically(target, document.Bytes())
+	var values []string
+	for _, step := range request.Input.Definition.Steps {
+		for _, source := range step.SecretEnvironment {
+			values = append(values, os.Getenv(source))
+		}
+	}
+	return storage.WriteFileAtomically(target, []byte(redact.New(values...).Text(document.String())))
 }

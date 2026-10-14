@@ -88,6 +88,17 @@ func (runtime *activityRuntime) executionIdentity() string {
 	return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + binding.WorkflowID + "/" + binding.RunID + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
 }
 func (runtime *activityRuntime) logProgress(message string, fields ...any) {
+	secrets := runtime.secretRedaction()
+	message = secrets.Text(message)
+	for i, value := range fields {
+		switch typed := value.(type) {
+		case string:
+			fields[i] = secrets.Text(typed)
+		case error:
+			fields[i] = secrets.Error(typed)
+		}
+	}
+
 	fields = append([]any{"task", runtime.request.Input.Task, "stage", runtime.request.Step.Name, "attempt", runtime.request.Attempt}, fields...)
 	logger := runtime.logger
 	if logger == nil {

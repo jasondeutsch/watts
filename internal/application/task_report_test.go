@@ -43,3 +43,21 @@ func TestTaskReportActivityReplacesWholeDocument(t *testing.T) {
 	require.NoError(t, os.Symlink(filepath.Join(app.Root, "outside.html"), target))
 	require.ErrorContains(t, app.WriteTaskReport(context.Background(), request), "symlink")
 }
+
+func TestTaskReportRedactsHTMLCredentialForms(t *testing.T) {
+	const secret = "synthetic<&>credential"
+	t.Setenv("FIXTURE_REPORT_KEY", secret)
+	app := &Service{Root: t.TempDir()}
+	task := "tasks/report"
+	require.NoError(t, os.MkdirAll(filepath.Join(app.Root, task), 0700))
+	request := orchestration.ReportInput{
+		Input: orchestration.Input{Task: task, Definition: orchestration.Definition{Steps: []orchestration.Step{{Name: "build", SecretEnvironment: map[string]string{"TOKEN": "FIXTURE_REPORT_KEY"}}}}},
+		State: orchestration.State{Status: "failed", History: []orchestration.StageResult{{Step: "build", Attempt: 1, Error: "provider failed: " + secret}}},
+	}
+	require.NoError(t, app.WriteTaskReport(context.Background(), request))
+	report := readFile(t, filepath.Join(app.Root, task, "report.html"))
+	require.NotContains(t, report, secret)
+	require.NotContains(t, report, "synthetic&lt;&amp;&gt;credential")
+	require.Contains(t, report, "[REDACTED]")
+	require.Contains(t, report, "Status: failed")
+}

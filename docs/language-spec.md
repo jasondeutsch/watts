@@ -590,8 +590,10 @@ secret "credentials" { env = { api_key = "MODEL_API_KEY" } }
 
 `secret.credentials.keys.api_key` produces a typed source reference for Agent
 authentication, workload secret bindings, or MCP credentials. Literal key values
-are not a Secret feature. Compilation does not look up the environment, and
-compiled artifacts contain source names rather than credentials. Missing required
+are not a Secret feature. Declared values are redacted at workload capture
+boundaries; image adapters must also protect model-facing tool results. See
+[secret protection](secret-protection.md) for coverage and limits. Compilation
+does not look up the environment, and compiled artifacts contain source names rather than credentials. Missing required
 worker sources fail readiness checks or execution.
 
 ## Compiled artifacts and task execution

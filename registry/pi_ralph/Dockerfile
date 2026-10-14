@@ -13,7 +13,7 @@ RUN apt-get update \
         "@lnilluv/pi-ralph-loop@${RALPH_VERSION}" \
     && npm cache clean --force
 
-COPY launcher.mjs mcp.mjs protocol.mjs telemetry.ts tools.mjs tools.ts patch-ralph.mjs /opt/watts/
+COPY redact.mjs redaction.ts launcher.mjs mcp.mjs protocol.mjs telemetry.ts tools.mjs tools.ts patch-ralph.mjs /opt/watts/
 COPY kit/skills /opt/watts/kit/skills/
 RUN node /opt/watts/patch-ralph.mjs
 RUN node --input-type=module -e 'const { loadMCPClient } = await import("/opt/watts/mcp.mjs"); const client = await loadMCPClient(); for (const name of ["McpClient", "StdioTransport", "StreamableHttpTransport"]) { if (typeof client[name] !== "function") throw new Error(`Unsupported MCP library: ${name}`); }'

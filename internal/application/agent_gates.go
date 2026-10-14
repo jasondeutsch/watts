@@ -82,5 +82,18 @@ func (runtime *activityRuntime) validateAgentGates(attempt attemptWorkspace) err
 func preserveToolEvidence(attempt attemptWorkspace) error {
 	// Missing directories are handled by the caller; CopyResource rejects escaped
 	// symlinks and oversized files just like other published workload artifacts.
-	return workload.CopyResource(attempt.output, "tools", filepath.Join(attempt.evidence, "tools"))
+	files, err := workload.Snapshot(filepath.Join(attempt.output, "tools"), nil)
+	if err != nil {
+		return err
+	}
+	for name := range files {
+		data, _, err := workload.ReadFile(attempt.output, "tools/"+name, workload.MaximumFileBytes)
+		if err != nil {
+			return err
+		}
+		if err := workload.WriteFile(attempt.evidence, "tools/"+attempt.secrets.Text(name), attempt.secrets.JSON(data), 0600); err != nil {
+			return err
+		}
+	}
+	return nil
 }

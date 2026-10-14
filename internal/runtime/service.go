@@ -44,6 +44,9 @@ func lock(app *application.Service) (*os.File, error) {
 func release(file *os.File) { syscall.Flock(int(file.Fd()), syscall.LOCK_UN); file.Close() }
 
 func Start(ctx context.Context, app *application.Service, detached bool) error {
+	if err := app.ProtectRuntimeFiles(); err != nil {
+		return err
+	}
 	if detached {
 		return detach(ctx, app)
 	}

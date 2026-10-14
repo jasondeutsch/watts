@@ -9,4 +9,4 @@ function replace(file, before, after) {
   writeFileSync(path, source.replace(before, after));
 }
 replace('runner.ts', 'const registryRoots = cwd === taskDir ? [taskDir] : [taskDir, cwd];', 'const registryRoots = process.env.PI_WATTS_RALPH_REGISTRY ? [taskDir, process.env.PI_WATTS_RALPH_REGISTRY] : (cwd === taskDir ? [taskDir] : [taskDir, cwd]);');
-replace('runner-rpc.ts', '["--mode", "rpc", "--no-session", "--no-extensions", "-e", extensionPath]', '["--mode", "rpc", "--no-session", "--no-extensions", "--no-context-files", "--no-approve", "--offline", "-e", extensionPath, "-e", "/opt/watts/telemetry.ts", "-e", "/opt/watts/tools.ts", ...JSON.parse(process.env.PI_WATTS_SKILL_ARGS ?? "[]")]');
+replace('runner-rpc.ts', '["--mode", "rpc", "--no-session", "--no-extensions", "-e", extensionPath]', '["--mode", "rpc", "--no-session", "--no-extensions", "--no-context-files", "--no-approve", "--offline", "-e", extensionPath, "-e", "/opt/watts/redaction.ts", "-e", "/opt/watts/telemetry.ts", "-e", "/opt/watts/tools.ts", ...JSON.parse(process.env.PI_WATTS_SKILL_ARGS ?? "[]")]');
