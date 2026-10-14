@@ -10,6 +10,7 @@ import (
 	"time"
 
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
+	"github.com/jasondeutsch/watts/internal/workerstate"
 )
 
 // Service coordinates project operations and reports results to the caller.
@@ -27,8 +28,8 @@ type Service struct {
 	TimeoutUnit time.Duration
 }
 
-// Locate finds the project root: the nearest folder above the current one that holds watts.acl
-// or .watts; failing that, the invocation directory is the workspace. It never asks git.
+// Locate finds a registered workspace or authored package above the invocation.
+// Runtime directories and Git never define the application root.
 func (a *Service) Locate() error {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -51,23 +52,62 @@ func (a *Service) Locate() error {
 
 // findProjectRoot walks up from dir looking for a Watts project.
 func FindProjectRoot(dir string) string {
+	store, _ := workerstate.Default()
+	fallback := ""
 	for {
-		for _, marker := range []string{projectconfig.Filename, ".watts"} {
-			if _, err := os.Stat(filepath.Join(dir, marker)); err == nil {
-				return dir
+		if store.Root != "" && store.HasProject(dir) {
+			return dir
+		}
+		if info, err := os.Stat(filepath.Join(dir, "watts", projectconfig.Filename)); err == nil && info.Mode().IsRegular() {
+			return dir
+		}
+		if info, err := os.Stat(filepath.Join(dir, projectconfig.Filename)); err == nil && info.Mode().IsRegular() {
+			if fallback == "" {
+				fallback = dir
+				if filepath.Base(dir) == "watts" {
+					fallback = filepath.Dir(dir)
+				}
 			}
+		}
+		// Durable tasks are also a discovery boundary when a project is copied to a
+		// new machine. A package source directory is not required for inspection.
+		tasks, _ := filepath.Glob(filepath.Join(dir, projectconfig.DefaultTasksDir, "*", "workflow.json"))
+		if len(tasks) > 0 {
+			return dir
 		}
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return ""
+			return fallback
 		}
 		dir = parent
 	}
 }
 
-// wd joins a path under <repo>/.watts.
-func (a *Service) Wd(parts ...string) string {
-	return filepath.Join(append([]string{a.Root, ".watts"}, parts...)...)
+func (app *Service) ProjectWorkerDir() (string, error) {
+	store, err := workerstate.Default()
+	if err != nil {
+		return "", err
+	}
+	project, err := filepath.EvalSymlinks(app.Root)
+	if err != nil {
+		return "", err
+	}
+	directory := store.WorkerDir(project)
+	if err = store.CheckDirectory(directory); err != nil {
+		return "", err
+	}
+	return directory, nil
+}
+func (app *Service) RegisterWorkspace(cfg projectconfig.Config) error {
+	store, err := workerstate.Default()
+	if err != nil {
+		return err
+	}
+	project, err := filepath.EvalSymlinks(app.Root)
+	if err != nil {
+		return err
+	}
+	return store.RegisterProject(project, cfg.TasksDir)
 }
 
 // tasksPath is the absolute path of the tasks directory.

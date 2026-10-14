@@ -27,6 +27,7 @@ func TestCoordinatorCLILifecycle(t *testing.T) {
 	if os.Getenv("WATTS_TEMPORAL_INTEGRATION") != "1" {
 		t.Skip("set WATTS_TEMPORAL_INTEGRATION=1 with Docker and ubuntu:latest available")
 	}
+	t.Setenv("HOME", t.TempDir())
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 	cache := filepath.Join(os.TempDir(), "watts-temporal-cli")
@@ -59,7 +60,7 @@ func TestCoordinatorCLILifecycle(t *testing.T) {
 				}
 			}
 		}
-		_ = os.RemoveAll(filepath.Join(home, ".watts", "runtime", storage.Digest([]byte(project))[:16]))
+		_ = os.RemoveAll(filepath.Join(home, ".watts", "runtime", "projects", storage.Digest([]byte(project))))
 	})
 	queue := app.ResolvedTemporalSettings(settings).TaskQueue
 	worker := app.NewTemporalWorker(server.Client(), queue)

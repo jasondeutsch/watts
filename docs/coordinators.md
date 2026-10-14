@@ -70,3 +70,12 @@ WATTS_TEMPORAL_INTEGRATION=1 go test -race ./cli -run '^TestCoordinatorCLILifecy
 ```
 
 The test uses a temporary Temporal server and isolated project/package directories. It verifies rejection/rework, stale decisions, worker restart/reconnect, failed build/retry, review/publication, and cancellation through the public CLI. Workloads are deterministic Procedures; no hosted inference occurs. This establishes the coordination contract, not the behavior of an autonomous supervising agent. The external-agent/model eval remains tracked in wiss-004.
+
+## Worker settings and storage
+
+Worker preferences live in `~/.watts/config/settings.json` and affect all projects
+using that home directory. Keep task-specific policy in the ACL package. New tasks
+and worker startup register the application workspace without a project `.watts/`
+marker. Durable task evidence stays under the task; the coordinator should use
+public status and recorded evidence rather than infer progress from disposable
+home-directory runtime files. See [storage layout](package-runtime-layout.md).

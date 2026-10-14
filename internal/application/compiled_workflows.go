@@ -26,9 +26,6 @@ func (app *Service) CreateCompiledTask(cfg projectconfig.Config, slug string, pk
 	if err := cfg.ValidateWorkflow(pkg.Definition); err != nil {
 		return "", err
 	}
-	if err := pkg.Materialize(app.Root); err != nil {
-		return "", err
-	}
 	metadata := workflowlang.Metadata{Name: pkg.Name, Version: pkg.Version, Digest: pkg.Digest, SourcePaths: pkg.SourcePaths}
 	metadata.Layers = append(metadata.Layers, workflowlang.Identity{Name: pkg.Name, Version: pkg.Version, Digest: pkg.Digest, Source: pkg.Source})
 	for _, dependency := range pkg.Dependencies {
@@ -36,7 +33,7 @@ func (app *Service) CreateCompiledTask(cfg projectconfig.Config, slug string, pk
 			metadata.Layers = append(metadata.Layers, workflowlang.Identity{Name: dependency.Name, Version: dependency.Version, Digest: dependency.Digest, Source: dependency.Source})
 		}
 	}
-	selection := TaskDefinition{Name: pkg.Name, Definition: pkg.Definition, Package: &metadata}
+	selection := TaskDefinition{Name: pkg.Name, Definition: pkg.Definition, Package: &metadata, Captured: &pkg}
 	return app.createTask(cfg, slug, selection)
 }
 

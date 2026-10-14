@@ -22,6 +22,7 @@ func TestWorkerPreferences(t *testing.T) {
 func TestInvalidWorkerSettings(t *testing.T) {
 	for _, mutate := range []func(*Config){
 		func(c *Config) { c.Version = 9 },
+		func(c *Config) { c.RuntimeRetention = "unsafe" },
 		func(c *Config) { c.TasksDir = "/outside" },
 		func(c *Config) { c.SnapshotExclude = []string{"../outside"} },
 		func(c *Config) { c.Limits.MaxMinutes = -1 },

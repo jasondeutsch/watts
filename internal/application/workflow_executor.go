@@ -17,6 +17,7 @@ import (
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/redact"
 	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/jasondeutsch/watts/internal/workerstate"
 	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/jasondeutsch/watts/internal/workspace"
 )
@@ -38,11 +39,11 @@ type attemptWorkspace struct {
 }
 
 func (runtime *activityRuntime) attemptRoot() (string, error) {
-	home, err := os.UserHomeDir()
+	store, err := workerstate.Default()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".watts", "runtime", storage.Digest([]byte(runtime.project.Root))[:16], storage.Digest([]byte(runtime.request.Input.Task))[:16], storage.Digest([]byte(runtime.executionIdentity()))[:24]), nil
+	return store.AttemptDir(runtime.project.Root, runtime.request.Input.Task, runtime.runIdentity(), runtime.executionIdentity()), nil
 }
 
 func (runtime *activityRuntime) execute() (result orchestration.Result, runErr error) {
@@ -83,6 +84,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 			if !equalArtifacts(hashes, receipt.Result.Artifacts) {
 				return result, fmt.Errorf("accepted attempt outputs changed; refusing to repeat execution")
 			}
+			runtime.evidenceReady = true
 			return receipt.Result, nil
 		}
 	} else if !os.IsNotExist(err) {
@@ -93,14 +95,40 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 		return result, err
 	}
 	defer engine.Close()
+	store, err := workerstate.Default()
+	if err != nil {
+		return result, err
+	}
+	lease, err := store.Begin(runtime.project.Root, runtime.request.Input.Task, runtime.runIdentity(), runtime.executionIdentity())
+	if err != nil {
+		return result, err
+	}
+	defer lease.Close()
 	if err = runtime.prepareWorkspace(engine, &attempt, input, inputHash); err != nil {
 		return result, err
 	}
+	var containers []string
+	publicationUncertain := false
 	defer func() {
+		retained := true
 		if runErr != nil {
 			_, err := attempt.preserveEvidence()
 			runErr = errors.Join(runErr, err)
+			retained = err == nil
 		}
+		for _, id := range containers {
+			if id == "" {
+				continue
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			cleanupErr := engine.Remove(ctx, id)
+			cancel()
+			if cleanupErr != nil {
+				retained = false
+				runtime.logProgress("Container cleanup pending", "container", id, "error", cleanupErr)
+			}
+		}
+		runtime.evidenceReady = retained && !publicationUncertain
 	}()
 	environment, err := runtime.containerEnvironment()
 	if err != nil {
@@ -126,7 +154,6 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 			command []string
 		}{fmt.Sprintf("post-%d", i), check.Command})
 	}
-	var containers []string
 	for _, phase := range phases {
 		spec := *step.Container
 		spec.Image = attempt.preparation.Image
@@ -191,6 +218,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 	if err = attempt.rejectSecretPublication(step.Outputs, step.Container.Workspace == "write"); err != nil {
 		return result, err
 	}
+	publicationUncertain = true
 	if step.Container.Workspace == "write" {
 		if err = workload.Publish(runtime.project.Root, attempt.candidate, attempt.preparation.Baseline, runtime.exclusions()); err != nil {
 			return result, err
@@ -216,17 +244,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 	if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "accepted.json"), receipt); err != nil {
 		return result, err
 	}
-	for _, id := range containers {
-		if id == "" {
-			continue
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		err = engine.Remove(ctx, id)
-		cancel()
-		if err != nil {
-			runtime.logProgress("Container cleanup pending", "container", id, "error", err)
-		}
-	}
+	publicationUncertain = false
 	return result, nil
 }
 

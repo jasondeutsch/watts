@@ -73,5 +73,13 @@ func QueryTemporalWorkflowState(ctx context.Context, temporalClient client.Clien
 		return state, fmt.Errorf("cannot query workflow status; check that the project worker is running: %w", err)
 	}
 	err = value.Get(&state)
+	if err == nil {
+		switch state.Status {
+		case "completed", "failed", "cancelled":
+			// The workflow still has report/finalization work to acknowledge. Callers
+			// must not stop its worker on an unconfirmed terminal intent.
+			state.Status = "finalizing"
+		}
+	}
 	return state, err
 }

@@ -39,9 +39,9 @@ var tree = []*node{
 	{name: "c", summary: "Alias for compile", run: language.Compile},
 	{name: "exec", summary: "Execute a compiled artifact or continue an existing task", needsRepo: true, run: language.Exec},
 	{name: "doctor", summary: "Validate selected manifests, Docker images, and required secret sources", needsRepo: true, run: setup.Doctor},
-	{name: "config", summary: "Inspect packages and manage local worker preferences", needsRepo: true, children: []*node{
-		{name: "show", summary: "Print worker preferences and the selected workflow", needsRepo: true, run: settings.Show},
-		{name: "set", summary: "Change a setting: wctl config set <key> <value>", needsRepo: true, run: settings.Set},
+	{name: "config", summary: "Manage shared home-directory worker preferences", children: []*node{
+		{name: "show", summary: "Print shared worker preferences", run: settings.Show},
+		{name: "set", summary: "Change a shared setting: wctl config set <key> <value>", run: settings.Set},
 	}},
 	{name: "start", summary: "Start worker and web UI; -d runs detached", needsRepo: true, run: setup.Start},
 	{name: "stop", summary: "Stop this project's worker and web UI", needsRepo: true, run: setup.Stop},

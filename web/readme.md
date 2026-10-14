@@ -10,7 +10,7 @@ wctl start -d
 wctl stop
 ```
 
-Startup opens your default browser automatically. The UI binds to an available loopback port and prints its URL. Detached service logs are in `.watts/service.log`.
+Startup opens your default browser automatically. The UI binds to an available loopback port and prints its URL. Detached service logs are in `~/.watts/runtime/projects/<project-id>/worker/service.log`; startup prints the exact path.
 
 The sidebar discovers all immediate task folders in the configured `tasks_dir`, refreshes every five seconds, and lets you switch tasks. Incomplete tasks remain selectable and show their configuration error. The selected task streams snapshots every two seconds with stage status, attempts, workflow routes (including conditional branches and loops), agent configuration, failure feedback, and local stage log tails. Log output depends on when the worker writes it; this does not stream individual model tokens.
 

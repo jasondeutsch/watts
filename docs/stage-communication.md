@@ -26,7 +26,7 @@ Pi is an implementation of an Agent runtime; Ralph is a tool used by Pi. Their c
 
 Kubernetes may schedule workload containers. Temporal retains durable workflow routing and waits; Watts adapters own execution and publication. Neither container restart nor activity retry establishes exactly-once side effects or safe workspace recovery.
 
-Authored packages, durable task evidence, and worker working files have separate ownership. See the [package/runtime layout proposal](package-runtime-layout.md) for the proposed project `watts/` package and home-directory worker storage.
+Authored packages, durable task evidence, and worker working files have separate ownership. See the [implemented local storage layout](package-runtime-layout.md) for project `watts/` authoring, durable task captures, and home-directory worker storage.
 
 ## Authoring, compilation, and execution
 
@@ -182,7 +182,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 | [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
 | [wiss-003](../issues.md#wiss-003-live-execution-progress-and-evidence), [wiss-008](../issues.md#wiss-008-global-web-ui) | Coordinator and UI visibility should follow execution identities through shared services rather than a single worker's local files |
 | [wiss-013](../issues.md#wiss-013-containerized-workloads) | Isolated workloads establish the common execution primitive and container/sandbox lifecycle |
-| [wiss-028](../issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime) | Package authoring, durable task evidence, and worker runtime have separate storage and retention |
+| [wiss-028 (completed)](../issues.done.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime) | Package authoring, durable task evidence, and worker runtime have separate storage and retention |
 | [wiss-011](../issues.md#wiss-011-evolving-workflow-report) | Recorded results and evidence supply verification, timing, and usage reporting |
 
 ## Open decisions

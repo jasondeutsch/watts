@@ -163,7 +163,8 @@ and the functions `merge`, `concat`, `coalesce`, `join`, `format`, `length`,
 `file("prompts/build.md")` reads a UTF-8 file within the current package and
 records it as a compilation input. It cannot read outside the package through
 parent paths or symlinks. There is no shell, environment, or network function.
-`package.root` refers to captured assets under a content-addressed project path;
+`package.root` is a logical content-addressed asset root, bound to a task-owned
+capture when a task is created;
 use it in `container.resources`. Declared assets are embedded in the artifact,
 including their file modes; execution does not require the source directory.
 Asset paths must stay inside the package, cannot be `.` or traverse parents, and
@@ -598,6 +599,12 @@ worker sources fail readiness checks or execution.
 
 ## Compiled artifacts and task execution
 
+`wctl compile <package> -workflow <name>` selects a named workflow, overriding
+its package `entrypoint`. A package with multiple workflows needs an entrypoint
+or explicit selection. Each artifact contains one selected execution graph;
+compilation does not change the application root or start runtime services.
+
+
 Without `-o`, compile prints JSON. With `-o`, it atomically replaces that artifact
 and prints its package identity, digest, stage count, and dependency count. Source
 and asset files cannot be output targets. The artifact contains schema version,
@@ -618,7 +625,7 @@ wctl exec tasks/<printed-task-name>
 ```
 
 For immediate execution, use `wctl exec coding.json --name hello-server
---request "..."`. Every execution creates a distinct task. Existing-task exec
+--request "..."`. Execution of a compiled artifact creates a distinct task. Existing-task exec
 continues the same execution or retries its failed stage; it does not reload
 source configuration. Tasks store a resolved `workflow.json` with a private definition fingerprint.
 Execution rejects a task definition that has been edited since scaffolding. Do not hand-edit
@@ -627,7 +634,9 @@ compiled artifacts, task definitions, or `.watts-state` to change policy.
 The application root is the invocation directory for new compiled executions,
 independent of the package/artifact location. Source edits require recompilation
 and a new task. Monitor, approvals, conflict-aware publication, and `report.html`
-use recorded execution evidence. See [the runbook](runbook.md).
+use recorded execution evidence. Package captures are task-owned; worker
+settings, logs, and locks live under the home directory. See
+[storage layout](package-runtime-layout.md) and [the runbook](runbook.md).
 
 ## Complete example
 

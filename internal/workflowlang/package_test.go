@@ -98,7 +98,7 @@ workflow "team" {
 	pkg, err := Load(root, Options{})
 	require.NoError(t, err)
 	require.Equal(t, "test:0.1.0", pkg.Definition.Steps[0].Container.Image)
-	require.Contains(t, pkg.Definition.Steps[0].Container.Resources["library"], ".watts/packages/library/")
+	require.Contains(t, pkg.Definition.Steps[0].Container.Resources["library"], "packages/library/")
 	target := filepath.Join(root, "compiled.json")
 	data, err := json.Marshal(pkg)
 	require.NoError(t, err)

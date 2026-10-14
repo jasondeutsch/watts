@@ -64,8 +64,8 @@ func (pkg Package) Validate() error {
 	}
 	seen := map[string]bool{}
 	for _, asset := range pkg.Assets {
-		if !fs.ValidPath(asset.Path) || asset.Path == "." || !fs.ValidPath(asset.Root) || !strings.HasPrefix(asset.Root, ".watts/packages/") {
-			return fmt.Errorf("invalid compiled asset path")
+		if !fs.ValidPath(asset.Path) || asset.Path == "." || !fs.ValidPath(asset.Root) || !strings.HasPrefix(asset.Root, "packages/") {
+			return fmt.Errorf("invalid compiled asset path; recompile the ACL package for the current task-owned asset layout")
 		}
 		if asset.Mode & ^fs.FileMode(0777) != 0 {
 			return fmt.Errorf("invalid compiled asset mode")

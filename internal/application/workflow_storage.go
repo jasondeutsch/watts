@@ -52,6 +52,9 @@ func (app *Service) WorkflowConfigPath(taskPath string) string {
 }
 
 func (app *Service) CreateWorkflowBinding(config projectconfig.Config, taskPath string, flags *RunOptions) (WorkflowBinding, error) {
+	if err := app.CheckLegacySettings(); err != nil {
+		return WorkflowBinding{}, err
+	}
 	selected, err := app.TaskWorkflow(config, taskPath)
 	if err != nil {
 		return WorkflowBinding{}, err

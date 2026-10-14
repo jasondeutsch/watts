@@ -13,12 +13,13 @@ import (
 )
 
 type Config struct {
-	Version         int                       `json:"version" yaml:"version"`
-	TasksDir        string                    `json:"tasks_dir" yaml:"tasks_dir"`
-	SnapshotExclude []string                  `json:"snapshot_exclude,omitempty" yaml:"snapshot_exclude,omitempty"`
-	Limits          Limits                    `json:"limits" yaml:"limits"`
-	Temporal        *TemporalSettings         `json:"temporal,omitempty" yaml:"temporal,omitempty"`
-	Workflow        *orchestration.Definition `json:"-" yaml:"-"`
+	RuntimeRetention string                    `json:"runtime_retention" yaml:"runtime_retention"`
+	Version          int                       `json:"version" yaml:"version"`
+	TasksDir         string                    `json:"tasks_dir" yaml:"tasks_dir"`
+	SnapshotExclude  []string                  `json:"snapshot_exclude,omitempty" yaml:"snapshot_exclude,omitempty"`
+	Limits           Limits                    `json:"limits" yaml:"limits"`
+	Temporal         *TemporalSettings         `json:"temporal,omitempty" yaml:"temporal,omitempty"`
+	Workflow         *orchestration.Definition `json:"-" yaml:"-"`
 }
 type Limits struct {
 	MaxMinutes  int `json:"max_minutes" yaml:"max_minutes"`
@@ -34,7 +35,9 @@ const ConfigVersion = 1
 const Filename = "watts.acl"
 const DefaultTasksDir = "tasks"
 
-func Default() Config { return Config{Version: ConfigVersion, TasksDir: DefaultTasksDir} }
+func Default() Config {
+	return Config{Version: ConfigVersion, TasksDir: DefaultTasksDir, RuntimeRetention: "last-run"}
+}
 func Contains(values []string, value string) bool {
 	for _, entry := range values {
 		if entry == value {
@@ -59,6 +62,9 @@ func ValidTasksDir(value string) error {
 	return nil
 }
 func (config Config) Validate() error {
+	if config.RuntimeRetention != "last-run" && config.RuntimeRetention != "all" {
+		return fmt.Errorf("runtime_retention must be last-run or all")
+	}
 	if config.Version != ConfigVersion {
 		return fmt.Errorf("unsupported settings version %d", config.Version)
 	}
@@ -90,11 +96,18 @@ func SortedKeys[V any](values map[string]V) []string {
 	return keys
 }
 
-var ConfigKeys = []string{"tasks_dir", "max_minutes", "max_attempts"}
+var ConfigKeys = []string{"tasks_dir", "max_minutes", "max_attempts", "runtime_retention"}
 
 func (config *Config) Set(key string, values []string) error {
 	if len(values) != 1 {
 		return fmt.Errorf("%s takes one value", key)
+	}
+	if key == "runtime_retention" {
+		if values[0] != "last-run" && values[0] != "all" {
+			return fmt.Errorf("runtime_retention must be last-run or all")
+		}
+		config.RuntimeRetention = values[0]
+		return nil
 	}
 	if key == "tasks_dir" {
 		if err := ValidTasksDir(values[0]); err != nil {

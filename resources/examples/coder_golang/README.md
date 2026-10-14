@@ -103,3 +103,12 @@ Current limits: local modules and Docker execution only; model/cost/tool telemet
 may be incomplete. Gate success and workflow completion do not replace independent
 acceptance evaluation. Use [comparable evals](../../../evals/go-workflow/README.md)
 to assess changes to this team's configuration over time.
+
+## Project and worker storage
+
+Keep authored ACL, values, modules, and resources under your project's `watts/`
+or compile this example externally. `-workflow coding` selects this example's
+named workflow. Task creation captures package assets under the task's private
+state; it does not create a project `.watts/` cache. Worker preferences and runtime
+files live under `~/.watts/`, shared across projects with isolated project/run
+identities. See [storage layout](../../../docs/package-runtime-layout.md).

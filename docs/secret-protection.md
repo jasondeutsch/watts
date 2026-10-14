@@ -27,8 +27,9 @@ preserving existing contents:
 **/.watts-state/
 ```
 
-These protect service logs, private state, and task evidence from ordinary Git
-adds. Authored `watts/` ACL packages and intentional task reports remain visible.
+Project `.watts/` is not created by the current runtime; its ignore rule protects
+leftover files from older runs. Current service logs and worker state live under
+`~/.watts/runtime/`. Task-private evidence remains ignored during ordinary Git adds. Authored `watts/` ACL packages and intentional task reports remain visible.
 Watts does not run Git, untrack files, or change commits. An already tracked file
 remains tracked despite ignore rules. Private worker state is separate from
 shareable reports; see the [runtime layout](package-runtime-layout.md).
