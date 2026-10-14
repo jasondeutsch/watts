@@ -128,3 +128,11 @@ Report writes are atomic/retryable. Failures appear in `report_error`, CLI statu
 and worker logs without changing the workload outcome. Keep the worker running
 for finalization. Forced Temporal termination cannot run it. Live report updates
 and crash accounting remain tracked in wiss-011/wiss-025.
+
+## Credentials and private evidence
+
+Use ACL Secret bindings for credentials. New tasks and worker startup add ignore
+rules for `.watts/` and `.watts-state/`; existing tracked files require explicit
+cleanup. Share sanitized reports, not whole runtime directories. See
+[secret protection](secret-protection.md) for image rebuilding, export limits,
+and handling an existing leak.

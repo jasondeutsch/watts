@@ -180,7 +180,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 | [wiss-016](../issues.md#wiss-016-typed-workflow-resources-and-compiled-execution-packages) | Extend resolved resources and the implemented generic workload contract into portable execution packages |
 | [wiss-014](../issues.md#wiss-014-watts-worker) | Portable packages and external artifact persistence support workers without project-local state dependencies; persistence choices remain open |
 | [wiss-006](../issues.md#wiss-006-shared-logging-across-projects) | Distributed logs need consistent project, task, stage, and attempt identities |
-| [wiss-003](../issues.md#wiss-003-web-ui-status-and-execution-output), [wiss-008](../issues.md#wiss-008-global-web-ui) | UI visibility should follow execution identities rather than a single worker's local files |
+| [wiss-003](../issues.md#wiss-003-live-execution-progress-and-evidence), [wiss-008](../issues.md#wiss-008-global-web-ui) | Coordinator and UI visibility should follow execution identities through shared services rather than a single worker's local files |
 | [wiss-013](../issues.md#wiss-013-containerized-workloads) | Isolated workloads establish the common execution primitive and container/sandbox lifecycle |
 | [wiss-028](../issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime) | Package authoring, durable task evidence, and worker runtime have separate storage and retention |
 | [wiss-011](../issues.md#wiss-011-evolving-workflow-report) | Recorded results and evidence supply verification, timing, and usage reporting |

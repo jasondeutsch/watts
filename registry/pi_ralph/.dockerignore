@@ -12,3 +12,5 @@
 !tools.mjs
 !tools.ts
 !tools.test.mjs
+!redact.mjs
+!redaction.ts

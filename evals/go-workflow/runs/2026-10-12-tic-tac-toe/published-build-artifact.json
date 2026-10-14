@@ -1,7 +1,0 @@
-{
-  "path": "tic-tac-toe",
-  "bytes": 2367736,
-  "sha256": "5a784b927ac8efae6ed65a12827bf349b3055e97ddbf3da57ee35b28dae99cfc",
-  "format": "Linux arm64 ELF executable published into macOS project",
-  "source": "build workspace publication; coordinator verification compiled separately to /private/tmp"
-}

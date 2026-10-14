@@ -1,4 +1,5 @@
 // Runtime-neutral command/gate mechanics owned by this workload image.
+import { redactor } from './redact.mjs';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
@@ -6,7 +7,7 @@ import { join } from 'node:path';
 
 const outputLimit = 8192;
 export function recordEvent(type, message, details, environment = process.env) {
-  appendFileSync(environment.WATTS_EVENTS, JSON.stringify({ id: randomUUID(), type, message, details }) + '\n', { mode: 0o600 });
+  appendFileSync(environment.WATTS_EVENTS, JSON.stringify(redactor(environment).data({ id: randomUUID(), type, message, details })) + '\n', { mode: 0o600 });
 }
 export function snapshotFiles(root) {
   const files = {};
@@ -29,6 +30,7 @@ function writeEvidence(path, data) {
   renameSync(temporary, path);
 }
 export async function runCommandTool(tool, { signal, environment = process.env } = {}) {
+  const secrets = redactor(environment);
   const command = tool.command;
   if (!command) throw new Error(`Tool ${tool.name} is not a command tool`);
   const directory = command.working_dir || '/workspace';
@@ -59,19 +61,22 @@ export async function runCommandTool(tool, { signal, environment = process.env }
       if (result[field].length + text.length > outputLimit) result.truncated = true;
       result[field] = (result[field] + text).slice(-outputLimit);
     }
-    child.stdout.on('data', data => collect('stdout', data));
-    child.stderr.on('data', data => collect('stderr', data));
-    child.on('error', error => { result.stderr = error.message; });
-    child.on('close', code => {
+    const stdout = secrets.stream(), stderr = secrets.stream();
+    child.stdout.pipe(stdout).on('data', data => collect('stdout', data));
+    child.stderr.pipe(stderr).on('data', data => collect('stderr', data));
+    const drained = Promise.all([stdout, stderr].map(stream => new Promise(resolve => stream.on('end', resolve))));
+    child.on('error', error => { result.stderr = secrets.text(error.message); });
+    child.on('close', async code => {
+      await drained;
       clearTimeout(timer); clearTimeout(escalation); signal?.removeEventListener('abort', abort);
       if (!stopping && code !== null) { result.status = 'exited'; result.exit_code = code; }
       resolve();
     });
   });
   result.duration_ms = Date.now() - started;
-  writeEvidence(join(environment.WATTS_OUTPUTS, evidence), result);
+  writeEvidence(join(environment.WATTS_OUTPUTS, evidence), secrets.data(result));
   recordEvent('tool', `Tool ${tool.name}: ${result.status}${result.exit_code === null ? '' : ` (${result.exit_code})`}`, { tool: tool.name, status: result.status, exit_code: result.exit_code, evidence }, environment);
-  return result;
+  return secrets.data(result);
 }
 export async function evaluateGates(input, environment = process.env) {
   const tools = new Map((input.agent.tools || []).map(tool => [tool.name, tool]));

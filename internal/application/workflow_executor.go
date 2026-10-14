@@ -15,6 +15,7 @@ import (
 
 	"github.com/jasondeutsch/watts/internal/containerengine"
 	"github.com/jasondeutsch/watts/internal/orchestration"
+	"github.com/jasondeutsch/watts/internal/redact"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workload"
 	"github.com/jasondeutsch/watts/internal/workspace"
@@ -33,6 +34,7 @@ type acceptedAttempt struct {
 type attemptWorkspace struct {
 	root, input, output, private, candidate, evidence string
 	preparation                                       attemptPreparation
+	secrets                                           *redact.Set
 }
 
 func (runtime *activityRuntime) attemptRoot() (string, error) {
@@ -45,6 +47,8 @@ func (runtime *activityRuntime) attemptRoot() (string, error) {
 
 func (runtime *activityRuntime) execute() (result orchestration.Result, runErr error) {
 	step := runtime.request.Step
+	secrets := runtime.secretRedaction()
+	defer func() { runErr = secrets.Error(runErr) }()
 	if step.Container == nil {
 		return result, fmt.Errorf("stage %s requires a container", step.Name)
 	}
@@ -52,7 +56,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 	if err != nil {
 		return result, err
 	}
-	attempt := attemptWorkspace{root: root, input: filepath.Join(root, "inputs"), output: filepath.Join(root, "outputs"), private: filepath.Join(root, "private"), candidate: filepath.Join(root, "workspace"), evidence: filepath.Dir(runtime.project.stepInputPath(runtime.request))}
+	attempt := attemptWorkspace{secrets: secrets, root: root, input: filepath.Join(root, "inputs"), output: filepath.Join(root, "outputs"), private: filepath.Join(root, "private"), candidate: filepath.Join(root, "workspace"), evidence: filepath.Dir(runtime.project.stepInputPath(runtime.request))}
 	input, err := os.ReadFile(runtime.project.stepInputPath(runtime.request))
 	if err != nil {
 		return result, err
@@ -65,7 +69,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 	// The durable receipt outlives disposable containers and candidate directories.
 	if data, err := os.ReadFile(filepath.Join(attempt.evidence, "accepted.json")); err == nil {
 		var receipt acceptedAttempt
-		if err = json.Unmarshal(data, &receipt); err != nil {
+		if err = json.Unmarshal(secrets.JSON(data), &receipt); err != nil {
 			return result, err
 		}
 		if receipt.Execution == runtime.executionIdentity() {
@@ -129,7 +133,11 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 		spec.Command = phase.command
 		var tail checkOutput
 		runtime.logProgress("Container executing", "phase", phase.name, "image", spec.Image)
-		exit, err := engine.Run(runtime.context, containerengine.Request{Identity: runtime.executionIdentity() + "/" + phase.name, Spec: spec, InputDir: attempt.input, OutputDir: attempt.output, RuntimeDir: attempt.private, WorkspaceDir: attempt.candidate, Environment: environment, Stdout: io.MultiWriter(runtime.output, &tail), Stderr: io.MultiWriter(runtime.errorOutput, &tail)})
+		stdout := secrets.Writer(io.MultiWriter(runtime.output, &tail))
+		stderr := secrets.Writer(io.MultiWriter(runtime.errorOutput, &tail))
+		exit, err := engine.Run(runtime.context, containerengine.Request{Identity: runtime.executionIdentity() + "/" + phase.name, Spec: spec, InputDir: attempt.input, OutputDir: attempt.output, RuntimeDir: attempt.private, WorkspaceDir: attempt.candidate, Environment: environment, Stdout: stdout, Stderr: stderr})
+		err = errors.Join(err, stdout.Flush(), stderr.Flush())
+		exit.Error = secrets.Text(exit.Error)
 		containers = append(containers, exit.ContainerID)
 		if saveErr := storage.WriteJSONAtomically(filepath.Join(attempt.evidence, phase.name+"-container.json"), exit); saveErr != nil {
 			return result, errors.Join(err, saveErr)
@@ -160,7 +168,7 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 		if err != nil {
 			return result, fmt.Errorf("workload must publish result.json: %w", err)
 		}
-		result, err = parseStepResult(data)
+		result, err = parseStepResult(secrets.JSON(data))
 		if err != nil {
 			return result, err
 		}
@@ -178,6 +186,9 @@ func (runtime *activityRuntime) execute() (result orchestration.Result, runErr e
 		return result, err
 	}
 	if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "publication.json"), result); err != nil {
+		return result, err
+	}
+	if err = attempt.rejectSecretPublication(step.Outputs, step.Container.Workspace == "write"); err != nil {
 		return result, err
 	}
 	if step.Container.Workspace == "write" {
@@ -231,6 +242,13 @@ func (runtime *activityRuntime) containerEnvironment() ([]string, error) {
 		}
 		environment = append(environment, target+"="+value)
 	}
+	names := []string{}
+	for target := range runtime.request.Step.SecretEnvironment {
+		names = append(names, target)
+	}
+	sort.Strings(names)
+	encoded, _ := json.Marshal(names)
+	environment = append(environment, "WATTS_SECRET_ENV_NAMES="+string(encoded))
 	sort.Strings(environment)
 	return environment, nil
 }
@@ -267,22 +285,26 @@ func (attempt attemptWorkspace) preserveEvidence() ([]workload.Event, error) {
 	if candidate, err := workload.Snapshot(attempt.candidate, nil); err != nil {
 		return nil, err
 	} else {
-		if err = storage.WriteJSONAtomically(filepath.Join(attempt.evidence, "workspace.json"), struct {
+		metadata, err := json.Marshal(struct {
 			Baseline  map[string]workload.File `json:"baseline"`
 			Candidate map[string]workload.File `json:"candidate"`
-		}{attempt.preparation.Baseline, candidate}); err != nil {
+		}{attempt.preparation.Baseline, candidate})
+		if err != nil {
+			return nil, err
+		}
+		if err = workload.WriteFile(attempt.evidence, "workspace.json", attempt.secrets.JSON(metadata), 0600); err != nil {
 			return nil, err
 		}
 	}
 	for _, name := range []string{"result.json", "events.jsonl", "gates.json"} {
-		data, mode, err := workload.ReadFile(attempt.output, name, workload.MaximumFileBytes)
+		data, _, err := workload.ReadFile(attempt.output, name, workload.MaximumFileBytes)
 		if os.IsNotExist(err) {
 			continue
 		}
 		if err != nil {
 			return nil, err
 		}
-		if err = workload.WriteFile(attempt.evidence, "workload-"+name, data, mode); err != nil {
+		if err = workload.WriteFile(attempt.evidence, "workload-"+name, attempt.secrets.JSON(data), 0600); err != nil {
 			return nil, err
 		}
 	}
@@ -293,7 +315,7 @@ func (attempt attemptWorkspace) preserveEvidence() ([]workload.Event, error) {
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
-	events, err := workload.ReadEvents(filepath.Join(attempt.output, "events.jsonl"))
+	events, err := workload.ReadEvents(filepath.Join(attempt.evidence, "workload-events.jsonl"))
 	if err != nil {
 		return events, err
 	}

@@ -1,6 +1,0 @@
-name: tic-tac-toe-eval
-version: 0.1.0
-extends:
-  path: ../watts/resources/examples/go_generalist/watts.yaml
-values:
-  - values.yaml

@@ -1,0 +1,30 @@
+# Record completed issues here when removing them from issues.md.
+# Preserve issue IDs; do not reuse them or infer completion from partial work.
+issues:
+  - id: wiss-048
+    title: Prevent secrets leaking into logs, telemetry, and exported evidence
+    completed_on: "2026-10-13"
+    summary: >-
+      Protect declared credentials at workload capture and publication boundaries,
+      with image-owned protection before tool results enter model context.
+    changes:
+      - Redact stdout/stderr across streaming chunk boundaries and diagnostic errors.
+      - Sanitize retained results, events, tool evidence, and completion reports.
+      - Sanitize Pi and nested Ralph tool results, provider context, and telemetry.
+      - Reject credential-bearing source and task artifacts before publication.
+      - Add private-state ignore rules during task creation and worker startup.
+      - Document image responsibilities, evidence sharing, and incident cleanup.
+    verification:
+      - Full Go test suite passed.
+      - Adapter unit tests passed; optional native MCP integration tests were skipped.
+      - Container tests verified Pi and nested Ralph context with synthetic credentials.
+      - SDK activity logs and actual Temporal history retained sanitized failures.
+      - Synthetic evidence archive and report checks passed.
+      - Git tracking checks excluded private state and preserved authored ACL and reports.
+    limitations:
+      - Matches known declared values and common escaped forms, not arbitrary transformations.
+      - Does not scrub historical leaks or rotate credentials.
+      - Private workload files and container-engine storage require separate protection.
+      - Updated binaries and derived images must be rebuilt; workers must be restarted.
+    documentation:
+      - docs/secret-protection.md

@@ -1,6 +1,0 @@
-{
-  "go.mod": "a6ca3fed3e325291fc6e52da8ff9d79d44d0d5854821e1a8e6a7693b7b817f42",
-  "main.go": "047e6d2b4e6afcf8cdeba37b43bcc8a4e9cc7f4d2ca1c4a68cbb686c405a337e",
-  "main_test.go": "6e8afb40037d796af047e3e36839199d18c07e277f8bb2f5b7d8d307a733b378",
-  "Makefile": "d760dddb4544c1273ab94b4bba7ff8bc298bc621335273a817f2018e1fe0acf0"
-}

@@ -1,6 +1,6 @@
 # Watts issues and proposed improvements
 
-Watts remains a proof of concept at **0.1.0**. This backlog contains open work; completed items are removed without reusing their numbers. Each issue distinguishes observed failures, implemented foundations, and proposed capabilities. A passing component test does not establish full workflow completion.
+Watts remains a proof of concept at **0.1.0**. This backlog contains open work; completed items move to [issues.done.yaml](issues.done.yaml) without reusing their numbers. Record the changes, verification, and remaining limitations when closing an issue. Each issue distinguishes observed failures, implemented foundations, and proposed capabilities. A passing component test does not establish full workflow completion.
 
 Watts core executes a generic workload contract. Agent/tool integrations belong in images; Temporal owns durable orchestration. Currently, only local Docker Engine execution is supported. Podman and Kubernetes remain possible future backends.
 
@@ -105,18 +105,31 @@ Suggested order: configuration guidance and atomic scaffolding; log/failure visi
 
 ## Observed issues
 
-### wiss-003: Web UI status and execution output
+### wiss-003: Live execution progress and evidence
 
 The container eval's builder actively edited files and ran tools while its durable attempt log contained only a 133-byte session header. Private progress/usage events were absent from the web snapshot. Completed drafting logs also contained 44,419- and 56,663-byte JSON events: the API's 32 KiB tail discarded those partial records, leaving only `agent_settled` and the check result. See [log shape](evals/go-workflow/runs/2026-10-12-tic-tac-toe/log-shape.json) and [web snapshot](evals/go-workflow/runs/2026-10-12-tic-tac-toe/web-build-snapshot.sse).
 
 Failed-stage reporting has improved: the October 12 CLI returned a nonzero status with the lint error, and the web API retained its stage, attempt, failure, and retry state. Remaining work is useful live output and access to retained evidence.
 
+External coordinating agents are primary consumers of this information. Useful
+progress must be accessible through MCP, not just the web UI or private log files.
+The CSS eval required read-only Docker/private runtime inspection to discover
+nested builder progress; that is evidence of an incomplete public interface.
+
+Responsibility boundaries: this issue defines the normalized progress/evidence
+contract and its presentation; wiss-025 owns durable event capture and accounting;
+wiss-010 exposes the contract through a thin MCP adapter. CLI, MCP, and web UI must
+consume the same application services and retained records. Do not implement
+agent-specific inspection or separate progress state in each interface.
+
 Acceptance criteria:
 
-- Expose structured progress, tool activity, and reported usage during execution through the common workload interface. Keep runtime-specific translation in the image.
-- Display stage/attempt identity, update time, failure cause, and available actions. An idle log alone must not imply a stalled execution.
+- Expose structured progress, tool activity, gate/repair outcomes, and reported usage during execution through the common workload interface. Keep runtime-specific translation in the image; preserve attribution to execution, stage, attempt, and relevant nested activity.
+- Display stage/attempt identity, last recorded activity time, failure cause, pending decisions, and available actions. Distinguish partial/unavailable usage from zero, and a quiet execution from unavailable infrastructure. An idle log alone must not imply a stalled execution; do not invent completion percentages.
 - Mark truncation and provide access to full output; do not silently discard oversized records. Preserve earlier attempts when querying Temporal fails.
-- Verify active nested-agent output, oversized events, failed attempts, and retry visibility against the live UI/API. Coordinate with wiss-011 and wiss-025.
+- Make the same information consumable by an external agent through MCP under wiss-010: current status, a bounded wait for meaningful changes with a reconnect cursor, and scoped retrieval of detailed evidence. Default to useful summaries and references, not full transcript replay.
+- Verify active nested-agent output, oversized events, failures, decisions, retries, and reconnect through MCP and the CLI/web views. An external coordinator must follow a task without Docker access, private runtime paths, or knowledge of a particular Agent implementation.
+- Use the implemented [secret protection](docs/secret-protection.md) before progress is retained or exposed. Coordinate with wiss-011 and wiss-025; the report and interfaces are views over the same evidence.
 
 The [web-UI incremental eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) confirms the nested-agent visibility gap: while Ralph iteration 2 was writing source and reporting assistant-turn usage in private outputs, the public task log and UI showed only the outer session and completed iteration 1 summary. Task identity, attempts, and rejection feedback were visible. Stream useful normalized progress from image-owned events rather than presenting quiet outer-process output as the only activity evidence.
 
@@ -225,12 +238,21 @@ Remaining work:
 
 The container eval retained usage for drafting and both nested build iterations: 1,831,396 input and 40,081 output tokens; cached input is included in that input count. Cost remained unknown. [Usage evidence](evals/go-workflow/runs/2026-10-12-tic-tac-toe/usage-summary.json). Post-attempt capture is improved; live visibility and abrupt-loss completeness remain open.
 
+Provide the durable foundation for live progress under wiss-003 and MCP status,
+wait, and evidence operations under wiss-010. Event persistence and read services
+are transport-independent: MCP must not create its own telemetry store or depend
+on disposable container files. Durable capture improves completeness but cannot
+recover usage an adapter/provider never reported; surface that limitation.
+
 Acceptance criteria:
 
 - Persist events incrementally outside disposable workload storage. Preserve available usage, logs, and failure/cleanup evidence after cancellation or worker loss.
-- Deduplicate by stable response/event identity, including rework and redelivery. Document cache semantics; missing counters remain unknown.
+- Preserve a common event identity and attribution to task/execution, stage, attempt, and relevant nested operation, with event/receipt timestamps. Capture progress, tool lifecycle, gate/repair results, usage, and errors; keep bulk content outside Temporal history.
+- Deduplicate by stable response/event identity, including rework and redelivery. Document ordering and cache semantics; missing counters remain unknown.
+- Provide bounded queries and retained cursor/catch-up semantics for shared application services. A cursor outside retention produces an explicit resynchronization requirement and current snapshot; it must not silently lose or duplicate observed activity.
 - Distinguish reported billing from estimates, with pricing provenance. Unset prices do not imply free execution.
-- Verify cumulative accounting through a multi-stage failure/retry/cancellation scenario. Coordinate with wiss-003 and wiss-011; store bulk content outside Temporal history.
+- Redact declared secrets at capture boundaries before persistence, summaries, or exports, following the implemented [secret protection](docs/secret-protection.md); access through MCP does not justify retaining raw credentials.
+- Verify cumulative accounting and evidence preservation through failure, cancellation, worker restart, and duplicate event delivery. Check that reconnecting coordinator reads and multiple consumers do not double-count usage or alter workflow execution. Coordinate with wiss-003, wiss-010, and wiss-011.
 
 ### wiss-026: Support authenticated remote Temporal connections
 
@@ -277,6 +299,18 @@ Allow one UI to inspect multiple projects and workers independently of any proje
 
 Expose a thin MCP adapter over the application services used by the CLI/UI. Define a generic coordination contract so an external agent can understand what is happening, what needs attention, and which actions are available. MCP supplies structured operations; the coordinator skill supplies operating guidance. Neither introduces another workflow runner or an agent-specific dependency into core.
 
+Live task observation is a first-class part of this adapter, not an optional web
+UI feature. Consume the progress contract from wiss-003 and durable records/read
+services from wiss-025. Implement business rules, event selection, accounting,
+and evidence lookup once in application services; MCP translates their inputs and
+outputs, as do CLI and web adapters.
+
+The initial observation interface should stay small: current task status; bounded
+wait-for-change with an opaque cursor; and scoped evidence retrieval for a tool
+result, gate, failure, artifact, or detailed output. Tool names and wire schemas
+remain implementation decisions. A coordinator must explain progress and decisions
+without accessing worker files or invoking runtime-specific commands.
+
 Acceptance criteria:
 
 - Expose a focused lifecycle: task creation, access to declared artifacts, submission, status/evidence inspection, decisions, retry, and cancellation. Artifact operations remain scoped to the task and existing publication rules; the adapter is not a general filesystem or shell interface.
@@ -286,8 +320,8 @@ Acceptance criteria:
 - Support reconnect and catch-up from a cursor, stable event identities, and documented duplicate/order behavior. If a cursor is no longer retained, return an explicit resynchronization response with a current snapshot and accessible history. Derive available actions from current state, not stale notifications.
 - A disconnected coordinator must not cancel the workflow. Canceling a status wait cancels only that observation. Distinguish a quiet execution from an unavailable worker/Temporal connection, and state the limits of available liveness evidence.
 - Handle repeated mutation requests after a lost response without creating duplicate executions or decisions; coordinate with wiss-022. Reject stale decisions and preserve the authorization boundary in wiss-004 and wiss-012.
-- Keep responses bounded with pagination or evidence references for large output. Return structured failures even when a tool call cannot complete; retain accessible local evidence where possible during infrastructure outages.
-- Test the same application lifecycle through MCP and CLI, plus timeout, reconnect, missed/duplicate events, stale decisions, and unavailable infrastructure. Include an external-agent scenario under wiss-004; do not expose every internal operation.
+- Keep responses bounded with pagination or evidence references for large output. Retrieve evidence through execution-bound references and existing access controls, not arbitrary host paths; expose redacted summaries/output using the implemented [secret protection](docs/secret-protection.md). Return structured failures even when a tool call cannot complete; retain accessible evidence where possible during infrastructure outages.
+- Test the same application lifecycle and progress facts through MCP, CLI, and web services, plus timeout, reconnect, missed/duplicate events, stale decisions, and unavailable infrastructure. Include an external-agent scenario under wiss-004 that follows nested workload activity using only public operations; do not expose every internal operation.
 - Document client setup and capability limits, including hosts that cannot wait or deliver background updates. This exposes Watts to coordinators; workload tool services remain the separate MCP declaration under wiss-034.
 
 ### wiss-011: Evolving workflow report
