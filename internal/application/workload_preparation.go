@@ -46,6 +46,13 @@ func (runtime *activityRuntime) prepareWorkspace(engine *containerengine.Engine,
 		return err
 	}
 	attempt.preparation = attemptPreparation{InputHash: inputHash, Baseline: baseline, Image: image}
+	if runtime.request.Step.Container.Workspace == "write" {
+		attempt.preparation.BaselineMeasurements, err = workload.MeasureFiles(attempt.candidate, baseline)
+		if err != nil {
+			return err
+		}
+		attempt.preparation.MeasurementsVersion = 1
+	}
 	var envelope StepInput
 	if err = json.Unmarshal(input, &envelope); err != nil {
 		return err

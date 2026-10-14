@@ -50,9 +50,9 @@ func (c Counter) String() string {
 		return "Unknown"
 	}
 	if c.Known != c.Expected {
-		return fmt.Sprintf("%d (partial %d/%d)", c.Value, c.Known, c.Expected)
+		return fmt.Sprintf("%s (partial %d/%d)", integerText(c.Value), c.Known, c.Expected)
 	}
-	return fmt.Sprint(c.Value)
+	return integerText(c.Value)
 }
 func (c *Counter) add(value *int64) {
 	c.Expected++
@@ -83,7 +83,7 @@ func (m *Metrics) add(u *workload.Usage) {
 	}
 	m.Total.add(total)
 	m.Expected++
-	if u.Cost != nil {
+	if u.Cost != nil && *u.Cost >= 0 && !math.IsInf(*u.Cost, 0) && !math.IsNaN(*u.Cost) && !math.IsInf(m.Cost+*u.Cost, 0) {
 		m.Cost += *u.Cost
 		m.CostKnown++
 	}
@@ -103,13 +103,14 @@ func (m Metrics) CostText() string {
 
 type Attempt struct {
 	orchestration.StageResult
-	Sequence int
-	Metrics  Metrics
-	Models   []string
-	Warnings []string
-	Gates    []workload.GateResult
-	Evidence string
-	Log      string
+	Sequence     int
+	Metrics      Metrics
+	Models       []string
+	Warnings     []string
+	Gates        []workload.GateResult
+	Measurements []workload.Measurement
+	Evidence     string
+	Log          string
 }
 type Stage struct {
 	Definition orchestration.Step
@@ -124,6 +125,7 @@ type Report struct {
 	Metrics          Metrics
 	Failures         int
 	Rework           int
+	Dashboard        Dashboard
 }
 
 // Render reads only selected evidence files, never environment values, prompts,
@@ -154,8 +156,8 @@ func Render(w io.Writer, evidence *os.Root, request orchestration.ReportInput) e
 			report.Failures++
 		}
 		directory := fmt.Sprintf(".watts-state/steps/%s-%d", record.Step, record.Attempt)
-		attempt.Evidence = directory + "/result.json"
-		attempt.Log = fmt.Sprintf(".watts-state/logs/%s-%d.log", record.Step, record.Attempt)
+		attempt.Evidence = retainedLink(evidence, directory+"/result.json")
+		attempt.Log = retainedLink(evidence, fmt.Sprintf(".watts-state/logs/%s-%d.log", record.Step, record.Attempt))
 		if stage.Definition.Agent != "" {
 			var usage *workload.Usage
 			if err := readJSON(evidence, directory+"/usage.json", &usage); err != nil {
@@ -167,14 +169,24 @@ func Render(w io.Writer, evidence *os.Root, request orchestration.ReportInput) e
 			attempt.Metrics.add(usage)
 			stage.Metrics.add(usage)
 			report.Metrics.add(usage)
+		}
+		if stage.Definition.Agent != "" || stage.Definition.Container != nil {
 			var events []workload.Event
 			if err := readJSON(evidence, directory+"/events.json", &events); err != nil {
-				attempt.Warnings = append(attempt.Warnings, "Model observations unavailable: "+err.Error())
+				attempt.Warnings = append(attempt.Warnings, "Workload observations unavailable: "+err.Error())
 			} else {
 				models := map[string]bool{}
 				for _, event := range events {
 					if event.Type == "usage" && event.Usage != nil && event.Usage.Model != "" {
 						models[event.Usage.Provider+" / "+event.Usage.Model] = true
+					}
+					if event.Type == "measurement" {
+						measurement, err := workload.ParseMeasurement(event)
+						if err != nil {
+							attempt.Warnings = append(attempt.Warnings, "Workload measurement unavailable: "+err.Error())
+						} else {
+							attempt.Measurements = append(attempt.Measurements, measurement)
+						}
 					}
 				}
 				for model := range models {
@@ -206,6 +218,7 @@ func Render(w io.Writer, evidence *os.Root, request orchestration.ReportInput) e
 		}
 		report.Attempts = append(report.Attempts, attempt)
 	}
+	report.Dashboard = buildDashboard(report, evidence)
 	return page.Execute(w, report)
 }
 
@@ -224,4 +237,12 @@ func readJSON(root *os.Root, name string, target any) error {
 		return fmt.Errorf("%s: invalid JSON", path.Base(name))
 	}
 	return nil
+}
+
+func retainedLink(root *os.Root, name string) string {
+	info, err := root.Lstat(name)
+	if err != nil || !info.Mode().IsRegular() {
+		return ""
+	}
+	return name
 }

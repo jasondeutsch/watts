@@ -3,6 +3,7 @@
 | Guide | Use it for |
 | --- | --- |
 | [Runbook](runbook.md) | Install, configure a project, run tasks, approve, recover, and read completion reports |
+| [Task reports](task-reports.md) | Dashboard metrics, charts, output/token ratios, measurement coverage, and team-defined complexity |
 | [External coordinators](coordinators.md) | Drive tasks through an agent, report progress, and record delegated decisions |
 | [Workflow execution](workflows.md) | Routing, results, events, and MCP selection |
 | [ACL language specification](language-spec.md) | Syntax, declarations, typed contracts, modules, routing, and compiled artifacts |

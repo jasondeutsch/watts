@@ -94,6 +94,11 @@ on failed attempts. Missing counters and prices remain unknown. Input includes
 cached input when the runtime can account for it; cache counters are a breakdown,
 not extra tokens to add to input. Watts does not invent provider prices.
 
+Workloads may also emit `measurement` events with a named numeric value, method,
+unit, scope, and optional baseline. Reports show these observations without
+inventing an overall score or running an analyzer. See [task report metrics](task-reports.md)
+for the event format and workspace-volume definitions.
+
 The worker saves event evidence, a usage summary, container identity/exit records,
 input, result, workspace hash manifests, acceptance receipt, and logs under `<task>/.watts-state/steps/` and
 `logs/`. Private attempt directories live under `~/.watts/runtime/`. Full retention

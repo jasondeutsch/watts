@@ -1,27 +1,739 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Watts task report — {{.Input.Task}}</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Watts task report — {{.Input.Task}}</title>
 <style>
-:root{color-scheme:light;font:15px/1.6 system-ui,sans-serif;color:#243449;background:#f5f7fa}body{max-width:1150px;margin:40px auto;padding:0 24px}h1,h2,h3{line-height:1.25;color:#15283e}h1{font-size:30px}h2{margin-top:36px}a{color:#125fa0}code{overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;background:white}td,th{text-align:left;padding:10px 12px;border-bottom:1px solid #dde3ec}th{font-size:12px;color:#53657b;background:#edf1f6}small,.muted{color:#65748a}.scroll{overflow:auto}.flow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:20px;background:white;border:1px solid #dde3ec;border-radius:10px}.node{border:1px solid #bbcbdc;border-radius:8px;padding:10px 16px;min-width:110px}.node.failure,.node.rejected{border-color:#c14b4b;background:#fff1ef}.arrow{color:#65748a;font-size:24px}.attempt{background:white;border:1px solid #dde3ec;padding:20px;margin:16px 0;border-radius:10px}.error{color:#a22e2e;white-space:pre-wrap}.warning{color:#805416}.facts{display:flex;flex-wrap:wrap;gap:12px}.fact{background:white;border:1px solid #dde3ec;border-radius:8px;padding:14px 20px}.fact strong{display:block;font-size:22px}dt{font-weight:600}dd{margin:0 0 12px;overflow-wrap:anywhere}@media print{body{margin:0;background:white}.attempt{break-inside:avoid}}
-</style></head><body>
-<header><small>WATTS · EXECUTION REPORT</small><h1>{{.Input.Task}}</h1><p><strong>Status: {{.State.Status}}</strong> · Generated {{timestamp .GeneratedAt}}</p></header>
-<div class="facts"><div class="fact"><strong>{{len .Attempts}}</strong>attempts</div><div class="fact"><strong>{{.Rework}}</strong>repeat stage visits</div><div class="fact"><strong>{{.Failures}}</strong>failed attempts</div><div class="fact"><strong>{{.Metrics.Total}}</strong>reported tokens</div><div class="fact"><strong>{{elapsed .State.StartedAt .State.FinishedAt}}</strong>elapsed including waits</div></div>
+:root {
+  color-scheme:light;
+  font:15px/1.6 system-ui,sans-serif;
+  color:#243449;
+  background:#f5f7fa;
+}
+body {
+  max-width:1150px;
+  margin:40px auto;
+  padding:0 24px;
+}
+h1,h2,h3 {
+  line-height:1.25;
+  color:#15283e;
+}
+h1 {
+  font-size:30px;
+}
+h2 {
+  margin-top:36px;
+}
+a {
+  color:#125fa0;
+}
+code {
+  overflow-wrap:anywhere;
+}
+table {
+  border-collapse:collapse;
+  width:100%;
+  background:white;
+}
+td,th {
+  text-align:left;
+  padding:10px 12px;
+  border-bottom:1px solid #dde3ec;
+}
+th {
+  font-size:12px;
+  color:#53657b;
+  background:#edf1f6;
+}
+small,.muted {
+  color:#65748a;
+}
+.scroll {
+  overflow:auto;
+}
+.flow {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:12px;
+  padding:20px;
+  background:white;
+  border:1px solid #dde3ec;
+  border-radius:10px;
+}
+.node {
+  border:1px solid #bbcbdc;
+  border-radius:8px;
+  padding:10px 16px;
+  min-width:110px;
+}
+.node.failure,.node.rejected {
+  border-color:#c14b4b;
+  background:#fff1ef;
+}
+.arrow {
+  color:#65748a;
+  font-size:24px;
+}
+.attempt {
+  background:white;
+  border:1px solid #dde3ec;
+  padding:20px;
+  margin:16px 0;
+  border-radius:10px;
+}
+.error {
+  color:#a22e2e;
+  white-space:pre-wrap;
+}
+.warning {
+  color:#805416;
+}
+.fact {
+  background:white;
+  border:1px solid #dde3ec;
+  border-radius:8px;
+  padding:14px 20px;
+}
+dt {
+  font-weight:600;
+}
+dd {
+  margin:0 0 12px;
+  overflow-wrap:anywhere;
+}
+@media print {
+  body {
+    margin:0;
+    background:white;
+  }
+  .attempt {
+    break-inside:avoid;
+  }
+}
+.facts {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:12px;
+  margin:24px 0;
+}
+.fact {
+  padding:18px;
+}
+.fact strong {
+  display:block;
+  font-size:26px;
+  line-height:1.2;
+  overflow-wrap:anywhere;
+}
+.fact small {
+  display:block;
+  margin-top:8px;
+}
+.dashboard {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin:24px 0;
+}
+.panel {
+  margin:0;
+  padding:22px;
+  background:#fff;
+  border:1px solid #dde3ec;
+  border-radius:10px;
+}
+.panel h2 {
+  font-size:19px;
+  margin:0 0 16px;
+}
+.chart-row {
+  display:grid;
+  grid-template-columns:minmax(100px,1fr) minmax(80px,2fr) 100px;
+  gap:12px;
+  align-items:center;
+  margin:16px 0;
+}
+.chart-label {
+  font-size:13px;
+  overflow-wrap:anywhere;
+}
+.chart-value {
+  font-size:13px;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+}
+.bar-track {
+  height:16px;
+  background:#edf1f6;
+  border-radius:4px;
+  overflow:hidden;
+  display:flex;
+}
+.fill {
+  display:block;
+  height:100%;
+  background:#3464b0;
+}
+.fill.output {
+  background:#438d82;
+}
+.fill.partial {
+  background:#929faf;
+}
+.fill.human {
+  background:#bb842b;
+}
+.bar-track.unknown {
+  background:repeating-linear-gradient(135deg,#edf1f6 0 5px,#dce4ec 5px 8px);
+}
+.legend {
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  font-size:12px;
+  color:#53657b;
+}
+.key {
+  display:inline-block;
+  width:10px;
+  height:10px;
+  background:#3464b0;
+  margin-right:5px;
+  border-radius:2px;
+}
+.key.output {
+  background:#438d82;
+}
+.key.partial {
+  background:#929faf;
+}
+.key.human {
+  background:#bb842b;
+}
+.caption {
+  overflow-wrap:anywhere;
+  font-size:12px;
+  margin:14px 0 0;
+  color:#65748a;
+}
+.coverage {
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  font-size:13px;
+  margin:18px 0;
+}
+.coverage span {
+  padding:8px 12px;
+  background:#edf1f6;
+  border-radius:5px;
+}
+.volume-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.volume-grid strong {
+  overflow-wrap:anywhere;
+  display:block;
+  font-size:24px;
+  font-variant-numeric:tabular-nums;
+}
+.measurement {
+  border-top:1px solid #dde3ec;
+  padding-top:16px;
+  margin-top:18px;
+}
+.measurement .bar-track {
+  max-width:100%;
+}
+.measurement h3 {
+  margin:0 0 8px;
+  font-size:16px;
+}
+.node.success,.node.approved {
+  border-color:#70a493;
+  background:#f4faf7;
+}
+@media(max-width:700px) {
+  body {
+    padding:0 16px;
+    margin:24px auto;
+  }
+  .dashboard {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .panel {
+    padding:16px;
+  }
+  .chart-row {
+    grid-template-columns:minmax(80px,1fr) minmax(60px,1.5fr) 86px;
+    gap:8px;
+  }
+  .fact strong {
+    font-size:22px;
+  }
+  .chart-value {
+    max-width:120px;
+  }
+  .flow {
+    padding:12px;
+  }
+}
+@media print {
+  .dashboard {
+    grid-template-columns:1fr 1fr;
+  }
+  .panel {
+    break-inside:avoid;
+  }
+  .bar-track,.fill,.key {
+    print-color-adjust:exact;
+  }
+}
+
+/* Compact panel grid, explicit units, shared scales, and visible data coverage. */
+.usage-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:20px;
+  margin:36px 0 18px;
+}
+.usage-heading h2 {
+  margin:4px 0 0;
+  font-size:24px;
+}
+.usage-heading p {
+  color:#65748a;
+  font-size:13px;
+  margin:0;
+}
+.usage-heading small {
+  font-size:11px;
+  letter-spacing:.12em;
+}
+.usage-grid {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.usage-panel {
+  min-width:0;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+}
+.usage-panel.wide {
+  grid-column:span 2;
+}
+.panel-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:12px;
+  margin:0 0 12px;
+}
+.panel-header h3 {
+  font-size:16px;
+  margin:0;
+  line-height:1.4;
+}
+.unit {
+  color:#65748a;
+  font-size:11px;
+  white-space:nowrap;
+}
+.usage-panel .legend {
+  gap:10px;
+  font-size:11px;
+}
+.usage-panel .chart-row {
+  grid-template-columns:90px minmax(0,1fr) 82px;
+  gap:8px;
+  margin:14px 0;
+}
+.usage-panel .chart-value {
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+.usage-panel .bar-track {
+  height:18px;
+  border-radius:2px;
+  background:repeating-linear-gradient(90deg,#edf1f6 0 calc(50% - 1px),#d7dfea calc(50% - 1px) 50%);
+}
+.usage-panel .bar-track.unknown {
+  background:repeating-linear-gradient(135deg,#edf1f6 0 5px,#dce4ec 5px 8px);
+}
+.plot-rows {
+  flex:1;
+}
+.chart-scale {
+  display:flex;
+  justify-content:space-between;
+  margin-left:98px;
+  margin-right:90px;
+  font:10px/1.5 ui-monospace,monospace;
+  color:#65748a;
+  gap:6px;
+}
+.usage-panel .caption {
+  border-top:1px solid #edf1f6;
+  padding-top:12px;
+  line-height:1.5;
+  font-size:11px;
+}
+.key.input,.fill.input,.svg-input {
+  background:#3464b0;
+  fill:#3464b0;
+}
+.key.total,.fill.total {
+  background:#7959bd;
+}
+.key.cache-read,.fill.cache-read {
+  background:#2990a1;
+}
+.key.cache-write,.fill.cache-write {
+  background:#789448;
+}
+.key.repeat,.fill.repeat {
+  background:#d47a38;
+}
+.key.cost,.fill.cost {
+  background:#b25a89;
+}
+.svg-output {
+  fill:#438d82;
+}
+.svg-partial {
+  fill:#929faf;
+}
+.attempt-panel {
+  min-width:0;
+  grid-column:1/-1;
+  padding:18px;
+}
+.chart-scroll {
+  overflow-x:auto;
+}
+.attempt-plot {
+  display:block;
+  width:100%;
+  height:auto;
+}
+.grid-line {
+  stroke:#dde3ec;
+  stroke-width:1;
+  stroke-dasharray:3 3;
+}
+.axis-line {
+  stroke:#a7b6c7;
+  stroke-width:1;
+}
+.tick-label {
+  fill:#65748a;
+  font:11px system-ui,sans-serif;
+}
+.point-value {
+  fill:#243449;
+  font:600 11px ui-monospace,monospace;
+}
+.attempt-plot a:hover rect,.attempt-plot a:focus rect {
+  opacity:.75;
+}
+.attempt-plot a:focus text {
+  fill:#125fa0;
+  text-decoration:underline;
+}
+@media (min-width:701px) and (max-width:1100px) {
+  .facts {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media (max-width:1100px) {
+  .usage-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .usage-panel.wide {
+    grid-column:auto;
+  }
+}
+@media (max-width:760px) {
+  .usage-grid {
+    grid-template-columns:minmax(0,1fr);
+  }
+  .usage-heading {
+    align-items:start;
+    flex-direction:column;
+    gap:8px;
+  }
+}
+@media print {
+  .usage-grid {
+    grid-template-columns:1fr 1fr;
+  }
+  .attempt-plot {
+    min-width:0!important;
+  }
+  .usage-panel {
+    break-inside:avoid;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+<small>WATTS · EXECUTION REPORT</small>
+<h1>{{.Input.Task}}</h1>
+<p>
+<strong>Status: {{.State.Status}}</strong> · Generated {{timestamp .GeneratedAt}}</p>
+</header>
+<section id="metrics" aria-label="Execution metrics">
+<div class="facts">
+<div class="fact">
+<strong>{{.Dashboard.Elapsed}}</strong>elapsed<small>Includes approval stages</small>
+</div>
+<div class="fact">
+<strong>{{.Metrics.Total}}</strong>reported tokens<small>Input + output, including rework</small>
+</div>
+<div class="fact">
+<strong>{{.Metrics.CostText}}</strong>reported cost<small>{{.Metrics.CostKnown}} / {{.Metrics.Expected}} model attempts reported cost</small>
+</div>
+<div class="fact">
+<strong>{{.Dashboard.ReworkAttempts}}</strong>repeat workload attempts<small>{{.Dashboard.RepeatShare}} of reported tokens</small>
+</div>
+<div class="fact">
+<strong>{{.Failures}}</strong>failed attempts<small>{{len .Attempts}} total stage visits</small>
+</div>
+<div class="fact">
+<strong>{{.Dashboard.Changes.FilesText}}</strong>file-change events<small>Accepted workspace publications</small>
+</div>
+</div>
+<div class="coverage" aria-label="Measurement coverage">
+<span>Token evidence: {{.Metrics.Total.Known}} / {{.Metrics.Total.Expected}} model attempts</span>
+<span>Workspace evidence: {{.Dashboard.Changes.KnownAttempts}} / {{.Dashboard.Changes.ExpectedAttempts}} write attempts</span>
+<span>Gate evidence: {{.Dashboard.Gates.Known}} / {{.Dashboard.Gates.Expected}}</span>
+<span>{{.Dashboard.Rejections}} rejected / {{.Dashboard.Decisions}} human decisions</span>
+</div>
+<div class="usage-heading" id="usage">
+<div><small>RECORDED TELEMETRY</small><h2>Usage by stage</h2></div>
+<p>{{.Metrics.Expected}} model attempts · all recorded visits included</p>
+</div>
+<div class="usage-grid" aria-label="Stage usage graphs">
+{{range .Dashboard.UsagePanels}}
+<figure class="panel usage-panel {{if eq .Title "Recorded stage time"}}wide{{end}}">
+<header class="panel-header"><h3>{{.Title}}</h3><span class="unit">{{.Unit}}</span></header>
+<div class="legend">{{range .Legend}}<span><i class="key {{.Class}}"></i>{{.Label}}</span>{{end}}<span><i class="key partial"></i>partial</span></div>
+<div class="plot-rows">
+{{range .Rows}}<div class="chart-row" title="{{.Detail}}">
+<span class="chart-label">{{.Label}}</span>
+<div class="bar-track {{if .Unknown}}unknown{{end}}" role="img" aria-label="{{.Detail}}">
+{{range .Series}}<span class="fill {{.Class}}" style="width:{{.Width}}%"></span>{{end}}
+</div>
+<strong class="chart-value">{{.Value}}</strong>
+</div>{{else}}<p class="muted">No applicable usage recorded.</p>{{end}}
+</div>
+{{if .Scale}}<div class="chart-scale" aria-hidden="true">{{range .Scale}}<span>{{.}}</span>{{end}}</div>{{end}}
+<figcaption class="caption">{{.Caption}}</figcaption>
+</figure>
+{{end}}
+<figure class="panel attempt-panel">
+<header class="panel-header"><h3>Tokens per model attempt</h3><span class="unit">tokens · execution order</span></header>
+<div class="legend"><span><i class="key input"></i>Input</span><span><i class="key output"></i>Output</span><span><i class="key partial"></i>Partial</span><span>Click an attempt to inspect it</span></div>
+{{with .Dashboard.AttemptUsage}}
+{{if .Points}}<div class="chart-scroll">
+<svg class="attempt-plot" viewBox="0 0 {{.Width}} 290" style="min-width:{{.Width}}px" role="group" aria-label="Reported input and output tokens for each model attempt in execution order. Exact values are also listed in the attempt details.">
+{{range .Ticks}}<line class="grid-line" x1="60" x2="100%" y1="{{.Y}}" y2="{{.Y}}"></line><text class="tick-label" x="48" y="{{.Y}}" text-anchor="end" dominant-baseline="middle">{{.Label}}</text>{{end}}
+<line class="axis-line" x1="60" x2="100%" y1="210" y2="210"></line>
+{{range .Points}}<a href="#attempt-{{.Sequence}}" aria-label="{{.Detail}} · inspect attempt">
+<title>{{.Detail}}</title>
+{{if .Unknown}}<text class="tick-label" x="{{.Center}}" y="198" text-anchor="middle">Unknown</text>{{else}}
+<rect class="svg-input {{if .Partial}}svg-partial{{end}}" x="{{.X}}" y="{{.InputY}}" width="{{.Width}}" height="{{.InputHeight}}" rx="2"></rect>
+<rect class="svg-output" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.OutputHeight}}" rx="2"></rect>
+<text class="point-value" x="{{.Center}}" y="{{.Y}}" dy="-8" text-anchor="middle">{{.Value}}</text>{{end}}
+<text class="tick-label" x="{{.Center}}" y="234" text-anchor="middle">{{.Stage}}</text>
+<text class="tick-label" x="{{.Center}}" y="253" text-anchor="middle">#{{.Sequence}} · attempt {{.Attempt}}</text>
+</a>{{end}}
+</svg>
+</div>{{else}}<p class="muted">No model attempts recorded.</p>{{end}}{{end}}
+<figcaption class="caption">One bar per recorded model attempt, including failures and rework. Human decisions are omitted. This is attempt-level usage, not a token-rate time series. Missing usage stays unknown.</figcaption>
+</figure>
+</div>
+<div class="dashboard">
+<figure class="panel">
+<h2>Workspace output / token use</h2>
+<div class="volume-grid">
+<div>
+<strong>{{.Dashboard.Changes.NewLinesText}}</strong>new-file text lines</div>
+<div>
+<strong>{{.Dashboard.Changes.LinesText}}</strong>net text-line change</div>
+<div>
+<strong>{{.Dashboard.LinesPerThousandTokens}}</strong>net text lines / 1,000 tokens</div>
+<div>
+<strong>{{.Dashboard.TokensPerNetLine}}</strong>tokens / net added text line</div>
+<div>
+<strong>{{.Dashboard.Changes.NonTextChangesText}}</strong>non-text file changes</div>
+<div>
+<strong>{{.Dashboard.Changes.BytesText}}</strong>net workspace size change</div>
+</div>
+{{range .Dashboard.FileRows}}<div class="chart-row">
+<span class="chart-label">{{.Label}} files</span>
+<div class="bar-track" role="img" aria-label="{{.Label}} files: {{.Value}}">
+<span class="fill" style="width:{{.Width}}%">
+</span>
+</div>
+<strong class="chart-value">{{.Value}}</strong>
+</div>{{end}}
+<figcaption class="caption">{{.Dashboard.Changes.KnownFiles}} / {{.Dashboard.Changes.ExpectedFiles}} changed files have volume measurements. UTF-8 physical text lines include tests, comments, and configuration; binary files contribute no text lines. Repeated edits count as separate file-change events. These ratios measure volume, not productivity or quality.</figcaption>
+</figure>
+<figure class="panel">
+<h2>Checks and complexity</h2>
+<div class="volume-grid">
+<div>
+<strong>{{if .Dashboard.Gates.Expected}}{{.Dashboard.Gates.Passed}} / {{.Dashboard.Gates.Expected}}{{else}}N/A{{end}}</strong>required gate results passed</div>
+<div>
+<strong>{{if .Dashboard.Gates.Expected}}{{.Dashboard.Gates.Failed}}{{else}}N/A{{end}}</strong>required gate results failed</div>
+<div>
+<strong>{{.Dashboard.Complexity}}</strong>latest reported complexity</div>
+<div>
+<strong>{{len .Dashboard.Observations}}</strong>workload measurements</div>
+</div>
+{{range .Dashboard.Observations}}<div class="measurement">
+<h3>{{.Name}} · {{.Unit}}</h3>
+<div class="chart-row">
+<span class="chart-label">Baseline</span>
+<div class="bar-track {{if not .Baseline}}unknown{{end}}">
+<span class="fill" style="width:{{.BeforeWidth}}%">
+</span>
+</div>
+<strong class="chart-value">{{.BaselineText}}</strong>
+</div>
+<div class="chart-row">
+<span class="chart-label">Reported</span>
+<div class="bar-track">
+<span class="fill output" style="width:{{.AfterWidth}}%">
+</span>
+</div>
+<strong class="chart-value">{{printf "%.2f" .Value}}</strong>
+</div>
+<p class="caption">Change {{.DeltaText}} · {{.Stage}} / attempt {{.Attempt}} · method {{.Method}} · scope {{.Scope}}</p>
+</div>{{end}}
+<figcaption class="caption">Check coverage refers to declared gates, not code coverage. Complexity requires a workload-reported method, unit, and scope; there is no invented overall score. Unlike measurements are not combined. Bars compare magnitudes; numeric values retain their signs.</figcaption>
+</figure>
+</div>
+</section>
 {{if .Error}}<p class="error">Execution error: {{.Error}}</p>{{end}}
 <p class="muted">Workflow completion records execution and declared checks; it does not independently establish software correctness or business value. Missing measurements are unknown, never zero. Totals include rework.</p>
-<h2>Actual execution</h2><p>Left to right in recorded execution order. Each box is one attempt; repeated stages show retries or feedback loops. Unexecuted stages are excluded.</p>
-<div class="flow" aria-label="Actual workflow execution">{{range .Attempts}}{{if ne .Sequence 1}}<span class="arrow" aria-hidden="true">→</span>{{end}}<a class="node {{if .Error}}failure{{else}}{{.Outcome}}{{end}}" href="#attempt-{{.Sequence}}"><strong>{{.Sequence}}. {{.Step}}</strong><br>Attempt {{.Attempt}} · {{.Outcome}}</a>{{else}}No attempts recorded.{{end}}<span class="arrow">→</span><strong>{{.State.Status}}</strong></div>
-<h2>Usage by stage</h2><p>Input + output forms the reported total. Cache counters are shown separately and are not added again; their relationship to input depends on the provider. Partial figures show how many agent attempts supplied that counter. Deterministic and human steps are N/A.</p>
-<div class="scroll"><table><thead><tr><th>Stage</th><th>Attempts</th><th>Input</th><th>Output</th><th>Cache read</th><th>Cache write</th><th>Total</th><th>Cost USD</th></tr></thead><tbody>{{range .Stages}}<tr><td>{{.Definition.Name}}</td><td>{{.Attempts}}</td><td>{{.Metrics.Input}}</td><td>{{.Metrics.Output}}</td><td>{{.Metrics.CacheRead}}</td><td>{{.Metrics.CacheWrite}}</td><td>{{.Metrics.Total}}</td><td>{{.Metrics.CostText}}</td></tr>{{end}}<tr><th>Total</th><td>{{len .Attempts}}</td><td>{{.Metrics.Input}}</td><td>{{.Metrics.Output}}</td><td>{{.Metrics.CacheRead}}</td><td>{{.Metrics.CacheWrite}}</td><td>{{.Metrics.Total}}</td><td>{{.Metrics.CostText}}</td></tr></tbody></table></div>
+<h2>Actual execution</h2>
+<p>Left to right in recorded execution order. Each box is one attempt; repeated stages show retries or feedback loops. Unexecuted stages are excluded.</p>
+<div class="flow" aria-label="Actual workflow execution">{{range .Attempts}}{{if ne .Sequence 1}}<span class="arrow" aria-hidden="true">→</span>{{end}}<a class="node {{if .Error}}failure{{else}}{{.Outcome}}{{end}}" href="#attempt-{{.Sequence}}">
+<strong>{{.Sequence}}. {{.Step}}</strong>
+<br>Attempt {{.Attempt}} · {{.Outcome}}</a>{{else}}No attempts recorded.{{end}}<span class="arrow">→</span>
+<strong>{{.State.Status}}</strong>
+</div>
+<h2>Usage data</h2>
+<p>Input + output forms the reported total. Cache counters are shown separately and are not added again; their relationship to input depends on the provider. Partial figures show how many agent attempts supplied that counter. Deterministic and human steps are N/A.</p>
+<div class="scroll">
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Attempts</th>
+<th>Input</th>
+<th>Output</th>
+<th>Cache read</th>
+<th>Cache write</th>
+<th>Total</th>
+<th>Cost USD</th>
+</tr>
+</thead>
+<tbody>{{range .Stages}}<tr>
+<td>{{.Definition.Name}}</td>
+<td>{{.Attempts}}</td>
+<td>{{.Metrics.Input}}</td>
+<td>{{.Metrics.Output}}</td>
+<td>{{.Metrics.CacheRead}}</td>
+<td>{{.Metrics.CacheWrite}}</td>
+<td>{{.Metrics.Total}}</td>
+<td>{{.Metrics.CostText}}</td>
+</tr>{{end}}<tr>
+<th>Total</th>
+<td>{{len .Attempts}}</td>
+<td>{{.Metrics.Input}}</td>
+<td>{{.Metrics.Output}}</td>
+<td>{{.Metrics.CacheRead}}</td>
+<td>{{.Metrics.CacheWrite}}</td>
+<td>{{.Metrics.Total}}</td>
+<td>{{.Metrics.CostText}}</td>
+</tr>
+</tbody>
+</table>
+</div>
 <h2>Steps and evidence</h2>
-{{range .Attempts}}<article class="attempt" id="attempt-{{.Sequence}}"><h3>{{.Sequence}}. {{.Step}} · attempt {{.Attempt}}</h3><p>{{.Outcome}} · {{elapsed .StartedAt .FinishedAt}} · {{timestamp .StartedAt}} → {{timestamp .FinishedAt}}</p>{{if .Error}}<p class="error">{{.Error}}</p>{{end}}{{if .Feedback}}<p>Feedback: {{.Feedback}}</p>{{end}}
+{{range .Attempts}}<article class="attempt" id="attempt-{{.Sequence}}">
+<h3>{{.Sequence}}. {{.Step}} · attempt {{.Attempt}}</h3>
+<p>{{.Outcome}} · {{elapsed .StartedAt .FinishedAt}} · {{timestamp .StartedAt}} → {{timestamp .FinishedAt}}</p>{{if .Error}}<p class="error">{{.Error}}</p>{{end}}{{if .Feedback}}<p>Feedback: {{.Feedback}}</p>{{end}}
 {{range .Warnings}}<p class="warning">{{.}}</p>{{end}}
 {{if .Models}}<p>Models observed in usage events: {{range .Models}}<code>{{.}}</code> {{end}}</p>{{end}}
 <p>Tokens: {{.Metrics.Total}} · input {{.Metrics.Input}} · output {{.Metrics.Output}} · cost {{.Metrics.CostText}}</p>
 {{if .Data.approved_by}}<p>Decision by: {{.Data.approved_by}}{{if .Data.authorized_by}} · authorized by {{.Data.authorized_by}}{{end}}</p>{{end}}
 {{if .Gates}}<ul>{{range .Gates}}<li>Gate {{.Name}} · {{.Status}} · tool {{.Tool}} · exit code {{.ExitCode}}{{if .Evidence}} · <a href="{{.Evidence}}">evidence</a>{{end}}</li>{{end}}</ul>{{end}}
-{{if .Artifacts}}<ul>{{range .Artifacts}}<li>{{if .Path}}<a href="{{.Path}}">{{.Path}}</a>{{end}} · SHA256 <code>{{.SHA256}}</code></li>{{end}}</ul>{{end}}
-<p><a href="{{.Evidence}}">Attempt result</a> · <a href="{{.Log}}">Attempt log</a></p></article>{{end}}
-<h2>Configured execution environment</h2><p>Declarations below describe available capabilities, not proof that each tool or MCP was invoked. Observed models above may differ from configured aliases. Evidence links require the retained task files.</p>
-{{range .Stages}}<details class="attempt"><summary><strong>{{.Definition.Name}}</strong> · {{.Attempts}} attempts</summary><dl><dt>Agent / identity</dt><dd>{{.Definition.Agent}} / {{.Definition.Identity}}</dd><dt>Configured provider / model</dt><dd>{{.Definition.Provider}} / {{.Definition.Model}}</dd>{{with .Definition.Container}}<dt>Pinned container image</dt><dd><code>{{.Image}}</code></dd><dt>Isolation</dt><dd>Workspace: {{.Workspace}} · network: {{.Network}} · user: {{.User}} · memory MB: {{.MemoryMB}} · CPUs: {{.CPUs}}</dd>{{end}}<dt>Tools</dt><dd>{{range .Definition.Tools}}{{.Name}}{{with .MCP}} (MCP {{.Ref}}, exposure {{.Exposure}}){{end}}; {{else}}None declared{{end}}</dd><dt>Skills</dt><dd>{{range .Definition.Skills}}{{.Name}}; {{else}}None declared{{end}}</dd><dt>MCP services</dt><dd>{{range $name, $service := .Definition.MCPServices}}{{$name}} ({{$service.Connection.Transport}}, {{$service.Lifecycle}}); {{else}}None declared{{end}}</dd><dt>Required gates</dt><dd>{{range .Definition.Gates}}{{.Name}} via {{.Tool}}; {{else}}None declared{{end}}</dd><dt>Inputs / outputs</dt><dd>{{.Definition.Inputs}} / {{.Definition.Outputs}}</dd><dt>Attempt timeout / limit</dt><dd>{{.Definition.TimeoutSeconds}} seconds / {{.Definition.MaxAttempts}} (zero uses defaults)</dd></dl></details>{{end}}
-<h2>Run provenance</h2><dl><dt>Workflow ID</dt><dd><code>{{.WorkflowID}}</code></dd><dt>Run ID</dt><dd><code>{{.RunID}}</code></dd><dt>Pinned workflow definition SHA256</dt><dd><code>{{.DefinitionSHA256}}</code></dd><dt>Runtime configuration SHA256</dt><dd><code>{{.Input.ConfigSHA256}}</code></dd><dt>Started / finished UTC</dt><dd>{{timestamp .State.StartedAt}} / {{timestamp .State.FinishedAt}}</dd></dl>
+{{if .Artifacts}}<ul>{{range .Artifacts}}<li>{{if .Path}}<a href="{{.Path}}">{{.Path}}</a>{{end}} · SHA256 <code>{{.SHA256}}</code>
+</li>{{end}}</ul>{{end}}
+<p>{{if .Evidence}}<a href="{{.Evidence}}">Attempt result</a>{{end}}{{if and .Evidence .Log}} · {{end}}{{if .Log}}<a href="{{.Log}}">Attempt log</a>{{end}}{{if not (or .Evidence .Log)}}No result/log file retained for this stage.{{end}}</p>
+</article>{{end}}
+<h2>Configured execution environment</h2>
+<p>Declarations below describe available capabilities, not proof that each tool or MCP was invoked. Observed models above may differ from configured aliases. Evidence links require the retained task files.</p>
+{{range .Stages}}<details class="attempt">
+<summary>
+<strong>{{.Definition.Name}}</strong> · {{.Attempts}} attempts</summary>
+<dl>
+<dt>Agent / identity</dt>
+<dd>{{.Definition.Agent}} / {{.Definition.Identity}}</dd>
+<dt>Configured provider / model</dt>
+<dd>{{.Definition.Provider}} / {{.Definition.Model}}</dd>{{with .Definition.Container}}<dt>Pinned container image</dt>
+<dd>
+<code>{{.Image}}</code>
+</dd>
+<dt>Isolation</dt>
+<dd>Workspace: {{.Workspace}} · network: {{.Network}} · user: {{.User}} · memory MB: {{.MemoryMB}} · CPUs: {{.CPUs}}</dd>{{end}}<dt>Tools</dt>
+<dd>{{range .Definition.Tools}}{{.Name}}{{with .MCP}} (MCP {{.Ref}}, exposure {{.Exposure}}){{end}}; {{else}}None declared{{end}}</dd>
+<dt>Skills</dt>
+<dd>{{range .Definition.Skills}}{{.Name}}; {{else}}None declared{{end}}</dd>
+<dt>MCP services</dt>
+<dd>{{range $name, $service := .Definition.MCPServices}}{{$name}} ({{$service.Connection.Transport}}, {{$service.Lifecycle}}); {{else}}None declared{{end}}</dd>
+<dt>Required gates</dt>
+<dd>{{range .Definition.Gates}}{{.Name}} via {{.Tool}}; {{else}}None declared{{end}}</dd>
+<dt>Inputs / outputs</dt>
+<dd>{{.Definition.Inputs}} / {{.Definition.Outputs}}</dd>
+<dt>Attempt timeout / limit</dt>
+<dd>{{.Definition.TimeoutSeconds}} seconds / {{.Definition.MaxAttempts}} (zero uses defaults)</dd>
+</dl>
+</details>{{end}}
+<h2>Run provenance</h2>
+<dl>
+<dt>Workflow ID</dt>
+<dd>
+<code>{{.WorkflowID}}</code>
+</dd>
+<dt>Run ID</dt>
+<dd>
+<code>{{.RunID}}</code>
+</dd>
+<dt>Pinned workflow definition SHA256</dt>
+<dd>
+<code>{{.DefinitionSHA256}}</code>
+</dd>
+<dt>Runtime configuration SHA256</dt>
+<dd>
+<code>{{.Input.ConfigSHA256}}</code>
+</dd>
+<dt>Started / finished UTC</dt>
+<dd>{{timestamp .State.StartedAt}} / {{timestamp .State.FinishedAt}}</dd>
+</dl>
 <p class="muted">Offline report derived from Temporal attempt history and retained worker evidence. No credentials or raw model transcripts are embedded. Forced Temporal termination cannot run finalization activities.</p>
-</body></html>
+</body>
+</html>

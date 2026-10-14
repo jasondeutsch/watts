@@ -125,7 +125,10 @@ The worker writes `<task>/report.html` on successful completion, terminal failur
 or graceful cancellation. It is an offline report of actual attempts and rework,
 timings including human waits, errors, decisions, artifacts, gate results,
 reported token/cost breakdowns, observed/configured models, capabilities, and
-run identity. Links address retained evidence files.
+run identity. Its dashboard charts stage time and token use, separates approval
+waits and repeat attempts, and measures accepted workspace output against token
+use. Complexity and other scoped scores come from workload measurements. See
+[task report metrics](task-reports.md). Links address retained evidence files.
 
 Missing usage or cost is unknown; partial figures show measurement coverage.
 Totals include failed attempts and rework. Cache counts are separate and are not

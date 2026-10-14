@@ -90,6 +90,11 @@ func TestContainerPublishesAndAcceptedAttemptDoesNotRepeat(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "x", readFile(t, filepath.Join(app.Root, "count")))
 	require.Equal(t, "report", readFile(t, filepath.Join(app.Root, request.Input.Task, "report.md")))
+	var measurements workload.WorkspaceEvidence
+	require.NoError(t, json.Unmarshal([]byte(readFile(t, filepath.Join(filepath.Dir(app.stepInputPath(request)), "workspace.json"))), &measurements))
+	require.Equal(t, 1, measurements.MeasurementsVersion)
+	require.Equal(t, int64(1), *measurements.CandidateMeasurements["count"].TextLines)
+	require.Equal(t, int64(1), measurements.CandidateMeasurements["count"].Bytes)
 }
 
 func TestErrorEvidenceRejectsZeroExitAndRetainsUsage(t *testing.T) {

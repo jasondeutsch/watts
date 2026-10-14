@@ -23,9 +23,11 @@ import (
 )
 
 type attemptPreparation struct {
-	InputHash string                   `json:"input_sha256"`
-	Baseline  map[string]workload.File `json:"baseline"`
-	Image     string                   `json:"image"`
+	InputHash            string                              `json:"input_sha256"`
+	Baseline             map[string]workload.File            `json:"baseline"`
+	Image                string                              `json:"image"`
+	BaselineMeasurements map[string]workload.FileMeasurement `json:"baseline_measurements,omitempty"`
+	MeasurementsVersion  int                                 `json:"measurements_version,omitempty"`
 }
 type acceptedAttempt struct {
 	Execution string               `json:"execution"`
@@ -303,10 +305,18 @@ func (attempt attemptWorkspace) preserveEvidence() ([]workload.Event, error) {
 	if candidate, err := workload.Snapshot(attempt.candidate, nil); err != nil {
 		return nil, err
 	} else {
-		metadata, err := json.Marshal(struct {
-			Baseline  map[string]workload.File `json:"baseline"`
-			Candidate map[string]workload.File `json:"candidate"`
-		}{attempt.preparation.Baseline, candidate})
+		workspaceEvidence := workload.WorkspaceEvidence{
+			Baseline: attempt.preparation.Baseline, Candidate: candidate,
+			MeasurementsVersion:  attempt.preparation.MeasurementsVersion,
+			BaselineMeasurements: attempt.preparation.BaselineMeasurements,
+		}
+		if workspaceEvidence.MeasurementsVersion == 1 {
+			workspaceEvidence.CandidateMeasurements, err = workload.MeasureFiles(attempt.candidate, candidate)
+			if err != nil {
+				return nil, err
+			}
+		}
+		metadata, err := json.Marshal(workspaceEvidence)
 		if err != nil {
 			return nil, err
 		}
