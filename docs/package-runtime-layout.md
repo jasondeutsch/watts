@@ -1,10 +1,10 @@
 # Package, task, and worker storage
 
-Status: proposed layout, tracked in [wiss-028](../issues.md#wiss-028-separate-watts-packages-task-executions-and-worker-runtime). These paths are not implemented setup instructions. Current paths and commands remain documented in the [runbook](runbook.md) and [Temporal guide](temporal.md).
+Implemented for local execution in wiss-028. Authored packages, durable task
+records, and disposable worker files have separate owners and locations.
+Remote artifact storage and distributed workers remain future work.
 
-## Watts package
-
-A project's `watts/` directory is its Watts package, analogous to a repository's `helm/` chart directory:
+## Authored package
 
 ```text
 project/
@@ -12,35 +12,131 @@ project/
   go.mod
   watts/
     watts.acl
-    values.wvars       # optional
+    values.wvars      # optional
     modules/
-    resources/        # authored skills, scripts, and other assets
+    resources/
 ```
 
-`watts.acl` describes package identity and composition. Typed variables customize reusable ACL modules; compilation resolves their resources and artifact connections. The package contains authored workflow design, not tasks, execution output, worker configuration, or tool-private state. Local modules compose packages; compiled artifacts capture their inputs for execution. The application's workspace is the project root, independent of the package's location.
+`watts/` is a recommended authoring convention, not a required application-root
+marker. Compile a local or external package; new task creation uses the invocation
+directory as the application workspace. Compilation never creates worker state.
+Local modules compose resources, and declared assets are embedded in the artifact.
 
-One Watts package may contain multiple named Workflows and their supporting Agents, Procedures, ConfigMaps, and Secrets. Select a Workflow explicitly or through a declared default; filenames have no semantic meaning. No additional grouping declaration is needed. ACL package entrypoints select the workflow for each compiled artifact.
+One package may contain multiple named workflows. Its `entrypoint` defines the
+default. Select a different named workflow without editing it:
 
-## Tasks and durable execution evidence
+```sh
+wctl compile ./watts -workflow coding -o /tmp/coding.json
+```
 
-Tasks contain SPEC.md and PLAN.md. Execution records preserve the pinned plan, approval bindings, attempts, logs, usage, results, verification evidence, and published artifacts. These records are separate from package authoring and disposable worker files.
+Each compiled artifact contains one resolved workflow. Names, not filenames,
+select workflows. Agent, Procedure, MCP, ConfigMap, and Secret declarations remain
+package-owned. See the [language specification](language-spec.md).
 
-The task/evidence storage location remains an open implementation decision. Do not assume tasks belong inside `watts/` or that home-directory runtime storage is their durable store. Temporal owns orchestration progress; published evidence and workspace revisions must remain available independently of worker cleanup.
+## Durable task records
 
-## Worker configuration and runtime
+The default task directory is `tasks/`, separate from `watts/`:
 
-Machine-level worker settings live at `~/.watts/config/settings.json`. Host execution environments and worker bookkeeping live under `~/.watts/runtime/`, isolated by stable project, task, execution, stage, and attempt identities. Worker settings do not belong in portable package manifests.
+```text
+tasks/<timestamp>-<slug>/
+  SPEC.md
+  PLAN.md
+  workflow.json
+  report.html
+  .watts-state/
+    package/          # captured package assets
+    resources/        # resource snapshot pinned at submission
+    approvals/
+    logs/
+    steps/
+    temporal.json
+    workflow-config.json
+```
 
-Only runtime retention needs a new setting for this scope; its exact key and value syntax are not yet defined. The default retains **the latest execution per task**, including all of its attempts. It does not retain only the most recent execution across the worker.
+Documents, compiled definitions, approval bindings, results, sanitized evidence,
+and reports belong to the task. Temporal retains orchestration history; task
+records retain application evidence. Neither replaces the other. Runtime cleanup
+never removes task directories or changes published application files.
 
-Cleanup preserves active executions and anything required for recovery, even if that exceeds the retention limit. Older runtime files may be removed only after required evidence is durably published. Task documents, approvals, reports, and published artifacts are outside this policy. Execution ordering and ownership must be explicit rather than inferred from filesystem timestamps.
+## Worker settings and bookkeeping
 
-## Execution environment ownership
+Worker preferences live at `~/.watts/config/settings.json`. They apply to all
+projects using that home directory; submitted tasks keep their frozen settings.
+The file is optional: missing settings use defaults. Agent/model/tool configuration
+belongs in ACL. Project queues are derived from the canonical application path;
+global task-queue overrides are rejected to prevent workers consuming another
+project's work. Temporal address and namespace remain configurable.
 
-The target execution primitive is an isolated workload; see the [stage communication proposal](stage-communication.md#isolated-workload-primitive). Host directories initially provide its storage boundary, not a security sandbox. Containers or sandboxes will enforce access and resource boundaries.
+```sh
+wctl config show
+wctl config set runtime_retention last-run
+# To preserve all execution runtime files:
+wctl config set runtime_retention all
+```
 
-An Agent owns its runtime and tools: Pi may implement that runtime, and Ralph may be a tool used by Pi. Their private state belongs inside the attempt's execution environment. Neither `.ralph-runner` nor Pi-specific configuration should leak into the application workspace or become an orchestration dependency. Deterministic Procedures use the same generic lifecycle without requiring Pi, Ralph, or a model.
+`runtime_retention` is the only new setting. `last-run` is the default. Existing
+preferences such as `tasks_dir` and execution-limit defaults remain available.
+Prefer ACL for workflow-specific limits rather than global worker defaults.
 
-Moving execution files does not move the application workspace. Build writes a candidate workspace; review inspects the specified revision and publishes reports separately. Adapter-owned evidence must be published before the environment is removed.
+```text
+~/.watts/
+  config/settings.json
+  runtime/projects/<project-id>/
+    project.json
+    worker/
+      service.json
+      service.lock
+      service.log
+      workflow.lock
+    tasks/<task-id>/
+      task.json
+      ordinal.json
+      retention.lock
+      executions/<execution-id>/
+        execution.json
+        execution.lock
+        captures/
+        attempts/<attempt-id>/
+          inputs/
+          outputs/
+          private/
+          workspace/
+```
 
-Container/sandbox execution is tracked in [wiss-013](../issues.md#wiss-013-containerized-workloads); recovery and publication are covered by [Temporal integration issues](../issues.md#orchestration-and-recovery).
+Identifiers are hashes of canonical project and execution identities. The worker
+registers the workspace at task creation or startup; commands from descendants
+find the nearest registered project. `watts/watts.acl` and durable tasks provide
+additional discovery boundaries. Project `.watts/` is no longer created or used
+for discovery, settings, service records, locks, or package assets.
+
+## Retention and recovery
+
+`last-run` retains **every attempt of the latest execution per task**, plus older
+active or recovery-required executions. It does not retain only the latest task
+or stage, nor delete all but the latest execution across the worker.
+
+A durable ordinal assigns execution order on first acquisition. Restarting an
+older execution does not make it latest. Cleanup runs at worker startup and after
+successful persistence of a terminal task report. A nonterminal approval, event,
+or retry wait does not make an execution eligible.
+
+An older execution is removable only when it is terminal, every attempt's
+required evidence has been retained, and no execution lease is active. The worker
+syncs its attempt log before marking evidence ready. Failed container cleanup,
+uncertain publication, missing/corrupt records, and interrupted capture preserve
+runtime files for inspection and recovery. This can exceed the configured limit;
+there is no forced age-based deletion or automatic resolution of ambiguous state.
+
+Cleanup is confined to the managed runtime tree and rejects symlink redirection.
+It does not touch settings, authored packages, task documents, approvals, reports,
+published artifacts, or durable memory. Operator-maintained, uncatalogued runtime
+files are not silently removed. `all` disables execution-runtime pruning; service
+log rotation remains separate work under wiss-006.
+
+## Workload ownership
+
+Agents own their tools and private state inside the attempt's execution
+environment. Pi/Ralph is an example image, not a core storage abstraction.
+Deterministic Procedures use the same lifecycle. Container isolation is not a
+claim of hardened multi-tenant sandboxing. See [container workloads](container-workloads.md)
+and the [stage communication proposal](stage-communication.md).

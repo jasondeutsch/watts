@@ -32,6 +32,7 @@ func TestCLIHelpAndRemovedHostAgentCommands(t *testing.T) {
 }
 
 func TestCompilationAndExecutionUseCapturedInputs(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	project := t.TempDir()
 	t.Chdir(project)
 	source := filepath.Join(project, "source")
@@ -78,6 +79,7 @@ workflow "checks" {
 	code, _, errOut = command(t, "exec", "compiled.json", "--dry-run")
 	require.Zero(t, code, errOut)
 	require.NoDirExists(t, filepath.Join(project, ".ralph-runner"))
+	require.NoDirExists(t, filepath.Join(project, ".watts"))
 	definition.Steps[0].Container.Command = []string{"changed"}
 	changed, err := json.Marshal(definition)
 	require.NoError(t, err)

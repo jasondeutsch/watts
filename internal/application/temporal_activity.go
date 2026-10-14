@@ -14,6 +14,7 @@ import (
 	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/orchestration"
 	"github.com/jasondeutsch/watts/internal/storage"
+	"github.com/jasondeutsch/watts/internal/workerstate"
 	"github.com/jasondeutsch/watts/internal/workspace"
 	"go.temporal.io/sdk/activity"
 )
@@ -52,7 +53,7 @@ func (app *Service) prepareActivity(ctx context.Context, request orchestration.A
 	if storage.Digest(data) != request.Input.ConfigSHA256 {
 		return nil, errors.New("the pinned runtime config was modified; restore it before retrying")
 	}
-	var config projectconfig.Config
+	config := projectconfig.Default()
 	if err = json.Unmarshal(data, &config); err != nil {
 		return nil, err
 	}
@@ -90,7 +91,7 @@ func (app *Service) CaptureApprovalArtifacts(ctx context.Context, request orches
 	if err != nil {
 		return orchestration.Result{}, err
 	}
-	unlock, err := workspace.LockWorkflowWorkspace(app.Wd())
+	unlock, err := app.lockWorkspace()
 	if err != nil {
 		return orchestration.Result{}, err
 	}
@@ -105,7 +106,7 @@ func (app *Service) ValidateApprovalArtifacts(ctx context.Context, request orche
 	if err != nil {
 		return err
 	}
-	unlock, err := workspace.LockWorkflowWorkspace(app.Wd())
+	unlock, err := app.lockWorkspace()
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,7 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 	runtime.logger = logger
 	info := activity.GetInfo(ctx)
 	runtime.execution = info.WorkflowExecution.ID + "/" + info.WorkflowExecution.RunID
-	unlock, err := workspace.LockWorkflowWorkspace(app.Wd())
+	unlock, err := app.lockWorkspace()
 	if err != nil {
 		return result, err
 	}
@@ -184,7 +185,7 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 	logger.Info("Attempt output", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "log", app.Rel(logPath))
 	runtime.output = io.MultiWriter(app.Output, logFile)
 	runtime.errorOutput = io.MultiWriter(app.ErrorOutput, logFile)
-	protectedPaths := append([]string(nil), []string{"watts.yaml", ".watts/packages"}...)
+	protectedPaths := append([]string(nil), []string{"watts"}...)
 	protectedPaths = append(protectedPaths, filepath.Join(request.Input.Task, "workflow.yaml"), filepath.Join(request.Input.Task, ".watts-state", "approvals"))
 	for _, input := range request.Step.Inputs {
 		if !projectconfig.Contains(request.Step.Outputs, input) {
@@ -206,5 +207,23 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 	if err == nil {
 		err = storage.WriteJSONAtomically(filepath.Join(filepath.Dir(app.stepInputPath(request)), "result.json"), result)
 	}
+	if syncErr := logFile.Sync(); syncErr != nil {
+		err = errors.Join(err, syncErr)
+	} else if runtime.evidenceReady {
+		store, storeErr := workerstate.Default()
+		if storeErr != nil {
+			err = errors.Join(err, storeErr)
+		} else {
+			err = errors.Join(err, store.RecordEvidence(app.Root, request.Input.Task, runtime.runIdentity(), runtime.executionIdentity()))
+		}
+	}
 	return result, err
+}
+
+func (app *Service) lockWorkspace() (func(), error) {
+	directory, err := app.ProjectWorkerDir()
+	if err != nil {
+		return nil, err
+	}
+	return workspace.LockWorkflowWorkspace(directory)
 }

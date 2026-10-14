@@ -21,19 +21,19 @@ creates the `default` namespace. Preserve its data volume to retain history.
 ## Connection
 
 Defaults are `localhost:7233`, namespace `default`, and a project-specific task
-queue derived from the project path. Local `.watts/settings.yaml` may override:
+queue derived from the project path. Shared `~/.watts/config/settings.json` may override the endpoint and namespace:
 
-```yaml
-version: 1
-tasks_dir: tasks
-limits: {max_minutes: 30, max_attempts: 3}
-temporal:
-  address: localhost:7233
-  namespace: default
-  task_queue: my-project
+```json
+{
+  "version": 1,
+  "tasks_dir": "tasks",
+  "runtime_retention": "last-run",
+  "limits": {"max_minutes": 30, "max_attempts": 3},
+  "temporal": {"address": "localhost:7233", "namespace": "default"}
+}
 ```
 
-Keep queues dedicated to the project whose files the worker owns. The current
+Queues remain derived from each project path; global queue overrides are rejected. The current
 connection supports a local or trusted self-hosted endpoint. TLS/Temporal Cloud
 authentication and distinct-node artifact delivery remain future work.
 
@@ -51,7 +51,7 @@ never implicitly restarts a completed process. Durable acceptance receipts preve
 reexecution after container cleanup. Publication checks baseline content and modes,
 so external edits cause explicit conflicts. See [the workload interface](container-workloads.md).
 
-A running workflow waiting for retry can receive `wctl task run <task>`. Completed,
+A running workflow waiting for retry can receive `wctl exec <task>`. Completed,
 failed, cancelled, and terminated executions are terminal states. Inspect status
 before starting a replacement execution; retained local evidence is not a signal
 to advance workflow state. Workers and the Temporal service may be restarted;
@@ -62,17 +62,18 @@ completed activities and durable waits are recovered from history.
 - `<task>/workflow.json`: resolved task snapshot; recompile ACL source changes before creating a new task.
 - `<task>/.watts-state/temporal.json`: execution binding and pinned definition.
 - `<task>/.watts-state/workflow-config.json`: hash-verified runtime preferences.
+- `<task>/.watts-state/package/`: task-owned compiled package assets.
 - `<task>/.watts-state/resources/`: captured workload resources.
 - `<task>/.watts-state/approvals/`: hash-bound approval receipts.
 - `<task>/.watts-state/logs/`: durable attempt output.
 - `<task>/.watts-state/steps/`: input, result, events, reported usage, container records, and acceptance receipts.
-- `.watts/workflow.lock`: publication/activity serialization.
+- `~/.watts/runtime/projects/<project-id>/worker/workflow.lock`: publication/activity serialization.
 - `~/.watts/runtime/`: private candidates, caches, agent settings, and tool state.
 
 Keep task evidence and the Temporal database. History does not replace application
 files or credentials. Definitions and prompt/command strings enter history; use
-Secret references instead of embedding credentials. Runtime retention and the
-consolidated home-directory settings layout remain tracked in [issues](../issues.md).
+Secret references instead of embedding credentials. See [storage layout](package-runtime-layout.md)
+for settings and runtime retention.
 
 ## Verification
 

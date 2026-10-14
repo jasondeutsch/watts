@@ -10,6 +10,7 @@ import (
 	"github.com/jasondeutsch/watts/internal/redact"
 	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/taskreport"
+	"github.com/jasondeutsch/watts/internal/workerstate"
 	"github.com/jasondeutsch/watts/internal/workspace"
 )
 
@@ -37,5 +38,26 @@ func (app *Service) WriteTaskReport(ctx context.Context, request orchestration.R
 			values = append(values, os.Getenv(source))
 		}
 	}
-	return storage.WriteFileAtomically(target, []byte(redact.New(values...).Text(document.String())))
+	if err := storage.WriteFileAtomically(target, []byte(redact.New(values...).Text(document.String()))); err != nil {
+		return err
+	}
+	switch request.State.Status {
+	case "completed", "failed", "cancelled", "terminated", "timed_out":
+		if request.WorkflowID == "" || request.RunID == "" {
+			return nil
+		}
+		store, err := workerstate.Default()
+		if err != nil {
+			return err
+		}
+		if err = store.Complete(app.Root, request.Input.Task, request.WorkflowID+"/"+request.RunID); err != nil {
+			return err
+		}
+		cfg, err := app.LoadServiceConfig()
+		if err != nil {
+			return err
+		}
+		return store.Prune(app.Root, request.Input.Task, cfg.RuntimeRetention)
+	}
+	return nil
 }

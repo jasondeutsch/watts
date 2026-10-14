@@ -23,7 +23,8 @@ import (
 type TaskDefinition struct {
 	Name       string                   `json:"name"`
 	Definition orchestration.Definition `json:"definition"`
-	Package    *workflowlang.Metadata   `json:"package,omitempty"`
+	Captured   *workflowlang.Package
+	Package    *workflowlang.Metadata `json:"package,omitempty"`
 }
 
 func decodeWorkflow(data []byte, value *orchestration.Definition) error {
@@ -82,12 +83,13 @@ func (app *Service) createTask(cfg projectconfig.Config, slug string, selected T
 	if slug == "" || strings.Trim(slug, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
 		return "", errors.New("slug may contain only lowercase letters, digits and dashes")
 	}
+	if err := app.CheckLegacySettings(); err != nil {
+		return "", err
+	}
 	if err := app.ProtectRuntimeFiles(); err != nil {
 		return "", err
 	}
-	// A private state marker keeps later commands rooted in this workspace even
-	// when its descriptor is external and an ancestor is another Watts project.
-	if err := os.MkdirAll(app.Wd(), 0700); err != nil {
+	if err := app.RegisterWorkspace(cfg); err != nil {
 		return "", err
 	}
 	if err := os.MkdirAll(app.TasksPath(cfg), 0755); err != nil {
@@ -108,6 +110,35 @@ func (app *Service) createTask(cfg projectconfig.Config, slug string, selected T
 		}
 	}
 	taskDefinition := selected.Definition
+	taskDefinition.Steps = append([]orchestration.Step(nil), selected.Definition.Steps...)
+	if selected.Captured != nil {
+		capturedDir := filepath.Join(app.StateDir(taskPath), "package")
+		if err := os.MkdirAll(capturedDir, 0700); err != nil {
+			return "", err
+		}
+		if err := selected.Captured.Materialize(capturedDir); err != nil {
+			return "", err
+		}
+		// Bind logical compiler resources to this task's durable captured package.
+		for i := range taskDefinition.Steps {
+			if taskDefinition.Steps[i].Container == nil {
+				continue
+			}
+			spec := *taskDefinition.Steps[i].Container
+			resources := map[string]string{}
+			for name, source := range spec.Resources {
+				resources[name] = source // Project-relative resources are captured at submission.
+				for _, asset := range selected.Captured.Assets {
+					if source == asset.Root || strings.HasPrefix(source, asset.Root+"/") {
+						resources[name] = filepath.ToSlash(filepath.Join(taskPath, StateDirName, "package", source))
+						break
+					}
+				}
+			}
+			spec.Resources = resources
+			taskDefinition.Steps[i].Container = &spec
+		}
+	}
 	taskDefinition.Templates = nil // Scaffolding has already created these artifacts.
 	if err := storage.WriteJSONAtomically(compiledTaskPath(app.Root, taskPath), taskDefinition); err != nil {
 		return "", err

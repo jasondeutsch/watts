@@ -14,6 +14,7 @@ The current interface is the CLI. MCP and wait-for-change are proposed, not avai
 - Verify the user's intended application directory with `pwd` and a listing. Set that absolute directory explicitly for every command; a previous `cd` may not persist. If needed, use `cd '/verified/project' && wctl ...` in the same invocation.
 - The application project and package/source checkout can be different locations. Compile an external ACL package with `wctl compile /verified/package -o /private/path/coding.json`, or use a provided compiled artifact. Do not infer the project from this skill's location or rely on ancestor discovery.
 - Resolve documentation links relative to this skill. After a missing-file error, list the nearest known existing directory instead of guessing alternative paths. There is no required `resources/docs` directory.
+- Worker preferences live in `~/.watts/config/settings.json` and affect all projects. Keep task-specific changes in ACL rather than adjusting global settings for one task. Project `.watts/` is not a required setup marker; task evidence remains task-owned.
 - Configure agents, models, tools, skills, and workflow policy in ACL/modules and variable files, then compile **before task creation**. Task `workflow.json` is a resolved execution contract. Do not edit compiled artifacts or pinned records to change policy.
 
 ## Create the request

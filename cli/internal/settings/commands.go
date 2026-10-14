@@ -39,6 +39,10 @@ func Set(a *terminal.Context, args []string) error {
 	if err := a.SaveConfig(cfg); err != nil {
 		return err
 	}
-	a.Say("saved %s; submitted tasks retain their pinned settings", a.Rel(a.ServiceSettingsPath()))
+	path, err := a.ServiceSettingsPath()
+	if err != nil {
+		return err
+	}
+	a.Say("saved %s; submitted tasks retain their pinned settings", path)
 	return nil
 }

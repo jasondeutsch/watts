@@ -21,6 +21,7 @@ import (
 const Filename = "watts.acl"
 
 type Options struct {
+	Workflow      string
 	VariableFiles []string
 	Variables     map[string]cty.Value
 }
@@ -125,8 +126,8 @@ func sourcePath(source string) (string, error) {
 }
 
 // Materialize publishes captured assets under content-addressed, package-private paths.
-func (pkg Package) Materialize(projectRoot string) error {
-	root, err := os.OpenRoot(projectRoot)
+func (pkg Package) Materialize(capturedDirectory string) error {
+	root, err := os.OpenRoot(capturedDirectory)
 	if err != nil {
 		return err
 	}

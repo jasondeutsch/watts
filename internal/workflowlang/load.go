@@ -230,7 +230,7 @@ func (resolver *moduleResolver) resolveModule(source, prefix string, options Opt
 		}{asset.Path, asset.Data, asset.Mode})
 		fingerprint = append(fingerprint, data...)
 	}
-	assetRoot := filepath.ToSlash(filepath.Join(".watts", "packages", result.name, digest(fingerprint)))
+	assetRoot := filepath.ToSlash(filepath.Join("packages", result.name, digest(fingerprint)))
 	for i := range assets {
 		assets[i].Root = assetRoot
 	}
@@ -285,7 +285,9 @@ func (resolver *moduleResolver) resolveModule(source, prefix string, options Opt
 	if err != nil {
 		return result, err
 	}
-	if selected != "" {
+	if prefix == "" && options.Workflow != "" {
+		result.selected = options.Workflow
+	} else if selected != "" {
 		result.selected = selected
 	} else if len(groups["workflow"]) == 1 {
 		result.selected = prefix + groups["workflow"][0].Labels[0]

@@ -23,6 +23,7 @@ type activityRuntime struct {
 	context             context.Context
 	output, errorOutput io.Writer
 	logger              temporallog.Logger
+	evidenceReady       bool
 	execution           string
 }
 type StepInput struct {
@@ -80,12 +81,15 @@ func (runtime *activityRuntime) prepareInput() (StepInput, error) {
 	}
 	return input, storage.WriteJSONAtomically(runtime.project.stepInputPath(request), input)
 }
-func (runtime *activityRuntime) executionIdentity() string {
+func (runtime *activityRuntime) runIdentity() string {
 	if runtime.execution != "" {
-		return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + runtime.execution + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
+		return runtime.execution
 	}
 	binding, _ := runtime.project.LoadWorkflowBinding(runtime.request.Input.Task)
-	return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + binding.WorkflowID + "/" + binding.RunID + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
+	return binding.WorkflowID + "/" + binding.RunID
+}
+func (runtime *activityRuntime) executionIdentity() string {
+	return storage.Digest([]byte(runtime.project.Root))[:16] + "/" + runtime.runIdentity() + "/" + runtime.request.Step.Name + "/" + fmt.Sprint(runtime.request.Attempt)
 }
 func (runtime *activityRuntime) logProgress(message string, fields ...any) {
 	secrets := runtime.secretRedaction()

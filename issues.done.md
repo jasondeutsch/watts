@@ -171,3 +171,43 @@ Remove legacy init and unconditional project-wide Agent installation. Create pri
 
 - [docs/runbook.md](docs/runbook.md)
 - [docs/container-workloads.md](docs/container-workloads.md)
+
+## wiss-028: Separate Watts packages, task executions, and worker runtime
+
+**Status:** Completed · **Completed:** 2026-10-13
+
+Separate authored ACL packages, durable task captures/evidence, and disposable
+host execution files. New projects no longer need a project `.watts/` directory.
+
+### Changes
+
+- Store shared worker preferences in `~/.watts/config/settings.json`.
+- Move service records, detached logs, and workspace/service locks into home-directory project state.
+- Register canonical application roots independently of authored package locations; resource modules do not become application roots.
+- Capture compiled package assets under each task's private state and select named workflows with `compile -workflow`.
+- Retain every attempt of the latest execution per task by default; `all` disables runtime pruning.
+- Protect active leases, uncertain publication, incomplete evidence, and unreadable records from cleanup.
+- Persist terminal reports and sync attempt logs before runtime becomes eligible for deletion.
+- Show `finalizing` until Temporal confirms closure, preventing premature worker shutdown.
+- Reject shared global task-queue overrides and explain setup with existing project-local settings/workers without silently migrating or deleting evidence.
+
+### Verification
+
+- Full Go suite and race checks passed.
+- Isolated Docker/Temporal integration tests covered worker restart, approvals, retry, publication, cancellation, and synthetic secret protection.
+- The public CLI lifecycle test passed with the race detector, including inspection after the worker stopped.
+- Retention tests covered multiple tasks/projects, active and incomplete executions, repeated cleanup, restart ordering, counter recovery, and symlink redirection.
+- Task creation tests covered external package roots, multiple named workflows, immutable compiled inputs, task-owned assets, and absence of project `.watts/`.
+- Coordinator skill frontmatter and updated documentation links were checked.
+
+### Limitations
+
+- Local filesystem task evidence remains the durable application record; distributed artifact storage is separate work.
+- Ambiguous/interrupted state is preserved, even above the retention limit; cleanup does not force recovery or erase uncatalogued historical runtime directories.
+- Service-log rotation, retention, and cross-project access remain open under wiss-006.
+
+### Documentation
+
+- [Storage layout](docs/package-runtime-layout.md)
+- [Runbook](docs/runbook.md)
+- [Temporal operations](docs/temporal.md)

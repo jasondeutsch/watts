@@ -85,7 +85,3 @@ func RunCommandTimeout(cmd *exec.Cmd, limit time.Duration) error {
 	}
 	return err
 }
-
-// kitScript runs one of the check scripts under .watts/kit/scripts with bash, in the repository
-// root. The scripts take their settings from WATTS_* variables, so the CLI is the only place that
-// reads config.json.

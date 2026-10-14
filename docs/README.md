@@ -10,7 +10,7 @@
 | [Architecture](workflow-design.md) | Authoring-to-execution flow and package responsibilities |
 | [Stage communication proposal](stage-communication.md) | Future portable packages, isolated workspaces, and publication |
 | [Container workloads](container-workloads.md) | Container interface, supported and proposed backends, publication, and image responsibilities |
-| [Package/runtime layout proposal](package-runtime-layout.md) | Authored Watts packages, durable task evidence, worker storage, and retention |
+| [Package/runtime storage](package-runtime-layout.md) | Current package/task/worker layout and retention |
 | [Secret protection](secret-protection.md) | Credential redaction, image responsibilities, publication, exports, and incident cleanup |
 | [Sandboxing](sandbox.md) | Current security boundaries and isolation research |
 

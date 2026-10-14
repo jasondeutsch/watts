@@ -281,11 +281,13 @@ Acceptance criteria:
 
 ### wiss-006: Shared logging across projects
 
-Workers still write service logs in project-local `.watts/` state.
+Worker service logs now live under `~/.watts/runtime/projects/<project-id>/worker/service.log`
+following wiss-028. Project-local service logging is no longer the supported path.
+Remaining work is rotation, log retention, and cross-project access.
 
-- Provide a worker-level log location with project/task/stage/attempt identities and credential protection.
+- Preserve project/task/stage/attempt identities and credential protection when aggregating worker-level logs.
 - Define rotation, retention, and access to completed attempts without depending on a running project UI.
-- Align storage with wiss-028 and visibility with wiss-003 rather than introducing a separate event ledger.
+- Align with the [implemented storage layout](docs/package-runtime-layout.md) and visibility under wiss-003 rather than introducing a separate event ledger.
 
 ### wiss-008: Global web UI
 
@@ -376,36 +378,6 @@ Remaining work:
 - Evaluate model-selected gopls use in a fresh workflow run; native protocol/tool integration tests do not establish that an Agent uses the service effectively.
 
 The resource abstracts workload tool services independently of ownership. It is distinct from wiss-010, which exposes Watts operations to coordinators. Coordinate managed/shared lifecycle work with wiss-013, wiss-016, wiss-027, and context delivery under wiss-033.
-
-### wiss-028: Separate Watts packages, task executions, and worker runtime
-
-Current projects retain `.watts` service/configuration state and `tasks/` evidence. Package descriptors may live at the root or elsewhere. Tool-private state has moved to `~/.watts/runtime/`; root `.ralph-runner` is no longer the supported container path.
-
-The proposed authored package layout is:
-
-```text
-project/
-  main.go
-  go.mod
-  watts/
-    watts.acl
-    values.wvars      # optional
-    modules/
-    resources/        # authored skills, scripts, and assets
-```
-
-A package may define multiple named Workflows and supporting resources; no new grouping declaration or filename semantics are needed. ACL package entrypoints select one Workflow for each compiled artifact; resource modules can be stitched into independent workflows. Preserve external package composition and the separate application root.
-
-Worker settings are proposed at `~/.watts/config/settings.json`; current operational preferences remain `.watts/settings.yaml`. Durable task/evidence storage is not yet selected. These are design targets, not implemented setup instructions; see [layout proposal](docs/package-runtime-layout.md).
-
-Acceptance criteria:
-
-- Keep authored packages, durable task records, and disposable worker storage separate. Update discovery, scaffolding, examples, and diagnostics together.
-- Support named workflow selection without treating package location as the application root.
-- Consolidate worker settings in the agreed home location. Runtime retention is the only new setting required for this scope.
-- Default retention keeps every attempt of the latest execution **per task**, plus active/recovery-required state. Delete older working files only after required evidence is durable.
-- Never apply runtime cleanup to SPEC.md, PLAN.md, approvals, reports, published artifacts, or future durable memory. Test restart, concurrent tasks, failures, and repeated cleanup.
-- Define safe handling of existing local evidence without preserving obsolete architecture through a compatibility layer. Coordinate with wiss-006, wiss-014, wiss-027, and wiss-033.
 
 ## Workflow policy questions
 

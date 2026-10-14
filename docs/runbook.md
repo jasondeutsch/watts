@@ -18,7 +18,7 @@ wctl compile resources/examples/coder_golang -o /tmp/coding.json
 ```
 
 `bin/wctl` is the local build. Compile accepts local ACL packages, `-var-file`
-and `-var` overrides, and `-o` for a compiled artifact. `wctl c` is an alias.
+and `-var` overrides, `-workflow` selection, and `-o` for a compiled artifact. `wctl c` is an alias.
 See [ACL language specification](language-spec.md) and [the coder example](../resources/examples/coder_golang/README.md).
 
 From the application project:
@@ -32,7 +32,8 @@ wctl start -d
 Doctor checks the compiled contract's images and required environment sources;
 it does not prove Temporal/worker health. `start` runs the project's worker and
 web monitor and opens the default browser. Without `-d`, it stays in foreground.
-`wctl stop` stops both. Detached logs are `.watts/service.log`. Temporal is
+`wctl stop` stops both. Detached logs live under `~/.watts/runtime/projects/<project-id>/worker/service.log`;
+startup prints the exact path. Temporal is
 managed separately; see [Temporal operations](temporal.md).
 
 Export declared secret sources before starting the worker. A detached worker
@@ -101,15 +102,22 @@ and stops its active workload; stopping observation does not cancel execution.
 
 ## Worker preferences and storage
 
-`wctl config show` displays local operational preferences. `wctl config set`
-supports `tasks_dir`, `max_minutes`, and `max_attempts`. Preferences live in
-`.watts/settings.yaml`, with optional Temporal overrides. They do not select
-agents, providers, or tools. Submitted tasks retain their captured settings.
+`wctl config show` displays machine-level operational preferences from
+`~/.watts/config/settings.json`. `wctl config set` supports `tasks_dir`,
+`max_minutes`, `max_attempts`, and `runtime_retention`. Settings are shared by
+projects; submitted tasks retain captured settings. Agents, providers, tools,
+and workflow-specific limits belong in ACL.
 
-Package assets are cached under `.watts/packages/`; task evidence lives in
-`tasks/`; private candidates, caches, and agent/tool state live under
-`~/.watts/runtime/`. The [package/runtime layout proposal](package-runtime-layout.md)
-tracks further consolidation and retention.
+```sh
+wctl config set runtime_retention last-run # default: every attempt of latest run per task
+wctl config set runtime_retention all      # preserve every run's working files
+```
+
+Task-owned package assets and evidence live under `<task>/.watts-state/`.
+Worker records, logs, locks, private candidates, and tool state live under
+`~/.watts/runtime/`. No project `.watts/` is created. Retention preserves active
+and recovery-required state and never deletes task records. See
+[storage layout](package-runtime-layout.md).
 
 ## Completion report
 
@@ -124,7 +132,8 @@ Totals include failed attempts and rework. Cache counts are separate and are not
 added to input + output again. Declared capabilities do not prove invocation,
 and completion does not independently establish correctness or business value.
 
-Report writes are atomic/retryable. Failures appear in `report_error`, CLI status,
+While Temporal is still recording the final report, status shows `finalizing`.
+Wait for a confirmed terminal state before stopping the worker. Report writes are atomic/retryable. Failures appear in `report_error`, CLI status,
 and worker logs without changing the workload outcome. Keep the worker running
 for finalization. Forced Temporal termination cannot run it. Live report updates
 and crash accounting remain tracked in wiss-011/wiss-025.

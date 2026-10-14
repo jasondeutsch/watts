@@ -26,12 +26,13 @@ func (values *repeated) Set(value string) error { *values = append(*values, valu
 
 func Compile(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "compile")
+	selected := flags.String("workflow", "", "named workflow entrypoint (overrides the package default)")
 	output := flags.String("o", "", "compiled JSON artifact (default: stdout)")
 	var variableFiles, variables repeated
 	flags.Var(&variableFiles, "var-file", "ACL variable file; repeat for overrides")
 	flags.Var(&variables, "var", "name=ACL-expression; repeat to override variables")
 	flags.Usage = func() {
-		fmt.Fprintln(app.ErrorOutput, "Usage: wctl compile <package> [-var-file file.wvars] [-var 'model=\"...\"'] [-o workflow.json]")
+		fmt.Fprintln(app.ErrorOutput, "Usage: wctl compile <package> [-workflow name] [-var-file file.wvars] [-var 'model=\"...\"'] [-o workflow.json]")
 		flags.PrintDefaults()
 	}
 	positional, err := arguments.Parse(flags, args)
@@ -58,7 +59,7 @@ func Compile(app *terminal.Context, args []string) error {
 		}
 		supplied[name] = value
 	}
-	pkg, err := app.CompileWorkflow(source, workflowlang.Options{VariableFiles: variableFiles, Variables: supplied})
+	pkg, err := app.CompileWorkflow(source, workflowlang.Options{Workflow: *selected, VariableFiles: variableFiles, Variables: supplied})
 	if err != nil {
 		return err
 	}
