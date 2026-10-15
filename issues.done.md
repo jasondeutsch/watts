@@ -4,6 +4,42 @@ Closed issues are recorded here when removed from [issues.md](issues.md). Preser
 
 For historical entries, the closure date is the date of the backlog-removal commit, not an inferred implementation date. Verification records describe retained evidence; tests were not rerun for this backfill. Superseded proposals are explicitly distinguished from completed work.
 
+## wiss-050: Make local workload image builds reliable on a fresh machine
+
+**Status:** Completed · **Completed:** 2026-10-15
+
+### Changes
+
+- Add `make images`, backed by Docker Bake's explicit Pi/Ralph -> Go image graph.
+- Supply the unpublished Agent base as a target context instead of resolving a
+  Watts tag through a remote registry; load and inspect both final local tags.
+- Check Engine/context agreement, Docker driver, native platform, and output
+  availability. Report dependency steps and stop on failure without changing
+  Docker context/builder defaults.
+- Update source-build guidance in the runbook, image READMEs, root README, and
+  standalone setup guide. Keep image building separate from package authoring.
+
+### Verification
+
+- The full graph built and loaded both isolated `wiss-050-check` image tags on
+  this native ARM64 Docker Engine, without replacing the normal 0.1.0 tags.
+- Eight script tests passed, covering success, graph failure, missing Buildx,
+  context/Engine mismatch, wrong driver/platform, and missing/wrong output images.
+- Shell syntax and diff checks passed.
+
+### Limitations
+
+- Verification used an existing ARM64 builder cache, not a clean-machine build;
+  native AMD64 was unavailable. Native AMD64 remains unverified.
+- Docker Buildx and the context-owned Docker driver are required for this path.
+- Upstream image/package network access remains necessary. Corporate distribution
+  and CA customization remain open under wiss-053.
+
+### Documentation
+
+- [Image builds](registry/README.md#build-locally)
+- [Runbook](docs/runbook.md)
+
 ## wiss-049: Make Agent configuration explicit through global and namespaced variables
 
 **Status:** Completed · **Completed:** 2026-10-15

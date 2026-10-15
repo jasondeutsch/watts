@@ -1,4 +1,5 @@
-# Build context: registry/coder_golang. Build watts/pi-ralph:0.1.0 first.
+# syntax=docker/dockerfile:1
+# Build with make images; Bake supplies the Pi/Ralph base as a named context.
 FROM golang:1.27.0-bookworm AS tools
 ARG GOPLS_VERSION=v0.23.0
 ARG GOLANGCI_LINT_VERSION=v2.14.0
@@ -16,7 +17,7 @@ RUN mkdir /tmp/toolchain-check \
     && /tools/golangci-lint run --no-config ./... \
     && rm -rf /tmp/toolchain-check
 
-FROM watts/pi-ralph:0.1.0
+FROM watts-agent-base
 USER root
 COPY --from=tools /usr/local/go /usr/local/go
 COPY --from=tools /tools/ /usr/local/bin/

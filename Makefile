@@ -4,7 +4,7 @@ SUDO ?= sudo
 
 BINARY := bin/wctl
 
-.PHONY: build test install
+.PHONY: build test install images
 
 build:
 	mkdir -p bin
@@ -16,3 +16,6 @@ test:
 install: build
 	$(SUDO) mkdir -p "$(INSTALL_DIR)"
 	$(SUDO) install -m 755 "$(BINARY)" "$(INSTALL_DIR)/wctl"
+
+images:
+	./registry/build-images.sh

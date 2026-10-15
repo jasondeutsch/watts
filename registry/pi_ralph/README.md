@@ -5,7 +5,7 @@ with Pi 1.0.3 and Ralph 2.1.0. Watts core has no Pi adapter or host-install logi
 Teams may extend this image or provide a different image implementing the contract.
 
 ```sh
-docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
+make images # from the Watts checkout; builds the base and Go derivative
 ```
 
 An Agent selects `command: [node, /opt/watts/launcher.mjs]` and `network: bridge`

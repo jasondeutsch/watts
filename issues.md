@@ -406,66 +406,6 @@ Acceptance criteria:
   through the same public interface. Update coordinator guidance and setup docs
   with implemented commands only, clearly separating proposals.
 
-### wiss-050: Make local workload image builds reliable on a fresh machine
-
-During setup on another machine, Docker failed to load metadata for
-`docker.io/watts/pi-ralph:0.1.0`. Follow-up identified
-`registry/coder_golang/Dockerfile:19`, whose `FROM watts/pi-ralph:0.1.0` is intended
-to consume the locally built Pi/Ralph base image. There is currently no published
-Watts Docker Hub image to satisfy that lookup. The `registry/` source directory
-is tracked in the repository; the reported failure concerns image resolution,
-not a missing source directory.
-
-The guide lists two sequential builds but does not establish that the derived
-build can resolve the first build's image through the selected builder, Docker
-context/image store, tag, and platform. The other machine's complete log and
-builder configuration are unavailable, so the specific cause remains unverified.
-Possible causes include an unsuccessful/unexported base build, different Docker
-contexts or builder stores, and platform/tag mismatches. Do not present any one
-of these as the confirmed diagnosis.
-
-Paths forward:
-
-- Provide one documented, dependency-aware local build entrypoint, such as a Make
-  target or build script. Select and explain a supported builder/store arrangement
-  and verify the base image before building the Go image. Scope builder/context
-  choices to the invocation rather than silently changing the user's defaults.
-- Evaluate a build graph using existing Docker Buildx/Bake facilities if it avoids
-  passing an unpublished base tag between independent builds. Retain the reusable
-  Agent base-image design; do not duplicate the adapter into every derived image.
-- Explain that these Watts images are local outputs, not published downloads.
-  Unqualified image references use Docker Hub as their registry namespace when
-  remote resolution occurs. Local image availability and registry publication
-  are separate concerns; creating or authenticating to a remote Watts registry is
-  not required for this prototype's supported local path.
-- Distinguish builder cache from the Docker Engine image store. `--load` can
-  export a Buildx result to the Engine, but is not a universal solution for a
-  separate builder resolving `FROM`. Diagnose the actual builder/store boundary.
-
-Acceptance criteria:
-
-- Starting without either Watts image, the documented procedure builds Pi/Ralph
-  and its Go derivative in order and leaves both exact tags available to the
-  Docker engine used by the Watts worker.
-- Verify the supported builder/context arrangement on clean native amd64 and
-  arm64 environments. Report unsupported arrangements and platform mismatches
-  clearly rather than implying successful setup from a cached developer machine.
-- Surface which build failed, the Dockerfile/base reference, active context,
-  builder driver, and whether the base image is available to the relevant store.
-  Stop after a failed base build instead of continuing with the derivative.
-- Do not attempt to pull a nonexistent published Watts base as the recovery path.
-  Upstream Node/Go images and package downloads remain separate network
-  dependencies; this requirement does not claim air-gapped builds.
-- Update the runbook, image READMEs, and new-repository guidance with verified
-  commands and expected outputs. Keep building images an explicit setup action,
-  separate from package scaffolding and generic workflow execution.
-- Coordinate toolchain verification with wiss-029 and image availability checks
-  with wiss-039. No Agent-specific image builder belongs in Watts orchestration.
-
-References: [Docker image naming](https://docs.docker.com/reference/cli/docker/image/tag/),
-[Docker builder driver](https://docs.docker.com/build/builders/drivers/docker/),
-and [containerized builder export behavior](https://docs.docker.com/build/builders/drivers/docker-container/).
-
 ### wiss-006: Shared logging across projects
 
 Worker service logs now live under `~/.watts/runtime/projects/<project-id>/worker/service.log`

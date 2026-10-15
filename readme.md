@@ -32,8 +32,7 @@ From this checkout:
 
 ```sh
 docker compose up -d --wait
-docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
-docker build -t watts/coder-golang:0.1.0 registry/coder_golang
+make images
 make install
 ```
 

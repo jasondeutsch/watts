@@ -12,10 +12,14 @@ From the Watts checkout:
 make build
 make install # or: make install INSTALL_DIR="$HOME/.local/bin" SUDO=
 docker compose up -d --wait
-docker build -t watts/pi-ralph:0.1.0 registry/pi_ralph
-docker build -t watts/coder-golang:0.1.0 registry/coder_golang
+make images
 wctl compile resources/examples/coder_golang -o /tmp/coding.json
 ```
+
+`make images` builds and loads both local workload images through a dependency
+graph. It requires Docker Buildx and the context-owned Docker driver; see
+[image build requirements and diagnostics](../registry/README.md#build-locally).
+No published Watts registry is required.
 
 `bin/wctl` is the local build. Compile accepts local ACL packages, `-var-file`
 and `-var` overrides, `-workflow` selection, and `-o` for a compiled artifact. `wctl c` is an alias.
