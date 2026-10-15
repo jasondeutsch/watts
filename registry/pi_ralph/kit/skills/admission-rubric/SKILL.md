@@ -24,17 +24,23 @@ Reject here if any of the above fails. This step catches the most dangerous fail
 
 ## Step 2: Required approvals
 
-Check Risk tier in SPEC.md and the recheck in PLAN.md, and use the higher of the two.
+Use the higher risk tier from SPEC.md and PLAN.md to guide review depth. Watts
+records and enforces the human approval gates declared by the selected workflow.
+The supplied `coder_golang` workflow requires spec and plan approval at every tier.
 
-- Tier 0: require the approval checks declared by the workflow, then proceed to step 3.
-- Tier 1: run `bash <kit>/scripts/check-approval.sh <task>` and require `APPROVAL: OK`. The workflow human gates record the reviewed content hashes; any changed document needs another review.
-- Tier 2: require those artifact approvals before implementation and inspect the risk-relevant evidence carefully.
-
-Reject if the required approval for the stated tier isn't actually present.
+Inspect approval evidence when it is supplied by the workflow, checking that it
+identifies the reviewed artifacts and attempt. Keep additional risk-specific
+approval requirements explicit in the workflow. If required evidence is missing
+or inconsistent, state that in the review. Do not invent approval files, recreate
+approval checks with an undeclared script, or treat a document signature as a
+Watts approval. A review Agent does not submit human decisions.
 
 ## Step 3: Test suite
 
-Look at the quality gates output in your evidence, which was run just now, and at the commands in PLAN.md's Quality gates section.
+Run the review Agent's declared checks against the candidate and inspect the
+actual results alongside PLAN.md's Quality gates section. Use supplied build
+evidence as context; do not assume a check ran or passed because it is listed in
+the plan. Report checks you could not run and why.
 
 - Does it build and run without error?
 - Do existing tests still pass?
@@ -53,6 +59,13 @@ If a gate is red, reject. If you can run a gate yourself and doubt the evidence,
 Write your verdict to `<task folder>/review/VERDICT.md`, with your reasoning first, covering each acceptance criterion and each story. The last line of the file must be exactly one of these, because the checks read it and treat anything else as invalid:
 
 - `VERDICT: PASS`
-- `VERDICT: REJECT: <step number and name>: <specific reason>`
+- `VERDICT: REJECT`
 
-A rejection goes back to the author with that reason, never forward with a note attached. The build loop shows the latest verdict to the builder on its next run and refuses to finish until a new build attempt supplies evidence of the fix.
+For a rejection, put the failed step, specific findings, and required changes in
+the body above that final line. Do not append an explanation to the verdict line;
+the supplied checker requires exactly PASS or REJECT.
+
+The image maps REJECT to `changes-required`. In `coder_golang`, the workflow
+routes that outcome back to build with review feedback, subject to its configured
+rework limit. Follow the selected workflow's routes; do not launch another stage
+or edit its state yourself.

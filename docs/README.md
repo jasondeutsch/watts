@@ -15,4 +15,5 @@
 | [Secret protection](secret-protection.md) | Credential redaction, image responsibilities, publication, exports, and incident cleanup |
 | [Sandboxing](sandbox.md) | Current security boundaries and isolation research |
 
-Start with the [repository quick start](../readme.md). For a team setup, use the [Golang coder example](../resources/examples/coder_golang/README.md); for an external coordinating agent, use the [resources toolbox](../resources/readme.md). The [Go workflow eval](../evals/go-workflow/README.md) describes comparing configured workflows over time. Proposed features are tracked in [issues](../issues.md).
+Start with the [repository quick start](../readme.md). For a team setup, use the [Golang coder example](../resources/examples/coder_golang/README.md); for an external coordinating agent, use the [resources toolbox](../resources/readme.md). Go workflow eval cases, rubrics, and run evidence live in the separate `evals`
+project under `go-workflow/`. Proposed features are tracked in [issues](../issues.md).

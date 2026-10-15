@@ -87,6 +87,7 @@ package as a local module with an explicit entrypoint:
 ```hcl
 package "team" {
   version    = "0.1.0"
+  var_files  = ["values.wvars"]
   entrypoint = module.coder.workflow.coding
 }
 
@@ -162,8 +163,10 @@ See [the ACL language specification](../../../docs/language-spec.md).
 
 Current limits: local modules and Docker execution only; model/cost/tool telemetry
 may be incomplete. Gate success and workflow completion do not replace independent
-acceptance evaluation. Use [comparable evals](../../../evals/go-workflow/README.md)
-to assess changes to this team's configuration over time.
+acceptance evaluation. Compare configurations against the same cases, rubric,
+and intervention policy over time. Cases and retained runs live in the separate
+`evals` project under `go-workflow/`; the [task-report guide](../../../docs/task-reports.md)
+explains available measurements.
 
 ## Project and worker storage
 

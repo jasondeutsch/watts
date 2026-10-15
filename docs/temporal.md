@@ -59,7 +59,7 @@ completed activities and durable waits are recovered from history.
 
 ## Stored state
 
-- `<task>/workflow.json`: resolved task snapshot; recompile ACL source changes before creating a new task.
+- `<task>/workflow.json`: resolved task snapshot. New package execution compiles current ACL; existing-task execution keeps the captured definition.
 - `<task>/.watts-state/temporal.json`: execution binding and pinned definition.
 - `<task>/.watts-state/workflow-config.json`: hash-verified runtime preferences.
 - `<task>/.watts-state/package/`: task-owned compiled package assets.
@@ -80,12 +80,24 @@ for settings and runtime retention.
 ```sh
 go test ./...
 WATTS_DOCKER_INTEGRATION=1 go test ./internal/containerengine ./internal/application
-WATTS_TEMPORAL_INTEGRATION=1 go test ./internal/application -run TestTemporalLive -v
+WATTS_TEMPORAL_INTEGRATION=1 go test ./internal/application -run '^TestTemporalLive$' -v
+WATTS_TEMPORAL_INTEGRATION=1 go test ./cli -run '^TestCoordinatorCLILifecycle$' -v
 ```
 
-The container tests require locally available Ubuntu the pinned Node base image, and the built Pi/Ralph image.
-They run real Pi/Ralph against a deterministic fake provider. The live test starts
-an independent persistent Temporal development service; it may download its CLI.
-It covers service/worker restart, approval rework, explicit retry with an ordinary
-Node image, external events, and cancellation. It does not use your test project
-or hosted model credentials.
+The Docker integration suite requires local `ubuntu:latest`, the pinned Node base
+image, and the built Pi/Ralph image. It includes deterministic container workloads
+and real Pi/Ralph against a fake provider. Pull the external fixture images
+explicitly and build the Watts images with `make images`; see
+[image prerequisites](../registry/README.md#build-locally).
+
+Both Temporal integration tests require local `ubuntu:latest`; the application
+test also requires the pinned Node base image. They start isolated persistent
+development servers and may download the Temporal CLI. The application test
+covers service/worker restart, approval rework, explicit retry,
+external events, and cancellation. The public CLI test covers package scaffolding,
+direct execution with a large request and mixed-case task name, rejection/rework,
+stale decisions, worker restart, retry, completion, and cancellation. See
+[coordinator verification](coordinators.md#developer-verification).
+
+These tests use isolated temporary projects and deterministic workloads. They do
+not run against your application project or use hosted model credentials.

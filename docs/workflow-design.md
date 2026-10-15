@@ -5,7 +5,9 @@ agent behavior. The CLI and web UI call the application layer; neither owns a ru
 
 1. ACL packages compose typed variables, local modules, resources, and captured assets.
 2. `wctl compile` resolves references/defaults into a frozen JSON artifact with a graph and workload contracts.
-3. `wctl exec` consumes that artifact without rereading source packages.
+3. `wctl exec <package> --name <name>` compiles and captures a new task directly;
+   `wctl exec <artifact.json> --name <name>` creates one from a frozen artifact.
+   `wctl exec <task>` continues the existing task with its captured definition.
 4. Submission freezes image identities, resources, and worker preferences.
 5. Temporal schedules activities and retains routes, waits, attempts, and outcomes.
 6. The worker captures an isolated candidate and launches its image with the common interface.
@@ -47,8 +49,9 @@ describes current behavior; [stage communication](stage-communication.md) and
 Architecture tests protect the UI dependency boundary. Testify-based tests cover
 compilation, routing, CLI/package lifecycle, workload safety, ordinary images,
 Pi/Ralph against a fake provider, and opt-in persistent Temporal lifecycle tests.
-[Workflow evals](../evals/go-workflow/README.md) separately compare configured
-process outcomes over time.
+Workflow evals separately compare configured process outcomes over time. Cases,
+rubrics, and retained runs live in the separate `evals` project under
+`go-workflow/`; they are not bundled with this repository.
 
 Authored `watts/` packages and durable task captures are separate from worker
 settings and disposable home-directory execution files. See [storage layout](package-runtime-layout.md).

@@ -19,8 +19,9 @@ rejected before publication. Watts does not silently rewrite code or documents
 that passed gates. Remove the credential from the candidate and retry through the
 workflow. Private container workspaces are not safe export sources.
 
-`wctl task new` and `wctl start` add these rules to the project's `.gitignore`,
-preserving existing contents:
+Task creation, through `wctl exec <package|artifact.json> --name <name>` or
+`wctl task new <name> --compiled <artifact.json>`, and `wctl start` add these rules
+to the project's `.gitignore`, preserving existing contents:
 
 ```gitignore
 /.watts/

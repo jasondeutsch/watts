@@ -4,7 +4,10 @@ Watts remains a proof of concept at **0.1.0**. This backlog contains open work; 
 
 Watts core executes a generic workload contract. Agent/tool integrations belong in images; Temporal owns durable orchestration. Currently, only local Docker Engine execution is supported. Podman and Kubernetes remain possible future backends.
 
-The [October 10 eval](evals/go-workflow/runs/2026-10-10-tic-tac-toe/README.md) and [October 12 container eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe/README.md) retain historical evidence. Prioritize the current output, image integration, and publication problems below before treating Golang coder as a reliable end-to-end example.
+Historical evidence paths under `go-workflow/` below refer to the separate
+`evals` project. Those files are not included in the Watts repository.
+
+The October 10 eval (`go-workflow/runs/2026-10-10-tic-tac-toe/README.md`) and October 12 container eval (`go-workflow/runs/2026-10-12-tic-tac-toe/README.md`) retain historical evidence. Prioritize the current output, image integration, and publication problems below before treating Golang coder as a reliable end-to-end example.
 
 ## Candidate improvements
 
@@ -60,7 +63,7 @@ Task creation currently creates the final directory before writing artifacts, th
 
 ### wiss-042: Evaluate changes to an existing application
 
-The original tic-tac-toe eval starts from an empty project. The [web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) now exercises an incremental change against captured source and native-binary baselines. The workflow completed, and independent HTTP/terminal checks passed, but accessibility, test quality, and artifact handling prevent a clean verified success. Repeat this case from the same baseline before drawing performance conclusions.
+The original tic-tac-toe eval starts from an empty project. The web-UI eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) now exercises an incremental change against captured source and native-binary baselines. The workflow completed, and independent HTTP/terminal checks passed, but accessibility, test quality, and artifact handling prevent a clean verified success. Repeat this case from the same baseline before drawing performance conclusions.
 
 - Define a small feature or intentional bug fix against a known application baseline, with regression checks for existing behavior.
 - Record the package/values, images, context, starting code, approvals, outcomes, attempts, elapsed time, and available usage evidence using the existing eval structure.
@@ -68,7 +71,7 @@ The original tic-tac-toe eval starts from an empty project. The [web-UI eval](ev
 
 ### wiss-046: Bound and explain workflow resource consumption
 
-The [incremental web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) reported more than 2.5 million input-plus-output tokens during its first build attempt before gate acceptance. One Ralph iteration produced no durable changes and included a 16,000-output-token response. Iteration limits and timeouts alone do not describe the resource cost of repeated long contexts.
+The incremental web-UI eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) reported more than 2.5 million input-plus-output tokens during its first build attempt before gate acceptance. One Ralph iteration produced no durable changes and included a 16,000-output-token response. Iteration limits and timeouts alone do not describe the resource cost of repeated long contexts.
 
 - Consider optional declarative per-workload and whole-run limits for reported tokens and elapsed execution time, covering retries and internal repair loops. Preserve generic orchestration; image adapters report normalized consumption.
 - Expose consumption, cache treatment, remaining known budget, and the reason for a limit being reached to coordinators and the UI. Unknown cost or missing telemetry must remain explicit.
@@ -77,7 +80,7 @@ The [incremental web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-
 
 ### wiss-047: Make Golang coder review verify claims against real evidence
 
-The [incremental web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed with reviewer PASS, but independent inspection found unnamed empty-cell buttons and HTTP tests that copied handlers instead of testing the production router. The reviewer also described the newly published Linux binary as pre-existing, contradicting the captured original baseline. Passing command gates and a syntactically valid verdict did not establish all acceptance criteria.
+The incremental web-UI eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) completed with reviewer PASS, but independent inspection found unnamed empty-cell buttons and HTTP tests that copied handlers instead of testing the production router. The reviewer also described the newly published Linux binary as pre-existing, contradicting the captured original baseline. Passing command gates and a syntactically valid verdict did not establish all acceptance criteria.
 
 - Refine example builder/reviewer guidance to exercise production code paths. Factor reusable handler construction when needed; test the real handler or executable rather than recreating implementation in tests.
 - Supply a captured baseline/change inventory as explicit reviewer context so preservation claims compare before and after. Use generic artifacts/resources and provenance; keep Go-specific review policy in the example.
@@ -107,7 +110,7 @@ Suggested order: configuration guidance and atomic scaffolding; log/failure visi
 
 ### wiss-003: Live execution progress and evidence
 
-The container eval's builder actively edited files and ran tools while its durable attempt log contained only a 133-byte session header. Private progress/usage events were absent from the web snapshot. Completed drafting logs also contained 44,419- and 56,663-byte JSON events: the API's 32 KiB tail discarded those partial records, leaving only `agent_settled` and the check result. See [log shape](evals/go-workflow/runs/2026-10-12-tic-tac-toe/log-shape.json) and [web snapshot](evals/go-workflow/runs/2026-10-12-tic-tac-toe/web-build-snapshot.sse).
+The container eval's builder actively edited files and ran tools while its durable attempt log contained only a 133-byte session header. Private progress/usage events were absent from the web snapshot. Completed drafting logs also contained 44,419- and 56,663-byte JSON events: the API's 32 KiB tail discarded those partial records, leaving only `agent_settled` and the check result. See log shape (`go-workflow/runs/2026-10-12-tic-tac-toe/log-shape.json`) and web snapshot (`go-workflow/runs/2026-10-12-tic-tac-toe/web-build-snapshot.sse`).
 
 Failed-stage reporting has improved: the October 12 CLI returned a nonzero status with the lint error, and the web API retained its stage, attempt, failure, and retry state. Remaining work is useful live output and access to retained evidence.
 
@@ -131,7 +134,7 @@ Acceptance criteria:
 - Verify active nested-agent output, oversized events, failures, decisions, retries, and reconnect through MCP and the CLI/web views. An external coordinator must follow a task without Docker access, private runtime paths, or knowledge of a particular Agent implementation.
 - Use the implemented [secret protection](docs/secret-protection.md) before progress is retained or exposed. Coordinate with wiss-011 and wiss-025; the report and interfaces are views over the same evidence.
 
-The [web-UI incremental eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) confirms the nested-agent visibility gap: while Ralph iteration 2 was writing source and reporting assistant-turn usage in private outputs, the public task log and UI showed only the outer session and completed iteration 1 summary. Task identity, attempts, and rejection feedback were visible. Stream useful normalized progress from image-owned events rather than presenting quiet outer-process output as the only activity evidence.
+The web-UI incremental eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) confirms the nested-agent visibility gap: while Ralph iteration 2 was writing source and reporting assistant-turn usage in private outputs, the public task log and UI showed only the outer session and completed iteration 1 summary. Task identity, attempts, and rejection feedback were visible. Stream useful normalized progress from image-owned events rather than presenting quiet outer-process output as the only activity evidence.
 
 ### wiss-004: Coordinator lifecycle and approval provenance
 
@@ -151,9 +154,9 @@ Remaining validation:
 
 ### wiss-029: Verify image toolchains and control tool replacement
 
-The container eval's Go image paired Go 1.27.0 with golangci-lint 2.11.3. The linter could not decode Go export-data version 4; its reader supported only version 2. Build installed 2.14.0 privately and passed its checks, but the separate lint Procedure used the original image and failed. See [failure](evals/go-workflow/runs/2026-10-12-tic-tac-toe/lint-toolchain-failure.txt) and [private versions](evals/go-workflow/runs/2026-10-12-tic-tac-toe/build-private-tool-versions.txt).
+The container eval's Go image paired Go 1.27.0 with golangci-lint 2.11.3. The linter could not decode Go export-data version 4; its reader supported only version 2. Build installed 2.14.0 privately and passed its checks, but the separate lint Procedure used the original image and failed. See failure (`go-workflow/runs/2026-10-12-tic-tac-toe/lint-toolchain-failure.txt`) and private versions (`go-workflow/runs/2026-10-12-tic-tac-toe/build-private-tool-versions.txt`).
 
-**Image fix verified:** the Dockerfile now pins 2.14.0 and performs a compile/lint smoke check. The rebuilt image passed the generated application's tests, vet, and configured lint gate. [Follow-up verification](evals/go-workflow/runs/2026-10-12-tic-tac-toe/FOLLOW-UP.md) is separate from the failed eval; the existing task still pins its original image.
+**Image fix verified:** the Dockerfile now pins 2.14.0 and performs a compile/lint smoke check. The rebuilt image passed the generated application's tests, vet, and configured lint gate. Follow-up verification (`go-workflow/runs/2026-10-12-tic-tac-toe/FOLLOW-UP.md`) is separate from the failed eval; the existing task still pins its original image.
 
 Remaining work:
 
@@ -164,7 +167,7 @@ Remaining work:
 
 ### wiss-030: Prepare and surface the image-owned Ralph completion contract
 
-The builder's first iteration marked all stories done and emitted `DONE`, but Ralph rejected `Missing OPEN_QUESTIONS.md`. The launcher/instructions had not prepared or explained that mandatory helper file. A second iteration created it and completed. See [gate evidence](evals/go-workflow/runs/2026-10-12-tic-tac-toe/build-private-evidence/.ralph-runner/events.jsonl).
+The builder's first iteration marked all stories done and emitted `DONE`, but Ralph rejected `Missing OPEN_QUESTIONS.md`. The launcher/instructions had not prepared or explained that mandatory helper file. A second iteration created it and completed. See gate evidence (`go-workflow/runs/2026-10-12-tic-tac-toe/build-private-evidence/.ralph-runner/events.jsonl`).
 
 Acceptance criteria:
 
@@ -175,7 +178,7 @@ Acceptance criteria:
 
 ### wiss-031: Separate workspace source changes from generated build artifacts
 
-Build published a 2,367,736-byte Linux arm64 executable into the macOS project alongside the Go source/tests. The plan's `go build ./...` gate produced it, and workspace publication accepted it as an application change. See [artifact metadata](evals/go-workflow/runs/2026-10-12-tic-tac-toe/published-build-artifact.json) and [workspace evidence](evals/go-workflow/runs/2026-10-12-tic-tac-toe/steps/build-1/workspace.json).
+Build published a 2,367,736-byte Linux arm64 executable into the macOS project alongside the Go source/tests. The plan's `go build ./...` gate produced it, and workspace publication accepted it as an application change. See artifact metadata (`go-workflow/runs/2026-10-12-tic-tac-toe/published-build-artifact.json`) and workspace evidence (`go-workflow/runs/2026-10-12-tic-tac-toe/steps/build-1/workspace.json`).
 
 Acceptance criteria:
 
@@ -184,7 +187,7 @@ Acceptance criteria:
 - Retain requested deliverables with provenance while excluding incidental tool output from source publication.
 - Verify both source-only changes and intentionally requested build artifacts. Coordinate with wiss-022 and wiss-028.
 
-The [web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) reproduced publication leakage despite private-output guidance and a correct configured build tool: the Agent also ran a workspace build, and a 9,079,875-byte Linux executable was accepted/published alongside source. The final gate receipt included it in the candidate inventory. Explicit publication policy must cover the whole candidate, not just the declared build command. The original native `ttt` was missing before planning; deletion attribution is unknown and should not be assigned to build without evidence.
+The web-UI eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) reproduced publication leakage despite private-output guidance and a correct configured build tool: the Agent also ran a workspace build, and a 9,079,875-byte Linux executable was accepted/published alongside source. The final gate receipt included it in the candidate inventory. Explicit publication policy must cover the whole candidate, not just the declared build command. The original native `ttt` was missing before planning; deletion attribution is unknown and should not be assigned to build without evidence.
 
 ## Orchestration and recovery
 
@@ -236,7 +239,7 @@ Remaining work:
 
 ### wiss-025: Persist complete attempt telemetry across failures
 
-The container eval retained usage for drafting and both nested build iterations: 1,831,396 input and 40,081 output tokens; cached input is included in that input count. Cost remained unknown. [Usage evidence](evals/go-workflow/runs/2026-10-12-tic-tac-toe/usage-summary.json). Post-attempt capture is improved; live visibility and abrupt-loss completeness remain open.
+The container eval retained usage for drafting and both nested build iterations: 1,831,396 input and 40,081 output tokens; cached input is included in that input count. Cost remained unknown. Usage evidence (`go-workflow/runs/2026-10-12-tic-tac-toe/usage-summary.json`). Post-attempt capture is improved; live visibility and abrupt-loss completeness remain open.
 
 Provide the durable foundation for live progress under wiss-003 and MCP status,
 wait, and evidence operations under wiss-010. Event persistence and read services
@@ -477,7 +480,7 @@ Acceptance criteria:
 - Remove the standalone Golang coder lint stage; demonstrate build/review command tools, gates, named skills, and MCP selection in source ACL/modules. Document fixed-tool arguments and current limitations.
 - Test real command-tool exposure, repair, exhaustion, cancellation/timeouts, and stale/missing evidence without hosted model calls. Follow with a fresh full-workflow eval; do not rewrite the earlier pinned execution.
 
-Implementation now includes the typed contract, ACL resources, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Compiler/resource tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. The fresh [hosted web-UI eval](evals/go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md) completed: build final-candidate gates and review verdict validation passed, including internal correction of story/verdict formatting. It also exposed unrelated command-created publication leakage and false semantic review claims (wiss-031/wiss-047). Final-gate repair/exhaustion remain covered by component/integration tests rather than this hosted run. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
+Implementation now includes the typed contract, ACL resources, Pi/Ralph tool and gate support, final-candidate evidence validation, and the updated example. Compiler/resource tests, real Pi/Ralph command and gate tests, and race-enabled Docker/Temporal integration checks pass. The fresh hosted web-UI eval (`go-workflow/runs/2026-10-12-tic-tac-toe-web-ui/README.md`) completed: build final-candidate gates and review verdict validation passed, including internal correction of story/verdict formatting. It also exposed unrelated command-created publication leakage and false semantic review claims (wiss-031/wiss-047). Final-gate repair/exhaustion remain covered by component/integration tests rather than this hosted run. Coordinate with wiss-029, wiss-030, wiss-031, and wiss-033.
 
 ## Long-term execution and integrations
 

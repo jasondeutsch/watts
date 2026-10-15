@@ -20,9 +20,20 @@ The proposed basic execution primitive is an **isolated workload**, analogous to
 | ConfigMap | Supplies scoped nonsecret configuration to workloads |
 | Secret | Supplies scoped credential references resolved at launch |
 
-Resources do not each require a separate container. An attempt's environment provides materialization, launch, observation, cancellation, recovery, and publication, with explicit input/output, filesystem, network, credential, and resource boundaries. The initial host executor is an interim implementation; directory separation does not provide container or sandbox security.
+Resources do not each require a separate container. An attempt's environment
+provides materialization, launch, observation, cancellation, recovery, and
+publication, with explicit input/output, filesystem, network, credential, and
+resource boundaries. The local Docker backend uses private candidate directories
+and scoped mounts.
+Directory separation alone is not a security boundary; stronger sandboxing and
+distributed execution remain future work.
 
-Pi is an implementation of an Agent runtime; Ralph is a tool used by Pi. Their configuration, registries, and private files belong inside that Agent attempt's environment. Core orchestration consumes generic execution results and evidence rather than tool-specific directory layouts. Containers/sandboxes enforce this boundary in the target implementation.
+Pi is an implementation of an Agent runtime; Ralph is a tool used by Pi. Their
+configuration, registries, and private files belong inside that Agent attempt's
+environment. Core orchestration consumes generic execution results and evidence
+rather than tool-specific directory layouts. The local container interface
+implements this separation; additional sandboxing and distinct-node execution
+extend it.
 
 Kubernetes may schedule workload containers. Temporal retains durable workflow routing and waits; Watts adapters own execution and publication. Neither container restart nor activity retry establishes exactly-once side effects or safe workspace recovery.
 
@@ -30,7 +41,14 @@ Authored packages, durable task evidence, and worker working files have separate
 
 ## Authoring, compilation, and execution
 
-ACL packages, variables, modules, and declared assets are authoring inputs. `wctl compile` produces a self-contained JSON execution artifact without contacting runtime services. `wctl exec` creates a task whose `workflow.json` snapshots that definition, then pins image identities and worker preferences at submission and starts execution through Temporal. There is no apply step.
+ACL packages, variables, modules, and declared assets are authoring inputs.
+`wctl compile` produces a self-contained JSON execution artifact without
+contacting runtime services. For new tasks, `wctl exec <package> --name <name>`
+compiles and captures the package directly. The artifact form,
+`wctl exec <artifact.json> --name <name>`, consumes an existing artifact. Each task stores the resolved definition
+in `workflow.json`; submission pins image identities and worker preferences and
+starts execution through Temporal. `wctl exec <task>` continues that task without
+reloading source. See [the runbook](runbook.md) for request input and retry rules.
 
 Compilation validates stage contracts and connections, resolves executor settings and MCP definitions, and packages instructions, skills, scripts, and configuration. The source workflow remains available for editing and provenance, but workers do not reread it during that execution. Retries use the same compiled plan; configuration changes require a new compilation and execution.
 
@@ -44,10 +62,6 @@ compiled-plan/
       manifest.json
       instructions.md
       skills/
-      scripts/
-      configs/
-    lint/
-      manifest.json
       scripts/
       configs/
     review/
@@ -193,7 +207,8 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 - How are workspace revisions captured, identified, and published back to a user project, including conflicts with external edits?
 - How are partial changes from failed or cancelled build attempts handled on retry?
 - What is the minimum executor lifecycle contract for containers, including credentials, MCP resources, logs, and cancellation?
-- What are the compiled manifest schemas, package format, integrity rules, and compile/apply interfaces?
+- What additional package schemas, integrity rules, and compile/exec interfaces
+  are needed for distinct-node execution?
 - Which artifact store and transfer protocol support local and distributed execution, and who owns retention?
 - How are executable dependencies and container images pinned, and how are runtime requirements matched to workers?
 - How does publication remain atomic and idempotent across node loss or repeated completion delivery?

@@ -87,6 +87,9 @@ better results; they give teams a process they can inspect and improve.
 - [Golang coder example](resources/examples/coder_golang/README.md)
 - [Coordinator skill](resources/skills/watts-coordinator/SKILL.md)
 - [Architecture](docs/workflow-design.md), [container interface](docs/container-workloads.md), and [Temporal](docs/temporal.md)
-- [Workflow evals](evals/go-workflow/README.md), and [known issues](issues.md)
+- [Task reports and metrics](docs/task-reports.md), and [known issues](issues.md)
+
+Eval cases, rubrics, and run evidence live in the separate `evals` project under
+`go-workflow/`.
 
 Watts does not require Git. The source is licensed under [MPL 2.0](LICENSE).

@@ -5,9 +5,25 @@ description: Produces PLAN.md from the bundled template once the spec-review wor
 
 # Plan Template
 
-Copy `plan-template.md`, bundled in this skill's folder, into the task directory as `PLAN.md`, then fill it in against SPEC.md approved by the preceding workflow gate. `wctl task new <slug>` puts a copy in place. The spec-review workflow gate must approve the specification before planning starts; approval lives in workflow history, not in an agent-written signature.
+Read the existing task `PLAN.md` before editing it. Use the bundled
+[plan-template.md](plan-template.md) as a structure reference; copy it only when
+PLAN.md is absent. Preserve existing human content and incorporate review
+feedback. Watts scaffolds only files declared by the selected workflow; the
+planning Agent is responsible for writing its declared PLAN.md output.
 
-The project root is the current working directory containing watts.yaml. Implement application source, tests, modules, and other project files in the project root and its normal source directories. The task directory holds workflow documents, story logs, review artifacts, and execution evidence only; do not create application code or a separate application module inside it. Quality gates run from the project root, not with a task-directory working directory.
+Plan against the SPEC.md approved by the preceding workflow gate. Approval lives
+in workflow history, not an agent-written signature. In `coder_golang`, a
+coordinator can scaffold a task before submission with
+`wctl task new <name> --compiled <artifact.json>`; the planning Agent works on the
+existing task supplied to its stage.
+
+Use the application workspace supplied by Watts, `/workspace` in the provided
+image, as the project root. The authored package may live elsewhere. Application
+source, tests, modules, and build files belong in that workspace and its normal
+source directories. Task documents use the private task path supplied by the
+launcher (`/runtime/task` in this image). Run project quality checks from the
+application workspace; keep workflow documents and evidence in the task path.
+The planning Agent writes PLAN.md, not application code.
 
 Rules worth repeating here rather than assuming they're obvious:
 
@@ -15,29 +31,33 @@ Rules worth repeating here rather than assuming they're obvious:
 - Technical Decisions and Alternatives Considered is not allowed to collapse silently for anything above Tier 0. If there's nothing in it, that's worth noticing, not skipping past.
 - Risk Tier Recheck is mandatory, not a formality. Run the risk-tiering skill again against what this plan actually describes, not what SPEC.md assumed before the technical approach was known. A tier can move up here. It should never move down without saying why.
 - Open Questions for the author agent exists so ambiguity gets resolved here, in writing, rather than surfacing for the first time as an admission-rubric rejection.
-- The planning agent drafts this file. The default SDLC requires a human plan-review gate before implementation at every tier.
+- The planning agent drafts this file. The supplied `coder_golang` workflow requires a human plan-review gate before implementation at every tier. Follow the selected workflow's declared approval policy.
 
 ## The two sections the build loop runs on
 
-There is no separate task list. The build loop (pi-ralph-loop) reads this file every iteration, and scripts parse two sections mechanically, so their format is fixed.
+There is no separate task list. The build loop (pi-ralph-loop) reads this file every iteration. Keep the quality
+commands explicit and preserve the story heading format used by configured checks.
 
 Quality gates:
 
 - One command per bullet, written as `- \`command\``, for example `- \`go test ./...\``. These are real commands for this repository, run from the repository root.
-- The builder runs them before finishing a story, and the reviewer and the checks run them again independently. Avoid network access, `sudo`, `curl`, `ssh` and Git commands in a gate. `gates.sh` refuses commands that look dangerous.
+- Select commands from the Agent's declared tools and gates. Replace template examples with the workflow's actual commands and working directories; use its private build-output locations.
+- The builder and reviewer run their configured checks. Listing a command in PLAN.md does not register a tool or gate with Watts; those contracts are authored in ACL. Follow the selected workflow's network and command policy.
 
 User stories:
 
 - Each story is a heading `### US-001: Short title`, numbered in the order the builder should take them.
 - Each story has a `Covers: AC-1, AC-2` line naming the SPEC criteria it satisfies, and a `Depends on:` line (`none` or story ids).
-- Every acceptance criterion in SPEC.md must be covered by at least one story, or `check-plan.sh` fails.
+- Cover every acceptance criterion in SPEC.md with at least one story. In `coder_golang`, the declared `check-plan` tool runs `scripts/check.mjs plan` from captured resources to check story headings, lint inclusion, and acceptance-criterion references. Treat passing that check as a structural check, not proof of semantic coverage.
 - Each story must be small enough for one agent iteration and have checkable acceptance criteria. Nothing downstream splits a story that is too big, so split it here. A story that cannot finish in one iteration will fail repeatedly.
 - Put the riskiest or approach-proving story first, and never make a story depend on a later one.
 
-## Fill-in rules the Watts checks read
+## Document conventions and approval
 
 - `Risk tier after planning: N` in the Risk Tier Recheck section, where N is `0`, `1`, or `2`. The higher of this and SPEC.md's tier governs.
-- `Spec ref: SPEC.md vN` near the top must match SPEC.md's `Version:`, or the approval is treated as stale.
+- Keep `Spec ref: SPEC.md vN` consistent with SPEC.md's `Version:` for traceability. Watts approval freshness is enforced through reviewed artifact hashes and stage-attempt identity, not this text field.
 - The plan-review human workflow gate records approval of the specification and plan hashes. An agent never fills in a human signature or approves itself.
 
-After writing PLAN.md, the agent returns. The workflow pauses at plan-review; approval continues to build and rejection returns to planning with feedback.
+After writing PLAN.md, return to the workflow. In `coder_golang`, plan-review
+waits for approval; approval continues to build and rejection returns to planning
+with feedback. Other workflows may declare different routes.

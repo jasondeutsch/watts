@@ -1,8 +1,11 @@
 # Workflow execution
 
-Compilation resolves ACL resources, references, and routing into a frozen JSON artifact.
-Task creation copies its definition into `workflow.json`. First submission pins the plan, image IDs, captured
-resources, and worker preferences. Temporal interprets the ordered graph; the
+Compilation resolves ACL resources, references, and routing into a frozen JSON
+artifact. `wctl exec <package> --name <name>` compiles and captures a new task;
+`wctl exec <artifact.json> --name <name>` starts from an existing artifact.
+Task creation stores the definition in `workflow.json`. First submission pins
+image IDs, captured resources, and worker preferences. `wctl exec <task>`
+continues that task using its captured definition without recompiling source. Temporal interprets the ordered graph; the
 worker executes container workloads. See [ACL declarations](language-spec.md) for the resource fields
 and [the workload interface](container-workloads.md) for inputs/results.
 
