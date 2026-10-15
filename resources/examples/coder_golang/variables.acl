@@ -1,34 +1,26 @@
-variable "api" {
-  type        = string
-  description = "Provider API protocol understood by the Agent image."
+variable "agents" {
+  type = map(object({
+    provider          = string
+    model             = string
+    thinking          = string
+    image             = string
+    context_window    = number
+    max_output_tokens = number
+    reasoning         = bool
+  }))
+  description = "Per-Agent settings keyed by specification, planning, build, and review. An empty image selects globals.image explicitly in agents.acl."
 }
 
-variable "api_key_env" {
-  type        = string
-  description = "Worker environment variable supplying the provider credential."
+variable "globals" {
+  type        = object({ image = string })
+  description = "Shared image for Agents whose image setting is empty."
 }
 
-variable "base_url" {
-  type        = string
-  description = "Provider API endpoint used by the Agent image."
-}
-
-variable "image" {
-  type        = string
-  description = "OCI image containing the Go toolchain and Agent adapter."
-}
-
-variable "model" {
-  type        = string
-  description = "Provider model identifier for the workflow Agents."
-}
-
-variable "provider" {
-  type        = string
-  description = "Provider name understood by the Agent image."
-}
-
-variable "thinking" {
-  type        = string
-  description = "Reasoning setting passed to the Agent adapter."
+variable "providers" {
+  type = map(object({
+    api         = string
+    api_key_env = string
+    base_url    = string
+  }))
+  description = "Named provider profiles. Each profile keeps its protocol, endpoint, and credential source together."
 }

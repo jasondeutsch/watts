@@ -4,6 +4,39 @@ Closed issues are recorded here when removed from [issues.md](issues.md). Preser
 
 For historical entries, the closure date is the date of the backlog-removal commit, not an inferred implementation date. Verification records describe retained evidence; tests were not rerun for this backfill. Superseded proposals are explicitly distinguished from completed work.
 
+## wiss-049: Make Agent configuration explicit through global and namespaced variables
+
+**Status:** Completed · **Completed:** 2026-10-15
+
+### Changes
+
+- Give `coder_golang` typed `agents`, `providers`, and `globals` inputs.
+- Bind each Agent's provider profile, credential source, model, thinking, image,
+  and model capabilities explicitly in ACL; only an empty image selects the
+  shared image. Provider profiles keep endpoint, protocol, and credentials together.
+- Export scoped Secret references from the provider module without reading keys.
+- Document whole-variable replacement and independent configuration in the example,
+  language specification, and standalone setup guidance.
+
+### Verification
+
+- Compiler and manifest suites passed; the default example compiled successfully.
+- Consumer-module coverage uses two providers, endpoints, credential sources,
+  models, reasoning settings, images, and model limits.
+- Tests cover shared-image changes, missing bindings, compiled round trips, and
+  absence of credential values from captured configuration.
+
+### Limitations
+
+- Model metadata is declared by the team, not discovered from providers.
+- Overrides replace top-level objects in full; no automatic deep merge.
+- Configuration tests do not establish compatibility with every provider/image.
+
+### Documentation
+
+- [Coder example](resources/examples/coder_golang/README.md)
+- [Language specification](docs/language-spec.md)
+
 ## wiss-048: Prevent secrets leaking into logs, telemetry, and exported evidence
 
 **Status:** Completed · **Completed:** 2026-10-13

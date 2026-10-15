@@ -154,6 +154,13 @@ is optional. Unknown variable overrides and missing required values fail.
 Precedence is defaults, declared variable files, CLI variable files in order,
 then `-var`. CLI expressions use ACL's HCL-based expression syntax; quote string values.
 
+Object variables can organize package defaults (`var.globals`), named provider
+profiles (`var.providers`), and per-Agent settings (`var.agents`). These are
+ordinary variable names, not special scopes or inheritance. Each Agent explicitly
+chooses its sources; modules receive only their declared inputs. Overrides replace
+whole top-level variables, with no implicit deep merge. See the
+[coder example](../resources/examples/coder_golang/README.md#independent-agent-settings).
+
 Locals may reference variables and other locals; cycles fail. In this first
 implementation, locals resolve before modules and cannot read module outputs.
 Expressions support HCL-based literals, interpolation, conditionals, comprehensions,

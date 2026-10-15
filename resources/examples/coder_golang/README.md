@@ -14,7 +14,7 @@ gates, skills, and reusable provider/MCP modules. Source follows the
 | `agents.acl` | Specification, planning, build, and review Agent contracts |
 | `procedures.acl` | Human spec and plan approval Procedures |
 | `workflow.acl` | Stage order, named artifact connections, and bounded routes |
-| `modules/provider/` | Reusable provider defaults and environment-backed Secret |
+| `modules/provider/` | Named provider credential sources backed by the worker environment |
 | `modules/gopls/` | Reusable gopls MCP service |
 | `modules/go-tools/` | Command capabilities shared by build and review |
 | `prompts/` | Agent instructions, private Ralph configuration, and task scaffolds |
@@ -33,7 +33,7 @@ From the Watts checkout, build its selected images as described in
 ```sh
 wctl compile ./resources/examples/coder_golang -o /tmp/coding.json
 wctl c ./resources/examples/coder_golang \
-  -var 'model="your-provider/model"' -o /tmp/coding.json
+  -var-file /path/to/team.wvars -o /tmp/coding.json
 ```
 
 From an application project such as `../test`:
@@ -90,9 +90,67 @@ package "team" {
 module "coder" {
   source    = "../watts/resources/examples/coder_golang"
   version   = "0.1.0"
-  variables = { model = "your-provider/model" }
+  variables = {
+    agents    = var.agents
+    globals   = var.globals
+    providers = var.providers
+  }
 }
 ```
+
+Declare the same typed `agents`, `globals`, and `providers` inputs in the consuming
+package (copy `variables.acl`) and load your own `values.wvars` with
+`package.var_files = ["values.wvars"]`. Module inputs are explicit; parent values
+do not automatically flow into dependencies.
+
+### Independent Agent settings
+
+`values.wvars` has three namespaces, using ordinary ACL object variables:
+
+- `providers`: profiles keyed by provider name, grouping `base_url`, `api`, and
+  `api_key_env`. Add your own OpenAI-compatible endpoint here and export its key
+  in the worker environment. These are environment variable **names**, not keys.
+- `agents`: required entries `specification`, `planning`, `build`, and `review`.
+  Each chooses its provider profile, model ID, thinking setting, optional image
+  override, context window, output token limit, and reasoning capability.
+- `globals`: a shared image. Each Agent's ACL explicitly selects this image when
+  that Agent's `image` is empty. Nothing else inherits implicitly.
+
+For example, add a `corporate` profile alongside `openrouter`:
+
+```hcl
+corporate = {
+  api         = "openai-completions"
+  api_key_env = "CORPORATE_API_KEY"
+  base_url    = "https://models.example.com/v1"
+}
+```
+
+Then replace the `review` entry within `agents`:
+
+```hcl
+review = {
+  provider          = "corporate"
+  model             = "your-review-model"
+  thinking          = "high"
+  image             = "your-team/reviewer:0.1.0"
+  context_window    = 64000
+  max_output_tokens = 8000
+  reasoning         = true
+}
+```
+
+The other three Agents keep their own selections. Model limits/capabilities are
+passed to the Pi image's `model_config`; use values supported by your model.
+`thinking` is the image adapter's setting. Choose an empty value for models that
+do not support reasoning controls. An Agent image must implement the configured
+launcher contract; changing an image is not a universal adapter conversion.
+
+Override files replace each supplied top-level variable in full: an `agents`
+override supplies all four entries, with no deep merge. Missing Agent entries,
+provider references, or required fields fail compilation. Source credentials are
+resolved only at execution; compiled definitions retain independent Secret
+bindings. Existing tasks keep their captured configuration.
 
 A team can also export selected Agents from its own module and stitch them into
 an independent workflow. Named outputs connect task artifacts; routing controls

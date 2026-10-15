@@ -1,7 +1,52 @@
-api         = "openai-completions"
-api_key_env = "OPENROUTER_API_KEY"
-base_url    = "https://openrouter.ai/api/v1"
-image       = "watts/coder-golang:0.1.0"
-model       = "deepseek/deepseek-v4-flash"
-provider    = "openrouter"
-thinking    = "medium"
+globals = {
+  image = "watts/coder-golang:0.1.0"
+}
+
+providers = {
+  openrouter = {
+    api         = "openai-completions"
+    api_key_env = "OPENROUTER_API_KEY"
+    base_url    = "https://openrouter.ai/api/v1"
+  }
+}
+
+# Each Agent chooses a provider profile and its own model/runtime settings.
+# An empty image intentionally uses globals.image; no other fields inherit.
+agents = {
+  specification = {
+    provider          = "openrouter"
+    model             = "deepseek/deepseek-v4-flash"
+    thinking          = "medium"
+    image             = ""
+    context_window    = 128000
+    max_output_tokens = 16000
+    reasoning         = true
+  }
+  planning = {
+    provider          = "openrouter"
+    model             = "deepseek/deepseek-v4-flash"
+    thinking          = "medium"
+    image             = ""
+    context_window    = 128000
+    max_output_tokens = 16000
+    reasoning         = true
+  }
+  build = {
+    provider          = "openrouter"
+    model             = "deepseek/deepseek-v4-flash"
+    thinking          = "medium"
+    image             = ""
+    context_window    = 128000
+    max_output_tokens = 16000
+    reasoning         = true
+  }
+  review = {
+    provider          = "openrouter"
+    model             = "deepseek/deepseek-v4-flash"
+    thinking          = "medium"
+    image             = ""
+    context_window    = 128000
+    max_output_tokens = 16000
+    reasoning         = true
+  }
+}

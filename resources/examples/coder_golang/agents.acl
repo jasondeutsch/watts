@@ -1,6 +1,15 @@
 agent "specification" {
   identity   = "watts-agent"
-  config_ref = module.provider.outputs.defaults.name
+  provider   = var.agents.specification.provider
+  model      = var.agents.specification.model
+  thinking   = var.agents.specification.thinking
+  base_url   = var.providers[var.agents.specification.provider].base_url
+  api        = var.providers[var.agents.specification.provider].api
+
+  auth {
+    env    = var.providers[var.agents.specification.provider].api_key_env
+    secret = module.provider.outputs.credentials.keys[var.agents.specification.provider]
+  }
   prompt     = file("prompts/specification.md")
   inputs     = ["SPEC.md"]
   outputs    = ["SPEC.md"]
@@ -10,14 +19,21 @@ agent "specification" {
   }
 
   container {
-    image     = var.image
+    image     = var.agents.specification.image != "" ? var.agents.specification.image : var.globals.image
     command   = ["node", "/opt/watts/launcher.mjs"]
     workspace = "read-only"
     network   = "bridge"
     memory_mb = 4096
     cpus      = 2
     files = {
-      "launcher.json" = jsonencode({ outputs = ["SPEC.md"] })
+      "launcher.json" = jsonencode({
+        outputs = ["SPEC.md"]
+        model_config = {
+          contextWindow = var.agents.specification.context_window
+          maxTokens     = var.agents.specification.max_output_tokens
+          reasoning     = var.agents.specification.reasoning
+        }
+      })
     }
     resources = {
       team = package.root
@@ -58,7 +74,16 @@ agent "specification" {
 
 agent "planning" {
   identity   = "watts-agent"
-  config_ref = module.provider.outputs.defaults.name
+  provider   = var.agents.planning.provider
+  model      = var.agents.planning.model
+  thinking   = var.agents.planning.thinking
+  base_url   = var.providers[var.agents.planning.provider].base_url
+  api        = var.providers[var.agents.planning.provider].api
+
+  auth {
+    env    = var.providers[var.agents.planning.provider].api_key_env
+    secret = module.provider.outputs.credentials.keys[var.agents.planning.provider]
+  }
   prompt     = file("prompts/planning.md")
   inputs     = ["SPEC.md"]
   outputs    = ["PLAN.md"]
@@ -68,14 +93,21 @@ agent "planning" {
   }
 
   container {
-    image     = var.image
+    image     = var.agents.planning.image != "" ? var.agents.planning.image : var.globals.image
     command   = ["node", "/opt/watts/launcher.mjs"]
     workspace = "read-only"
     network   = "bridge"
     memory_mb = 4096
     cpus      = 2
     files = {
-      "launcher.json" = jsonencode({ outputs = ["PLAN.md"] })
+      "launcher.json" = jsonencode({
+        outputs = ["PLAN.md"]
+        model_config = {
+          contextWindow = var.agents.planning.context_window
+          maxTokens     = var.agents.planning.max_output_tokens
+          reasoning     = var.agents.planning.reasoning
+        }
+      })
     }
     resources = {
       team = package.root
@@ -116,7 +148,16 @@ agent "planning" {
 
 agent "build" {
   identity   = "watts-agent"
-  config_ref = module.provider.outputs.defaults.name
+  provider   = var.agents.build.provider
+  model      = var.agents.build.model
+  thinking   = var.agents.build.thinking
+  base_url   = var.providers[var.agents.build.provider].base_url
+  api        = var.providers[var.agents.build.provider].api
+
+  auth {
+    env    = var.providers[var.agents.build.provider].api_key_env
+    secret = module.provider.outputs.credentials.keys[var.agents.build.provider]
+  }
   prompt     = file("prompts/build.md")
   inputs     = ["SPEC.md", "PLAN.md"]
   outputs    = ["STORY_LOG.md"]
@@ -126,7 +167,7 @@ agent "build" {
   }
 
   container {
-    image     = var.image
+    image     = var.agents.build.image != "" ? var.agents.build.image : var.globals.image
     command   = ["node", "/opt/watts/launcher.mjs"]
     workspace = "write"
     network   = "bridge"
@@ -134,6 +175,11 @@ agent "build" {
     cpus      = 2
     files = {
       "launcher.json" = jsonencode({
+        model_config = {
+          contextWindow = var.agents.build.context_window
+          maxTokens     = var.agents.build.max_output_tokens
+          reasoning     = var.agents.build.reasoning
+        }
         outputs = ["STORY_LOG.md"]
         ralph   = true
       })
@@ -241,7 +287,16 @@ agent "build" {
 
 agent "review" {
   identity   = "watts-reviewer"
-  config_ref = module.provider.outputs.defaults.name
+  provider   = var.agents.review.provider
+  model      = var.agents.review.model
+  thinking   = var.agents.review.thinking
+  base_url   = var.providers[var.agents.review.provider].base_url
+  api        = var.providers[var.agents.review.provider].api
+
+  auth {
+    env    = var.providers[var.agents.review.provider].api_key_env
+    secret = module.provider.outputs.credentials.keys[var.agents.review.provider]
+  }
   prompt     = file("prompts/review.md")
   inputs     = ["SPEC.md", "PLAN.md", "STORY_LOG.md"]
   outputs    = ["review/VERDICT.md"]
@@ -251,7 +306,7 @@ agent "review" {
   }
 
   container {
-    image     = var.image
+    image     = var.agents.review.image != "" ? var.agents.review.image : var.globals.image
     command   = ["node", "/opt/watts/launcher.mjs"]
     workspace = "read-only"
     network   = "bridge"
@@ -259,6 +314,11 @@ agent "review" {
     cpus      = 2
     files = {
       "launcher.json" = jsonencode({
+        model_config = {
+          contextWindow = var.agents.review.context_window
+          maxTokens     = var.agents.review.max_output_tokens
+          reasoning     = var.agents.review.reasoning
+        }
         outputs = ["review/VERDICT.md"]
         ralph   = true
         verdict = "review/VERDICT.md"

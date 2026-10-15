@@ -184,12 +184,12 @@ workflow "consumer" {
 
 func TestCoderGolangModulesAndPolicy(t *testing.T) {
 	source := filepath.Join("..", "..", "resources", "examples", "coder_golang")
-	pkg, err := Load(source, Options{Variables: map[string]cty.Value{"model": cty.StringVal("team/model")}})
+	pkg, err := Load(source, Options{})
 	require.NoError(t, err)
 	require.Len(t, pkg.Definition.Steps, 6)
 	for _, step := range pkg.Definition.Steps {
 		if step.Agent != "" {
-			require.Equal(t, "team/model", step.Model)
+			require.Equal(t, "deepseek/deepseek-v4-flash", step.Model)
 			require.Equal(t, "OPENROUTER_API_KEY", step.SecretEnvironment["OPENROUTER_API_KEY"])
 		}
 		if step.Name == "build" {
