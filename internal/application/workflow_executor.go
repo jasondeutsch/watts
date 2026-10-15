@@ -45,13 +45,17 @@ func (runtime *activityRuntime) attemptRoot() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return store.AttemptDir(runtime.project.Root, runtime.request.Input.Task, runtime.runIdentity(), runtime.executionIdentity()), nil
+	directory := store.AttemptDir(runtime.project.Root, runtime.request.Input.Task, runtime.runIdentity(), runtime.executionIdentity())
+	if err := store.CheckDirectory(directory); err != nil {
+		return "", err
+	}
+	return directory, nil
 }
 
 func (runtime *activityRuntime) execute() (result orchestration.Result, runErr error) {
 	step := runtime.request.Step
 	secrets := runtime.secretRedaction()
-	defer func() { runErr = secrets.Error(runErr) }()
+	defer func() { runErr = secrets.Error(storage.DescribeHostError(runErr)) }()
 	if step.Container == nil {
 		return result, fmt.Errorf("stage %s requires a container", step.Name)
 	}

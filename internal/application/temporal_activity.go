@@ -151,7 +151,7 @@ func (app *Service) ExecuteWorkflowStage(ctx context.Context, request orchestrat
 	started := time.Now()
 	logger.Info("Attempt execution started", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt)
 	defer func() {
-		err = secrets.Error(err)
+		err = secrets.Error(storage.DescribeHostError(err))
 		if errors.Is(err, context.Canceled) {
 			logger.Warn("Attempt execution cancelled", "task", request.Input.Task, "stage", request.Step.Name, "attempt", request.Attempt, "elapsed", time.Since(started).Round(time.Second).String(), "next_action", "Inspect task status before retrying or creating a new task")
 		} else if err != nil {

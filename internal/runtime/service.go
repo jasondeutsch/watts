@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/jasondeutsch/watts/internal/application"
+	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workerstate"
 	"github.com/jasondeutsch/watts/web"
 )
@@ -55,7 +56,8 @@ func lock(app *application.Service) (*os.File, error) {
 }
 func release(file *os.File) { syscall.Flock(int(file.Fd()), syscall.LOCK_UN); file.Close() }
 
-func Start(ctx context.Context, app *application.Service, detached bool) error {
+func Start(ctx context.Context, app *application.Service, detached bool) (err error) {
+	defer func() { err = storage.DescribeHostError(err) }()
 	if err := app.CheckLegacySettings(); err != nil {
 		return err
 	}

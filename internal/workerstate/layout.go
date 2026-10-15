@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/jasondeutsch/watts/internal/storage"
 )
 
 type Store struct{ Root string }
@@ -24,7 +26,28 @@ type Project struct {
 func Default() (Store, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return Store{}, err
+		return Store{}, fmt.Errorf("host HOME is unavailable: %w", err)
+	}
+	home = filepath.Clean(home)
+	if !filepath.IsAbs(home) || home == string(filepath.Separator) {
+		return Store{}, fmt.Errorf("host HOME %q must be an absolute user directory, not the filesystem root", home)
+	}
+	if home == "/runtime" || strings.HasPrefix(home, "/runtime/") {
+		return Store{}, fmt.Errorf("host HOME %q uses the container-only /runtime path; start wctl with the host user's HOME (container HOME is separate)", home)
+	}
+	resolved, err := filepath.EvalSymlinks(home)
+	if err != nil {
+		return Store{}, storage.DescribeHostError(err)
+	}
+	if resolved == string(filepath.Separator) || resolved == "/runtime" || strings.HasPrefix(resolved, "/runtime/") {
+		return Store{}, fmt.Errorf("host HOME %q resolves to %q; use the host user's home directory, separate from container paths", home, resolved)
+	}
+	info, err := os.Stat(home)
+	if err != nil {
+		return Store{}, storage.DescribeHostError(err)
+	}
+	if !info.IsDir() {
+		return Store{}, fmt.Errorf("host HOME %q must be a directory", home)
 	}
 	return Store{Root: filepath.Join(home, ".watts")}, nil
 }
@@ -59,7 +82,8 @@ func (store Store) HasProject(project string) bool {
 	var record Project
 	return readJSON(filepath.Join(store.ProjectDir(project), "project.json"), &record) == nil && record.Root == projectIdentity(project)
 }
-func readJSON(path string, target any) error {
+func readJSON(path string, target any) (err error) {
+	defer func() { err = storage.DescribeHostError(err) }()
 	info, err := os.Lstat(path)
 	if err != nil {
 		return err
@@ -81,7 +105,8 @@ func readJSON(path string, target any) error {
 	}
 	return nil
 }
-func writeJSON(path string, value any) error {
+func writeJSON(path string, value any) (err error) {
+	defer func() { err = storage.DescribeHostError(err) }()
 	data, err := json.MarshalIndent(value, "", "  ")
 	if err != nil {
 		return err
@@ -126,7 +151,8 @@ func canonicalProject(project string) (string, error) {
 
 // CheckDirectory rejects redirected state directories before touching runtime
 // files. Workload mounts never include these bookkeeping parents.
-func (store Store) CheckDirectory(directory string) error {
+func (store Store) CheckDirectory(directory string) (err error) {
+	defer func() { err = storage.DescribeHostError(err) }()
 	if !filepath.IsAbs(store.Root) {
 		return fmt.Errorf("worker state root must be absolute")
 	}

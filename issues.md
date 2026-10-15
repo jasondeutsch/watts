@@ -322,40 +322,6 @@ local image dependencies with wiss-050, toolchains with wiss-029, and preflight
 with wiss-039. Keep organization-specific trust and Agent integration in images,
 not generic orchestration.
 
-### wiss-052: Keep host runtime paths under `$HOME/.watts/` and separate execution contexts
-
-The failed attempt reported a permission/read-only-filesystem error involving
-`/runtime/task`. The user subsequently clarified that the problem occurred on
-**the Mac host**, not inside the container. The exact command, failing process,
-and stack trace were not captured before the test was abandoned. Earlier
-troubleshooting incorrectly assumed a container mount/ownership problem; that
-assumption must not become the recorded diagnosis.
-
-**Agreed requirement:** Watts-managed host configuration and runtime state belong
-under the host user's `$HOME/.watts/`, not filesystem-root `/runtime` paths.
-Existing host storage already uses `~/.watts/config/` and `~/.watts/runtime/`
-following wiss-028. Determine whether a container-only path reached a host-launched
-command, an older executable/configuration used another layout, or a different
-component caused the failure. These are investigation paths, not confirmed causes.
-
-- Trace paths across host worker preparation, workload launch, and image-owned
-  tools. Resolve host paths from the configured worker home/runtime root; prevent
-  container paths from being used as host filesystem destinations.
-- Treat host and container HOME values as separate execution-context inputs.
-  Preserve per-attempt isolation, explicit input/output publication, and independent
-  application-workspace permissions. Any proposed workload HOME-based convention
-  must be reviewed separately from the host bug, rather than claimed as its fix.
-- Report the failing operation, host/container context, relevant path, and error
-  category. Distinguish read-only filesystems from ownership/access failures.
-
-Acceptance criteria: exercise host setup and task execution on a clean Mac as an
-ordinary user, including a non-default home location; verify that host preparation
-creates no runtime state under `/`; retain a regression case once the failing
-operation is identified; and verify recovery/retention under the existing home
-layout. Coordinate with wiss-024, wiss-028, wiss-037, and wiss-038. Do not require
-writable host root directories, broad permission changes, or exposing the entire
-host home to a workload.
-
 ### wiss-006: Shared logging across projects
 
 Worker service logs now live under `~/.watts/runtime/projects/<project-id>/worker/service.log`

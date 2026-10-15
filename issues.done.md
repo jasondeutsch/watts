@@ -4,6 +4,57 @@ Closed issues are recorded here when removed from [issues.md](issues.md). Preser
 
 For historical entries, the closure date is the date of the backlog-removal commit, not an inferred implementation date. Verification records describe retained evidence; tests were not rerun for this backfill. Superseded proposals are explicitly distinguished from completed work.
 
+## wiss-052: Keep host runtime paths under `$HOME/.watts/` and separate execution contexts
+
+**Status:** Completed · **Completed:** 2026-10-15
+
+### Findings and changes
+
+- Tracing the current executor found host paths derived from the host HOME and
+  container `/runtime/task` passed only to image-owned commands. No current
+  host-launch path reproducing the other-machine report was identified.
+- Validate host HOME before resolving state: require an existing absolute user
+  directory, reject filesystem-root/container-runtime values and aliases, and
+  retain support for a non-default home.
+- Validate final attempt paths against symlink redirection before preparation;
+  parent execution bookkeeping alone did not cover the final attempt path.
+- Reject relative, root, absent, non-directory, or container-only Docker bind
+  sources before daemon calls. Preserve per-attempt mounts and separate container
+  HOME/TMPDIR, without mounting the whole host home or changing image conventions.
+- Annotate host filesystem errors with operation, path, and category while
+  preserving `errors.Is/As`. Distinguish EROFS from permission denial; label Docker
+  creation/startup failures separately from workload process failures.
+- Keep retention's missing-record handling compatible with wrapped errors.
+- Document exact host/container mappings and diagnostic interpretation.
+
+### Verification
+
+- Full Go suite passed.
+- Docker Engine and application integration suites passed, including an ordinary
+  user on this Mac with an alternate HOME, private container `/runtime/task` and
+  HOME writes, unchanged host HOME, accepted-attempt reattachment, publication,
+  cancellation, and retained evidence.
+- Public CLI Docker/Temporal lifecycle passed again after these changes, covering
+  worker restart, failure/retry, approvals, completion, and cancellation.
+- Regression tests cover invalid HOME/aliases, attempt symlink redirection,
+  invalid mount sources before Docker access, actual host permission denial,
+  EROFS/access distinction, and retained wrapped error identity. Retention tests
+  passed under the existing home layout.
+
+### Limitations
+
+- The original command/process/trace from the other machine was unavailable.
+  This verifies the current path contract and hardening; it does **not** establish
+  the cause of that abandoned test or prove it fixed on that machine.
+- Validation used isolated fresh homes/projects on an existing Mac, not a newly
+  provisioned machine. Mount validation does not solve distributed filesystems or
+  remove every possible concurrent filesystem race.
+
+### Documentation
+
+- [Host/container paths](docs/package-runtime-layout.md#host-and-container-paths)
+- [Container interface](docs/container-workloads.md)
+
 ## wiss-051: Reduce task setup and execution mental overhead
 
 **Status:** Completed · **Completed:** 2026-10-15

@@ -109,6 +109,44 @@ find the nearest registered project. `watts/watts.acl` and durable tasks provide
 additional discovery boundaries. Project `.watts/` is no longer created or used
 for discovery, settings, service records, locks, or package assets.
 
+## Host and container paths
+
+Host state is rooted at the host user's `$HOME/.watts/`. HOME must be an existing,
+absolute user directory. Filesystem-root HOME and container-only `/runtime/...`
+values (including symlink aliases) are rejected before host state is created.
+A non-default home is supported; no fallback writes to `/runtime` or `/` occur.
+
+| Purpose | Worker host | Inside a workload container |
+| --- | --- | --- |
+| Preferences | `$HOME/.watts/config/settings.json` | Not mounted |
+| Private attempt state | `.../attempts/<id>/private/` | `/runtime/` |
+| Workload HOME | Private attempt's `private/home/` | `/runtime/home` |
+| Temporary executables | Private attempt's `private/tmp/` | `/runtime/tmp` |
+| Pi example's task copy | Private attempt's `private/task/` | `/runtime/task` |
+| Captured inputs | Private attempt's `inputs/` | `/inputs/` (read-only) |
+| Declared output staging | Private attempt's `outputs/` | `/outputs/` |
+| Application candidate | Private attempt's `workspace/` | `/workspace/` |
+
+`...` above is under `$HOME/.watts/runtime/projects/<project-id>/tasks/<task-id>/executions/<execution-id>/`.
+The worker never mounts the whole host home into a workload. Container HOME/TMPDIR
+are explicit launch inputs, separate from the worker's environment. The workload
+root filesystem remains read-only; private runtime/output mounts are writable.
+Host mount sources must already exist, be absolute directories, and must not be
+container-only paths. Attempt paths reject symlink redirection before preparation.
+
+Diagnostics distinguish the process that observed an error:
+
+- `host filesystem: <operation> "<path>" (<category>)`: a local Watts OS operation.
+  Read-only filesystem and permission-denied errors are separate categories.
+- `Docker runtime: create/start container`: Docker daemon/OCI startup diagnostics.
+- `container <phase> exited ...`: output from the workload process.
+
+Use the reported operation/path and execution context to investigate. For host
+errors, check the worker's HOME and access to that specific filesystem. A
+read-only filesystem is not an ownership problem. Changing container paths or
+permissions does not repair a host filesystem error. Workload paths do not need
+to exist at filesystem root on the Mac host.
+
 ## Retention and recovery
 
 `last-run` retains **every attempt of the latest execution per task**, plus older

@@ -40,7 +40,7 @@ func (app *Service) LoadServiceConfig() (projectconfig.Config, error) {
 		return cfg, nil
 	}
 	if err != nil {
-		return cfg, err
+		return cfg, storage.DescribeHostError(err)
 	}
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
@@ -66,7 +66,7 @@ func (app *Service) SaveConfig(cfg projectconfig.Config) error {
 	if err != nil {
 		return err
 	}
-	return storage.WriteJSONAtomically(path, cfg)
+	return storage.DescribeHostError(storage.WriteJSONAtomically(path, cfg))
 }
 
 func validateGlobalSettings(cfg projectconfig.Config) error {

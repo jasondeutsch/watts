@@ -31,7 +31,10 @@ No live project mount, Docker socket, or worker home directory is exposed.
 
 The environment names the interface with `WATTS_INPUT`, `WATTS_OUTPUTS`,
 `WATTS_RESULT`, `WATTS_EVENTS`, and `WATTS_WORKSPACE`. `HOME=/runtime/home` and
-`TMPDIR=/runtime/tmp`. Only explicitly declared environment and secret bindings
+`TMPDIR=/runtime/tmp`. These are **container paths**: the worker mounts only a
+private attempt directory from `$HOME/.watts/runtime/` at `/runtime`. It does not
+create host `/runtime/task` or change the host's HOME. See the
+[host/container mapping](package-runtime-layout.md#host-and-container-paths). Only explicitly declared environment and secret bindings
 are added to the image environment. `WATTS_SECRET_ENV_NAMES` contains their secret
 environment names as a JSON array, never credential values. Adapters use these
 bindings to sanitize tool results before model ingestion and evidence writes.

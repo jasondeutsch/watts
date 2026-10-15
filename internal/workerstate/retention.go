@@ -73,7 +73,7 @@ func (store Store) Begin(project, task, execution, attempt string) (*Lease, erro
 	lease := &Lease{file: file, capture: filepath.Join(directory, "captures", key(attempt)+".json")}
 	var record executionRecord
 	err = readJSON(filepath.Join(directory, "execution.json"), &record)
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		var ordinal uint64
 		ordinal, err = store.nextOrdinal(project, task, execution)
 		if err == nil {
@@ -110,7 +110,7 @@ func (store Store) Complete(project, task, execution string) error {
 	}
 	name := filepath.Join(directory, "execution.json")
 	var record executionRecord
-	if err = readJSON(name, &record); os.IsNotExist(err) {
+	if err = readJSON(name, &record); errors.Is(err, os.ErrNotExist) {
 		return nil
 	} else if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (store Store) Prune(project, task, policy string) error {
 		return err
 	}
 	entries, err := os.ReadDir(directory)
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
 	if err != nil {
@@ -224,7 +224,7 @@ func (store Store) RecordEvidence(project, task, execution, attempt string) erro
 	if err = store.CheckDirectory(directory); err != nil {
 		return err
 	}
-	if _, err = os.Stat(filepath.Join(directory, "execution.json")); os.IsNotExist(err) {
+	if _, err = os.Stat(filepath.Join(directory, "execution.json")); errors.Is(err, os.ErrNotExist) {
 		return nil
 	} else if err != nil {
 		return err
@@ -237,7 +237,7 @@ func (store Store) PruneProject(project, policy string) error {
 		return err
 	}
 	tasks, err := os.ReadDir(directory)
-	if os.IsNotExist(err) {
+	if errors.Is(err, os.ErrNotExist) {
 		return nil
 	}
 	if err != nil {
@@ -266,7 +266,7 @@ func (store Store) nextOrdinal(project, task, current string) (uint64, error) {
 	var ordinal uint64
 	counter := filepath.Join(store.TaskDir(project, task), "ordinal.json")
 	err := readJSON(counter, &ordinal)
-	missing := os.IsNotExist(err)
+	missing := errors.Is(err, os.ErrNotExist)
 	if err != nil && !missing {
 		return 0, err
 	}

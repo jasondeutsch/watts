@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/jasondeutsch/watts/internal/storage"
 	"github.com/jasondeutsch/watts/internal/workload"
 )
 
@@ -74,11 +75,15 @@ func Name(identity string) string {
 func (engine *Engine) Run(ctx context.Context, request Request) (result Exit, runErr error) {
 	defer func() {
 		if runErr != nil {
+			runErr = storage.DescribeHostError(runErr)
 			result.Error = runErr.Error()
 		}
 	}()
 	if request.Identity == "" {
 		return result, fmt.Errorf("container needs an execution identity")
+	}
+	if err := request.validateHostMounts(); err != nil {
+		return result, err
 	}
 	if request.Stdout == nil {
 		request.Stdout = io.Discard
@@ -146,11 +151,11 @@ func (engine *Engine) Run(ctx context.Context, request Request) (result Exit, ru
 		}}
 		created, createErr := engine.client.ContainerCreate(ctx, configuration, host, nil, nil, identity)
 		if createErr != nil {
-			return result, createErr
+			return result, fmt.Errorf("Docker runtime: create container: %w", createErr)
 		}
 		result.ContainerID = created.ID
 		if err = engine.client.ContainerStart(ctx, created.ID, container.StartOptions{}); err != nil {
-			return result, err
+			return result, fmt.Errorf("Docker runtime: start container: %w", err)
 		}
 		existing, err = engine.client.ContainerInspect(ctx, created.ID)
 		if err != nil {

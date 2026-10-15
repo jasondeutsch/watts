@@ -146,7 +146,10 @@ wctl config set runtime_retention all      # preserve every run's working files
 
 Task-owned package assets and evidence live under `<task>/.watts-state/`.
 Worker records, logs, locks, private candidates, and tool state live under
-`~/.watts/runtime/`. No project `.watts/` is created. Retention preserves active
+`~/.watts/runtime/`. Host filesystem diagnostics identify the operation, path,
+and error category. Container `/runtime/task` is a path inside a private mount,
+not a directory to create at the Mac filesystem root. See the
+[host/container path mapping](package-runtime-layout.md#host-and-container-paths). No project `.watts/` is created. Retention preserves active
 and recovery-required state and never deletes task records. See
 [storage layout](package-runtime-layout.md).
 
