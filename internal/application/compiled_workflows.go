@@ -47,6 +47,29 @@ func (app *Service) ExecuteCompiled(ctx context.Context, source, slug, request s
 	if err != nil {
 		return "", err
 	}
+	return app.executePackage(ctx, pkg, slug, request, options)
+}
+
+// ExecutePackage compiles authored ACL once for a new task. Existing task retries
+// call RunTask and never return through this source-loading path.
+func (app *Service) ExecutePackage(ctx context.Context, source, name, request string, compilation workflowlang.Options, options *RunOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	pkg, err := app.CompileWorkflow(source, compilation)
+	if err != nil {
+		return "", err
+	}
+	return app.executePackage(ctx, pkg, name, request, options)
+}
+
+func (app *Service) executePackage(ctx context.Context, pkg workflowlang.Package, name, request string, options *RunOptions) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+	if !options.DryRun {
+		app.say("Selected %s@%s · workflow %s · %d stages", pkg.Name, pkg.Version, pkg.Workflow, len(pkg.Definition.Steps))
+	}
 	if options.DryRun {
 		encoder := json.NewEncoder(app.Output)
 		encoder.SetIndent("", "  ")
@@ -56,7 +79,7 @@ func (app *Service) ExecuteCompiled(ctx context.Context, source, slug, request s
 	if err != nil {
 		return "", err
 	}
-	task, err := app.CreateCompiledTask(cfg, slug, pkg)
+	task, err := app.CreateCompiledTask(cfg, name, pkg)
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +88,7 @@ func (app *Service) ExecuteCompiled(ctx context.Context, source, slug, request s
 		if err != nil {
 			return task, err
 		}
-		if err := storage.WriteFileAtomically(target, []byte(request+"\n")); err != nil {
+		if err := storage.WriteFileAtomically(target, []byte(request)); err != nil {
 			return task, err
 		}
 	}

@@ -13,7 +13,6 @@ make build
 make install # or: make install INSTALL_DIR="$HOME/.local/bin" SUDO=
 docker compose up -d --wait
 make images
-wctl compile resources/examples/coder_golang -o /tmp/coding.json
 ```
 
 `make images` builds and loads both local workload images through a dependency
@@ -28,12 +27,20 @@ See [ACL language specification](language-spec.md) and [the coder example](../re
 From the application project:
 
 ```sh
+wctl new ./watts --from /path/to/watts/resources/examples/coder_golang
+# Edit watts/values.wvars for the team and each Agent.
 export OPENROUTER_API_KEY='your-key'
-wctl doctor --compiled /tmp/coding.json
 wctl start -d
 ```
 
-Doctor checks the compiled contract's images and required environment sources;
+`wctl new` creates watts.acl, typed variables.acl, editable values.wvars, and a
+README, importing the source through an explicit relative module path. The parent
+must exist and the destination must not exist. It does not copy the dependency,
+install images, or start services. Keep the module available for compilation or
+copy it into the repo and update its source path deliberately.
+
+For separate preflight, `wctl compile ./watts -o /tmp/coding.json` followed by
+`wctl doctor --compiled /tmp/coding.json` checks images and required environment sources;
 it does not prove Temporal/worker health. `start` runs the project's worker and
 web monitor and opens the default browser. Without `-d`, it stays in foreground.
 `wctl stop` stops both. Detached logs live under `~/.watts/runtime/projects/<project-id>/worker/service.log`;
@@ -46,25 +53,45 @@ Watts never installs Pi/Ralph or toolchains on the host.
 
 ## Create and execute
 
+With the project's worker running:
+
 ```sh
-wctl task new hello-server --compiled /tmp/coding.json
-# Edit SPEC.md in the exact task path printed above.
-wctl exec tasks/<printed-task-name> --dry-run
-wctl exec tasks/<printed-task-name>
+wctl exec ./watts --name 'Hello server' --request-file request.md
+# Or provide text directly:
+wctl exec ./watts --name 'Hello server' --request 'Create a minimal Go HTTP server.'
+# Or use stdin explicitly:
+cat request.md | wctl exec ./watts --name 'Hello server' --request-file -
 ```
 
-Or submit immediately with `wctl exec /tmp/coding.json --name hello-server
---request 'Create a minimal Go HTTP server.'`. New execution uses the invocation
-directory as the application root, independent of package/artifact location.
-Application files belong in that root and normal source directories. Task files
-hold workflow documents, evidence, and reports.
+Choose one request source; `--request` and `--request-file` are mutually exclusive.
+File/stdin contents are preserved exactly, including newlines, without shell
+argument-size limits. A missing, unreadable, or empty request file is an error.
+Watts reads stdin only when explicitly selected with `--request-file -`.
 
-Task names use sortable UTC millisecond timestamps, such as
-`tasks/2026-10-12t153042-127z-hello-server`; same-name collisions reserve distinct
-directories. Each task stores `workflow.json` and package provenance. The artifact
-captures all declared assets; execution never rereads the ACL source or modules.
-Do not hand-edit compiled artifacts, task definitions, or pinned state. Recompile
-source changes and create a new task.
+`exec <package>` compiles and validates ACL before creating/submitting a new task.
+It accepts the same `--workflow`, `--var-file`, and `--var` flags as compile.
+`--dry-run` prints the resolved graph without creating a task. Explicit
+`wctl compile ... -o /tmp/coding.json` and `wctl exec /tmp/coding.json --name ...`
+remain useful for inspecting/distributing a frozen contract. For draft-only work,
+use `wctl task new <name> --compiled /tmp/coding.json`, then edit SPEC.md and
+`wctl exec <printed-task-path>`.
+
+New tasks use the invocation directory as the application root, independent of
+package/artifact location. The selected package/workflow and created task path
+are printed at submission. Application code belongs in the project root; tasks
+hold documents, evidence, and reports.
+
+Task names accept ASCII letters (including uppercase), digits, spaces,
+underscores, and dashes. New names normalize to lowercase with single dashes;
+`Improve CSS` becomes `improve-css`. Punctuation/path separators are rejected.
+The resulting slug must have 1–100 characters. UTC millisecond prefixes order
+tasks; collisions reserve distinct directories. Existing task paths keep their
+original spelling and are never normalized during lookup or retry.
+
+Every task captures its resolved workflow, assets, and provenance. To retry,
+`wctl exec <task-folder>` uses those captured inputs; source-selection/request
+flags are rejected for existing tasks. Source edits require a new task and are
+never silently compiled into a retry. Do not edit captured definitions or state.
 
 Submission returns before completion. Follow the web monitor or:
 

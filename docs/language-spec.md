@@ -615,7 +615,7 @@ compilation does not change the application root or start runtime services.
 Without `-o`, compile prints JSON. With `-o`, it atomically replaces that artifact
 and prints its package identity, digest, stage count, and dependency count. Source
 and asset files cannot be output targets. The artifact contains schema version,
-resolved definition, captured assets, package/module provenance, and declared
+selected workflow name, resolved definition, captured assets, package/module provenance, and declared
 image/MCP dependencies. A SHA256 fingerprint detects accidental changes; it is
 not a signature or trust assessment. Inspect execution without side effects:
 
@@ -631,19 +631,37 @@ wctl task new hello-server --compiled coding.json
 wctl exec tasks/<printed-task-name>
 ```
 
-For immediate execution, use `wctl exec coding.json --name hello-server
---request "..."`. Execution of a compiled artifact creates a distinct task. Existing-task exec
-continues the same execution or retries its failed stage; it does not reload
-source configuration. Tasks store a resolved `workflow.json` with a private definition fingerprint.
-Execution rejects a task definition that has been edited since scaffolding. Do not hand-edit
-compiled artifacts, task definitions, or `.watts-state` to change policy.
+For immediate execution, use `wctl exec <package> --name 'Hello server'
+--request-file request.md`. This compiles and validates ACL, captures it in a new
+task, and submits execution without requiring a user-managed intermediate file.
+The same workflow/variable flags as compile apply. `--request-file -` reads stdin;
+`--request text` is an alternative. These request options cannot be combined.
+File/stdin contents are preserved exactly; empty or unreadable files fail.
 
-The application root is the invocation directory for new compiled executions,
-independent of the package/artifact location. Source edits require recompilation
-and a new task. Monitor, approvals, conflict-aware publication, and `report.html`
-use recorded execution evidence. Package captures are task-owned; worker
-settings, logs, and locks live under the home directory. See
-[storage layout](package-runtime-layout.md) and [the runbook](runbook.md).
+`wctl exec coding.json --name 'Hello server' --request "..."` creates a new task
+from a frozen artifact without loading source. Compilation options are rejected
+for artifacts. `wctl exec <task-folder>` continues or retries a captured task;
+new-task/request/compilation flags are rejected. It never reloads ACL. Tasks store
+a private definition fingerprint and reject altered captured definitions.
+
+`wctl new <directory> --from <package>` scaffolds an importing package with typed
+variable declarations, resolved editable values, a selected entrypoint, and a
+README. It accepts compile's workflow/variable flags. The destination must not
+exist, its parent must exist, and it must be outside the source package. This
+writes files only; the source remains an explicit local module dependency. A
+composed source must export its selected workflow if it is not declared locally.
+Generated packages export their own entrypoint for further composition.
+
+The application root for new execution is the invocation directory, independent
+of package/artifact location. New task names accept ASCII letters (including
+uppercase), digits, spaces, underscores, and dashes; they normalize to a 1–100
+character lowercase slug. Timestamps and collision handling reserve distinct
+directories. Existing paths are never lowercased during lookup.
+
+Source edits require a new task. Approvals, publication, and report.html use
+recorded execution evidence. Captures are task-owned; worker settings, logs, and
+locks live under the home directory. See [storage layout](package-runtime-layout.md)
+and [the runbook](runbook.md).
 
 ## Complete example
 

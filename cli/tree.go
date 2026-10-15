@@ -35,9 +35,10 @@ func (n *node) child(name string) *node {
 
 // tree is the command structure shown by `wctl help`.
 var tree = []*node{
+	{name: "new", summary: "Create an ACL package importing a local package", run: language.New},
 	{name: "compile", summary: "Compile ACL packages and modules into a frozen JSON artifact", run: language.Compile},
 	{name: "c", summary: "Alias for compile", run: language.Compile},
-	{name: "exec", summary: "Execute a compiled artifact or continue an existing task", needsRepo: true, run: language.Exec},
+	{name: "exec", summary: "Run an ACL package or compiled artifact, or continue an existing task", needsRepo: true, run: language.Exec},
 	{name: "doctor", summary: "Validate selected manifests, Docker images, and required secret sources", needsRepo: true, run: setup.Doctor},
 	{name: "config", summary: "Manage shared home-directory worker preferences", children: []*node{
 		{name: "show", summary: "Print shared worker preferences", run: settings.Show},
@@ -129,12 +130,12 @@ func usage() string {
 	var b strings.Builder
 	b.WriteString("wctl " + version + ": declarative agent workflows\n\n")
 	b.WriteString("Usage: wctl <command> [subcommand] [flags] [arguments]\n\n")
-	b.WriteString("Compile a watts.acl package with `wctl compile` (or `wctl c`), then execute its JSON artifact with `wctl exec`.\nTask arguments are folders under tasks/, or just the folder name.\n")
+	b.WriteString("Run a package with `wctl exec`; use `wctl compile` (or `wctl c`) to inspect or distribute a frozen artifact.\nTask arguments are folders under tasks/, or just the folder name.\n")
 	sections := []struct {
 		title string
 		names []string
 	}{
-		{"Authoring", []string{"compile", "exec"}},
+		{"Authoring", []string{"new", "compile", "exec"}},
 		{"Setup", []string{"doctor", "config"}},
 		{"Tasks", []string{"task", "start", "stop"}},
 		{"Other", []string{"dev", "version"}},

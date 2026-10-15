@@ -41,6 +41,7 @@ type Asset struct {
 	Root string      `json:"root"`
 }
 type Package struct {
+	Workflow      string                   `json:"workflow,omitempty"`
 	SchemaVersion int                      `json:"schema_version"`
 	Name          string                   `json:"name"`
 	Version       string                   `json:"version"`
@@ -63,7 +64,7 @@ func Load(source string, options Options) (Package, error) {
 	if err != nil {
 		return Package{}, err
 	}
-	pkg := Package{SchemaVersion: 1, Name: module.name, Version: module.version, Source: module.source, SourcePaths: module.paths, Dependencies: module.dependencies, Assets: module.assets, Definition: definition}
+	pkg := Package{Workflow: module.selected, SchemaVersion: 1, Name: module.name, Version: module.version, Source: module.source, SourcePaths: module.paths, Dependencies: module.dependencies, Assets: module.assets, Definition: definition}
 	for _, step := range definition.Steps {
 		if step.Container != nil {
 			pkg.Dependencies = append(pkg.Dependencies, Dependency{Kind: "image", Name: step.Name, Source: step.Container.Image})

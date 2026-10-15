@@ -39,18 +39,18 @@ wctl c ./resources/examples/coder_golang \
 From an application project such as `../test`:
 
 ```sh
+wctl new ./watts --from /path/to/watts/resources/examples/coder_golang
+# Edit watts/values.wvars for each Agent and named provider profile.
 export OPENROUTER_API_KEY='your-key'
-wctl doctor --compiled /tmp/coding.json
 wctl start -d
-wctl task new hello-server --compiled /tmp/coding.json
-# Draft the printed task's SPEC.md, then:
-wctl exec tasks/<printed-task-name>
+wctl exec ./watts --name 'Hello server' --request-file request.md
 ```
 
-Or start immediately with `wctl exec /tmp/coding.json --name hello-server
---request 'Create a minimal Go HTTP server.'`. The artifact includes scripts and
-skills, so execution does not depend on the source checkout remaining available.
-Source edits require recompilation and a new task.
+Use `--request 'Create a minimal Go HTTP server.'` for a short request, or
+`--request-file -` for stdin. `exec` compiles and captures a new task directly.
+Explicit compiled-artifact execution remains supported. The capture includes
+scripts and skills, so retries do not depend on the source checkout remaining
+available and do not reload changed ACL.
 
 ## Workflow
 
@@ -79,7 +79,10 @@ lint, Pi/Ralph, and gopls; Watts does not install host software.
 
 ## Reuse and customization
 
-Use the whole package as a local module with an explicit entrypoint:
+`wctl new ./watts --from <this-package>` generates the importing package and its
+editable typed inputs. It creates files only and keeps an explicit local module
+reference; it does not copy the dependency. For manual composition, use the whole
+package as a local module with an explicit entrypoint:
 
 ```hcl
 package "team" {

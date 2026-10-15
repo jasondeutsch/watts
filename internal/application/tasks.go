@@ -18,12 +18,23 @@ type RunOptions struct {
 }
 
 func (a *Service) TaskArg(cfg projectconfig.Config, arg string) (string, error) {
-	taskPath, err := a.ResolveTask(arg)
+	resolve := func(argument string) (string, error) {
+		path, err := a.ResolveTask(argument)
+		if err != nil {
+			return "", err
+		}
+		info, err := os.Stat(a.TaskWorkflowPath(path))
+		if err != nil || !info.Mode().IsRegular() {
+			return "", fmt.Errorf("%s is not a task folder (missing workflow definition)", argument)
+		}
+		return path, nil
+	}
+	taskPath, err := resolve(arg)
 	if err == nil {
 		return taskPath, nil
 	}
 	if arg != "" && !strings.Contains(arg, "/") {
-		if r2, err2 := a.ResolveTask(cfg.TasksDir + "/" + arg); err2 == nil {
+		if r2, err2 := resolve(cfg.TasksDir + "/" + arg); err2 == nil {
 			return r2, nil
 		}
 	}

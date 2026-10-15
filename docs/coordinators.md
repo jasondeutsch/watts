@@ -11,15 +11,16 @@ The CLI is available today; MCP and bounded wait-for-change remain proposed. No 
 From the verified application directory:
 
 ```sh
-wctl compile /path/to/package -o /private/path/coding.json
-wctl task new cancellation-fix --compiled /private/path/coding.json
-# Use the returned task path; draft its SPEC.md from the user's request.
-wctl exec <task> --dry-run
-wctl exec <task>
+# Review the package policy; draft the request outside task-private state.
+wctl exec /path/to/package --name 'Cancellation fix' --request-file request.md
+# Or read a large request from stdin with --request-file -.
 wctl task status <task> --json
 ```
 
-Customize ACL/modules and variable files, then compile before task creation. The task's `workflow.json` is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according to the selected workflow; the coordinator does not implement the application inside the task directory.
+Use `wctl new ./watts --from /path/to/package` to create a team-owned importing
+package when needed; edit its typed inputs in values.wvars. Customize ACL/modules
+before new execution. Direct package exec compiles before creating/submitting;
+explicit compiled artifacts and draft-only `task new --compiled` remain available. The task's `workflow.json` is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according to the selected workflow; the coordinator does not implement the application inside the task directory.
 
 A successful submission returns before completion. Each JSON status includes `task`, `workflow_id`, `run_id`, and `state`, with current stage, attempts, errors, artifact hashes, and history. Read feedback from `state.history`. Failure states such as `waiting_retry` also print valid JSON and return nonzero; connectivity/query errors may provide no JSON. Do not confuse those cases.
 

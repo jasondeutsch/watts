@@ -4,6 +4,48 @@ Closed issues are recorded here when removed from [issues.md](issues.md). Preser
 
 For historical entries, the closure date is the date of the backlog-removal commit, not an inferred implementation date. Verification records describe retained evidence; tests were not rerun for this backfill. Superseded proposals are explicitly distinguished from completed work.
 
+## wiss-051: Reduce task setup and execution mental overhead
+
+**Status:** Completed · **Completed:** 2026-10-15
+
+### Changes
+
+- Add `wctl new <directory> --from <package>` to scaffold a team-owned importing
+  package with typed inputs, resolved editable values, an entrypoint export, and
+  usage guidance. It creates files only and never overwrites an existing directory.
+- Let `wctl exec <package>` compile, capture, and submit directly. Explicit compile
+  and frozen-artifact execution remain available; selected workflow identity is
+  recorded in artifacts and printed with the package/task at submission.
+- Add mutually exclusive request-text/file/stdin inputs, preserving file bytes
+  without shell argument-size dependence and reporting read errors explicitly.
+- Normalize new mixed-case/spaced task names into safe slugs; retain millisecond
+  ordering and collision arbitration. Existing paths are never normalized.
+- Distinguish package directories from tasks and reject source/request options on
+  retries, which retain captured policy and assets.
+- Update the runbook, language spec, example, coordinator skill, and setup guidance.
+
+### Verification
+
+- Full Go suite passed, including package scaffolding, namespaced example reuse,
+  missing inputs, request-file errors, multiline input, and pinned task behavior.
+- Isolated public CLI Docker/Temporal lifecycle passed with a large request and
+  mixed-case task name, direct package execution, source edits after submission,
+  rejection/rework, stale decisions, worker restart, failure/retry, completion,
+  inspection, and cancellation. No hosted inference or eval product was tested.
+- Coordinator frontmatter and diff checks passed. The Python skill validator
+  could not run because PyYAML was unavailable; YAML was checked using Ruby.
+
+### Limitations
+
+- Scaffolding references a local dependency; it does not vendor/update modules.
+- Worker/Temporal and images remain explicit operational prerequisites (wiss-014).
+- Non-ASCII/punctuated task names are not supported; empty request files fail.
+
+### Documentation
+
+- [Runbook](docs/runbook.md)
+- [Coordinator](resources/skills/watts-coordinator/SKILL.md)
+
 ## wiss-050: Make local workload image builds reliable on a fresh machine
 
 **Status:** Completed · **Completed:** 2026-10-15

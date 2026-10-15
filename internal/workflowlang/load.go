@@ -26,6 +26,8 @@ type resolvedModule struct {
 	resources                               []manifest.Resource
 	workflows                               map[string]workflowBindings
 	exports                                 cty.Value
+	inputs                                  map[string]cty.Value
+	inputDeclarations                       []byte
 }
 
 var resourceKinds = map[string]string{"agent": manifest.Agent, "procedure": manifest.Procedure, "mcp": manifest.MCP, "configmap": manifest.ConfigMap, "secret": manifest.Secret, "workflow": manifest.Workflow}
@@ -194,6 +196,12 @@ func (resolver *moduleResolver) resolveModule(source, prefix string, options Opt
 	variables, err := resolveVariables(groups["variable"], overrides)
 	if err != nil {
 		return result, err
+	}
+	result.inputs = variables
+	for _, block := range groups["variable"] {
+		data := captured[filepath.Base(block.TypeRange.Filename)]
+		result.inputDeclarations = append(result.inputDeclarations, block.Range().SliceBytes(data)...)
+		result.inputDeclarations = append(result.inputDeclarations, '\n', '\n')
 	}
 	ctx.Variables["var"] = object(variables)
 	locals, err := resolveLocals(groups["locals"], ctx)

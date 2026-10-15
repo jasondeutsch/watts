@@ -89,3 +89,53 @@ workflow "checks" {
 	require.Contains(t, errOut, "definition was modified")
 
 }
+
+func TestPackageScaffoldingAndPinnedTaskRetry(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	project := t.TempDir()
+	source := t.TempDir()
+	t.Chdir(project)
+	require.NoError(t, os.WriteFile(filepath.Join(source, "watts.acl"), []byte(`package "example" { version="0.1.0" }
+procedure "approval" {
+ inputs=["SPEC.md"]
+ execution { type="approval" }
+}
+workflow "example" {
+ templates={"SPEC.md"="Draft"}
+ stage "approval" { executor=procedure.approval }
+}
+`), 0600))
+	code, _, errOut := command(t, "new", "watts", "--from", source)
+	require.Zero(t, code, errOut)
+	require.FileExists(t, filepath.Join(project, "watts", "values.wvars"))
+	code, _, errOut = command(t, "exec", "./watts", "--name", "Improve CSS", "--dry-run")
+	require.Zero(t, code, errOut)
+	require.NoDirExists(t, filepath.Join(project, "tasks"))
+	code, _, errOut = command(t, "exec", "./watts", "--name", "Improve CSS", "--request-file", "missing.md")
+	require.NotZero(t, code)
+	require.Contains(t, errOut, "read request from")
+	require.NoDirExists(t, filepath.Join(project, "tasks"))
+	code, _, errOut = command(t, "c", "./watts", "-o", "workflow.json")
+	require.Zero(t, code, errOut)
+	code, out, errOut := command(t, "task", "new", "Improve CSS", "--compiled", "workflow.json")
+	require.Zero(t, code, errOut)
+	entries, err := os.ReadDir(filepath.Join(project, "tasks"))
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	require.Contains(t, entries[0].Name(), "-improve-css")
+	task := filepath.Join("tasks", entries[0].Name())
+	require.Contains(t, out, task)
+	require.NoError(t, os.WriteFile(filepath.Join(source, "watts.acl"), []byte("invalid source"), 0600))
+	code, _, errOut = command(t, "exec", task, "--dry-run")
+	require.Zero(t, code, errOut)
+	for _, flags := range [][]string{{"--workflow", "changed"}, {"--request-file", "-"}, {"--name", "Other"}} {
+		code, _, errOut = command(t, append([]string{"exec", task}, flags...)...)
+		require.NotZero(t, code)
+		require.Contains(t, errOut, "pinned configuration")
+	}
+	code, _, errOut = command(t, "exec", "./watts", "--name", "Another", "--dry-run")
+	require.NotZero(t, code)
+	entries, err = os.ReadDir(filepath.Join(project, "tasks"))
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+}

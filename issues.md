@@ -356,56 +356,6 @@ layout. Coordinate with wiss-024, wiss-028, wiss-037, and wiss-038. Do not requi
 writable host root directories, broad permission changes, or exposing the entire
 host home to a workload.
 
-### wiss-051: Reduce task setup and execution mental overhead
-
-New-repository use exposed a confusing path from package configuration to an
-executing task: manual package scaffolding, explicit compilation to a user-managed
-JSON file, worker startup, and commands that accept different object types.
-The user described the execution step as having excessive mental overhead.
-`wctl new` was discussed but is not implemented; the former template scaffolder
-and `init` are no longer available. The current `exec` accepts a compiled artifact
-for a new task or a task directory for continuation.
-
-Additional observed friction:
-
-- Large requests have no request-file or stdin interface; users must expand a
-  file into a shell argument or scaffold a task and populate `SPEC.md` separately.
-- Uppercase task names fail the hard-coded slug validator in
-  `internal/application/task_scaffold.go`, which accepts only lowercase letters,
-  digits, and dashes. This is a local naming policy. It should not be described as
-  an architecture, container, or orchestration requirement.
-
-Design direction, with the exact command contract still open:
-
-- Make the normal path choose a workflow/package, accept the request, and start
-  observable work. Keep resolved definitions and provenance without requiring
-  users to carry an intermediate JSON file between commands.
-- Retain explicit compilation for inspection/distribution. Evaluate task creation
-  from a package versus a direct execution convenience; do not lock in a new
-  lifecycle or multiply commands before reviewing the complete user journey.
-- Provide package scaffolding that creates files only and makes module reuse
-  practical. Distinguish creating a package from creating a task; coordinate
-  operational setup with wiss-014, wiss-039, and wiss-050.
-- Support request files and stdin, with explicit input precedence and actionable
-  read errors. Preserve multiline input without shell argument-size dependence.
-- Accept ordinary human-entered task names, including uppercase. Consider a
-  separate display name and generated filesystem-safe identifier, or permit safe
-  case-preserving identifiers. Define normalization/collision handling explicitly;
-  never lowercase an existing task path implicitly during lookup or retry.
-
-Acceptance criteria:
-
-- Document and exercise a short first-task path from an existing configured repo,
-  including a large request and a mixed-case task name, through public commands.
-- Show the selected package/workflow and resulting task path before or at
-  submission. Preserve explicit project scope and avoid hidden current-task state.
-- Package compilation/validation failures must not submit work. Successful tasks
-  retain captured definitions, assets, and execution provenance; retries must not
-  silently recompile changed package sources.
-- Keep task documents, approvals, progress, failures, and recovery understandable
-  through the same public interface. Update coordinator guidance and setup docs
-  with implemented commands only, clearly separating proposals.
-
 ### wiss-006: Shared logging across projects
 
 Worker service logs now live under `~/.watts/runtime/projects/<project-id>/worker/service.log`

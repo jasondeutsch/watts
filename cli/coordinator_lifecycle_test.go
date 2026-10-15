@@ -69,7 +69,7 @@ func TestCoordinatorCLILifecycle(t *testing.T) {
 	procedure := func(name, script string) orchestration.Step {
 		return orchestration.Step{Name: name, Container: &workload.Spec{Image: "ubuntu:latest", Command: []string{"sh", "-c", script}, Workspace: "write", Result: "exit-code"}}
 	}
-	draft := procedure("specification", `printf '# Refined specification\n\nWrite a project-root greeting.\n' > /outputs/task/SPEC.md`)
+	draft := procedure("specification", `if grep -q lifecycle-eval /inputs/input.json && grep -m 1 '"attempt":' /inputs/input.json | grep -Eq '"attempt":[[:space:]]*1[,}]'; then test "$(wc -c < /inputs/task/SPEC.md)" -gt 300000 || exit 9; fi; printf '# Refined specification\n\nWrite a project-root greeting.\n' > /outputs/task/SPEC.md`)
 	draft.Inputs, draft.Outputs = []string{"SPEC.md"}, []string{"SPEC.md"}
 	build := procedure("build", `if grep -m 1 '"attempt":' /inputs/input.json | grep -Eq '"attempt":[[:space:]]*1[,}]'; then echo deliberate-build-failure >&2; exit 7; fi; printf 'hello\n' > /workspace/greeting.txt`)
 	review := procedure("review", `test "$(cat /workspace/greeting.txt)" = hello; printf '# Review\n\nGreeting verified.\n' > /outputs/task/REVIEW.md`)
@@ -165,14 +165,27 @@ workflow "coordinator" {
 		}
 		return command(t, args...)
 	}
-	task := create("lifecycle")
-	initial, code, _ := status(task)
-	require.Zero(t, code)
-	require.Equal(t, "not_started", initial.State.Status)
-	require.NoError(t, os.WriteFile(filepath.Join(project, task, "SPEC.md"), []byte("# Request\nWrite a greeting at the project root.\n"), 0600))
-	code, _, errOut := command(t, "task", "run", task, "--dry-run")
+
+	// Exercise the short first-task path through public commands with a large
+	// request, mixed-case name, and a team package outside the application root.
+	code, _, errOut := command(t, "new", "watts", "--from", pkg)
 	require.Zero(t, code, errOut)
-	code, _, errOut = command(t, "task", "run", task)
+	request := "# Request\n" + strings.Repeat("Write a greeting at the project root.\n", 10000)
+	requestFile := filepath.Join(t.TempDir(), "request.md")
+	require.NoError(t, os.WriteFile(requestFile, []byte(request), 0600))
+	code, output, errOut := command(t, "exec", "./watts", "--name", "Lifecycle Eval", "--request-file", requestFile)
+	require.Zero(t, code, errOut)
+	entries, err := os.ReadDir(filepath.Join(project, "tasks"))
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	task := filepath.Join("tasks", entries[0].Name())
+	require.Contains(t, task, "-lifecycle-eval")
+	require.Contains(t, output, "Selected watts@0.1.0")
+	require.Contains(t, output, task)
+	require.NoDirExists(t, filepath.Join(pkg, "tasks"))
+	// Future source edits cannot change this task or make retry compile again.
+	require.NoError(t, os.WriteFile(filepath.Join(pkg, "watts.acl"), []byte("broken source after submission"), 0600))
+	code, _, errOut = command(t, "exec", task, "--dry-run")
 	require.Zero(t, code, errOut)
 	first, snapshot := await(task, "waiting_approval")
 	reviewed := filepath.Join(t.TempDir(), "reviewed.json")
@@ -201,7 +214,7 @@ workflow "coordinator" {
 	_, code, _ = status(task)
 	require.NotZero(t, code, "failed task status retains structured output and a nonzero exit")
 	require.Contains(t, failed.State.Stages[2].LastError, "deliberate-build-failure")
-	code, _, errOut = command(t, "task", "run", task)
+	code, _, errOut = command(t, "exec", task)
 	require.Zero(t, code, errOut)
 	finished, _ := await(task, "completed")
 	require.Equal(t, first.RunID, finished.RunID)

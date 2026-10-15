@@ -7,7 +7,7 @@
 | `setup` | Worker startup/shutdown and manifest-scoped diagnostics commands |
 | `settings` | Configuration display, edits, application and environment settings |
 | `tasks` | Task lifecycle, execution, status and human decisions |
-| `language` | ACL compile/exec argument and output adapters |
+| `language` | ACL package scaffolding, compile/exec argument and output adapters |
 | `devtools` | Mock model gateway |
 | `arguments` | Flag parsing, argument validation and common execution flags |
 | `terminal` | Streams, prompts, diagnostic output, JSON and execution previews |

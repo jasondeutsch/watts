@@ -80,8 +80,9 @@ func (app *Service) TaskWorkflow(cfg projectconfig.Config, taskPath string) (Tas
 }
 
 func (app *Service) createTask(cfg projectconfig.Config, slug string, selected TaskDefinition) (string, error) {
-	if slug == "" || strings.Trim(slug, "abcdefghijklmnopqrstuvwxyz0123456789-") != "" {
-		return "", errors.New("slug may contain only lowercase letters, digits and dashes")
+	slug, err := taskSlug(slug)
+	if err != nil {
+		return "", err
 	}
 	if err := app.CheckLegacySettings(); err != nil {
 		return "", err
@@ -174,4 +175,29 @@ func createTaskDirectory(root, tasksDir, slug string, timestamp time.Time) (stri
 		}
 		return taskPath, nil
 	}
+}
+
+// Normalize new human-entered names once. Existing task lookup preserves case
+// and never passes through this function.
+func taskSlug(name string) (string, error) {
+	var result strings.Builder
+	separator := false
+	for _, r := range strings.ToLower(name) {
+		switch {
+		case r >= 'a' && r <= 'z' || r >= '0' && r <= '9':
+			if separator && result.Len() > 0 {
+				result.WriteByte('-')
+			}
+			result.WriteRune(r)
+			separator = false
+		case r == ' ' || r == '-' || r == '_':
+			separator = true
+		default:
+			return "", fmt.Errorf("task name %q contains unsupported characters; use letters, digits, spaces, underscores or dashes", name)
+		}
+	}
+	if result.Len() == 0 || result.Len() > 100 {
+		return "", fmt.Errorf("task name must produce between 1 and 100 letters, digits or dashes")
+	}
+	return result.String(), nil
 }

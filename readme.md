@@ -15,7 +15,7 @@ Compilation resolves those choices into a self-contained artifact. Execution
 records attempts, decisions, failures, published artifacts, and available usage.
 The web monitor and HTML report show what actually happened.
 
-## Compile, then execute
+## Run a workflow
 
 The CLI is `wctl`. Watts remains a proof of concept at **0.1.0**.
 
@@ -40,10 +40,12 @@ From the application project:
 
 ```sh
 export OPENROUTER_API_KEY='your-key' # The coder example's declared credential source.
-wctl doctor --compiled /tmp/coding.json
+wctl new ./watts --from /path/to/watts/resources/examples/coder_golang
+# Edit watts/values.wvars for your Agents and providers.
 wctl start -d
-wctl exec /tmp/coding.json --name hello-server \
+wctl exec ./watts --name 'Hello server' \
   --request 'Create a minimal Go HTTP server.'
+# For a large request: --request-file request.md (or --request-file - for stdin).
 ```
 
 Use the task path printed by exec. The coder example refines `SPEC.md`, waits for
@@ -60,7 +62,7 @@ wctl exec <task>
 To draft before submitting, use `wctl task new <slug> --compiled /tmp/coding.json`,
 edit its `SPEC.md`, then `wctl exec <task>`. Completed tasks have `report.html`.
 A submitted task retains its definition and runtime inputs; source changes
-require compilation and a new task. Never hand-edit compiled output to change policy.
+are compiled for a new task. Never hand-edit compiled output to change policy.
 
 ## How it works
 

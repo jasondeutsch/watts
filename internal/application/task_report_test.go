@@ -61,3 +61,15 @@ func TestTaskReportRedactsHTMLCredentialForms(t *testing.T) {
 	require.Contains(t, report, "[REDACTED]")
 	require.Contains(t, report, "Status: failed")
 }
+
+func TestNewTaskNamesAreNormalizedWithoutChangingLookup(t *testing.T) {
+	for _, name := range []string{"Improve CSS", "IMPROVE_CSS", "  Improve---CSS  "} {
+		slug, err := taskSlug(name)
+		require.NoError(t, err)
+		require.Equal(t, "improve-css", slug)
+	}
+	for _, name := range []string{"", "---", "../task", "/tmp/task", "a\\b", "a.b"} {
+		_, err := taskSlug(name)
+		require.Error(t, err)
+	}
+}

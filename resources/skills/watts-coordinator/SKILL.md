@@ -12,17 +12,21 @@ The current interface is the CLI. MCP and wait-for-change are proposed, not avai
 ## Select the project and package
 
 - Verify the user's intended application directory with `pwd` and a listing. Set that absolute directory explicitly for every command; a previous `cd` may not persist. If needed, use `cd '/verified/project' && wctl ...` in the same invocation.
-- The application project and package/source checkout can be different locations. Compile an external ACL package with `wctl compile /verified/package -o /private/path/coding.json`, or use a provided compiled artifact. Do not infer the project from this skill's location or rely on ancestor discovery.
+- The application project and package/source checkout can be different locations. Use an explicit ACL package path with `wctl exec /verified/package`, or a provided compiled artifact. `wctl new ./watts --from /verified/package` creates an editable importing package if setup is requested; it installs nothing. Do not infer the project from this skill's location or rely on ancestor discovery.
 - Resolve documentation links relative to this skill. After a missing-file error, list the nearest known existing directory instead of guessing alternative paths. There is no required `resources/docs` directory.
 - Worker preferences live in `~/.watts/config/settings.json` and affect all projects. Keep task-specific changes in ACL rather than adjusting global settings for one task. Project `.watts/` is not a required setup marker; task evidence remains task-owned.
-- Configure agents, models, tools, skills, and workflow policy in ACL/modules and variable files, then compile **before task creation**. Task `workflow.json` is a resolved execution contract. Do not edit compiled artifacts or pinned records to change policy.
+- Configure agents, models, tools, skills, and workflow policy in ACL/modules and variable files, before new execution. Package exec compiles and validates before task creation; explicit `compile` remains available. Task `workflow.json` is a resolved execution contract. Do not edit compiled artifacts or pinned records to change policy.
 
 ## Create the request
 
-1. If the user names an existing task, inspect it. Otherwise run `wctl task new <slug> --compiled <artifact.json>` from the application directory, retain the exact returned task path, and verify it exists beneath the configured task directory before writing.
+1. If the user names an existing task, inspect it. For a request ready to run, save its text to a request file and use `wctl exec /verified/package --name 'Task name' --request-file <file>`. `--request-file -` reads stdin explicitly; do not combine it with `--request`. This compiles, captures, and submits a new task. For draft-only work, compile and use `wctl task new <name> --compiled <artifact.json>` before drafting. Retain the exact printed task path and verify its project scope.
 2. Read the entire task `workflow.json` execution definition. Identify actual stages, inputs, outputs, routing, and approval policy; do not assume Golang coder or fixed names.
 3. Preserve existing human content in `SPEC.md`. Draft the requested behavior, scope, constraints, observable acceptance criteria, and unresolved questions using project evidence. A rough request is sufficient; ask only for missing intent. A verified team spec skill or [bundled spec guidance](../../../registry/pi_ralph/kit/skills/spec-template/SKILL.md) may help when available.
 4. SPEC.md describes what and why; PLAN.md describes approach and sequence. Do not create REQUIREMENTS.md, implement the application yourself, or bypass workflow-owned refinement/planning. Application changes belong in the project root; task directories hold documents and evidence.
+
+Task names accept uppercase/spaces and normalize only at creation; use the exact
+printed path for later actions. Retries reject package-selection/request flags
+and use the captured task. Never recompile source into an existing task.
 
 If the user only requested a draft, stop after drafting. A workflow configuration change requires a new task from updated source, with authorization for that additional execution.
 
