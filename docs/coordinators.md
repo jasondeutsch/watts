@@ -20,7 +20,12 @@ wctl task status <task> --json
 Use `wctl new ./watts --from /path/to/package` to create a team-owned importing
 package when needed; edit its typed inputs in values.wvars. Customize ACL/modules
 before new execution. Direct package exec compiles before creating/submitting;
-explicit compiled artifacts and draft-only `task new --compiled` remain available. The task's `workflow.json` is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according to the selected workflow; the coordinator does not implement the application inside the task directory.
+`exec --dry-run` prints the complete artifact without creating files or contacting
+runtime services. Save stdout outside the application workspace when a frozen
+artifact is needed for draft-only `task new --compiled`. The task's `workflow.json`
+is a resolved snapshot. Workload agents refine SPEC.md and create PLAN.md according
+to the selected workflow; the coordinator does not implement the application inside
+the task directory.
 
 A successful submission returns before completion. Each JSON status includes `task`, `workflow_id`, `run_id`, and `state`, with current stage, attempts, errors, artifact hashes, and history. Read feedback from `state.history`. Failure states such as `waiting_retry` also print valid JSON and return nonzero; connectivity/query errors may provide no JSON. Do not confuse those cases.
 

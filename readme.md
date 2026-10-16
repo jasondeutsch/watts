@@ -19,13 +19,6 @@ The web monitor and HTML report show what actually happened.
 
 The CLI is `wctl`. Watts remains a proof of concept at **0.1.0**.
 
-```sh
-make build
-# Compilation requires no Docker, Temporal, provider credentials, or Git.
-bin/wctl compile resources/examples/coder_golang -o /tmp/coding.json
-# `wctl c` is the short form.
-```
-
 Execution requires a Temporal service, a project worker, and the selected images
 on its Docker engine. Pi/Ralph is an example image, not a requirement of Watts.
 From this checkout:
@@ -59,10 +52,18 @@ wctl task decide <task> plan-review
 wctl exec <task>
 ```
 
-To draft before submitting, use `wctl task new <slug> --compiled /tmp/coding.json`,
-edit its `SPEC.md`, then `wctl exec <task>`. Completed tasks have `report.html`.
-A submitted task retains its definition and runtime inputs; source changes
-are compiled for a new task. Never hand-edit compiled output to change policy.
+`exec` compiles and submits in one command. To compile only, print the complete
+artifact to stdout without creating files or contacting runtime services:
+
+```sh
+wctl exec ./watts --dry-run
+```
+
+No Docker, Temporal, provider credentials, or Git are needed for compilation.
+For draft-only task creation, see [the runbook](docs/runbook.md). Completed tasks
+have `report.html`. A submitted task retains its definition and runtime inputs;
+source changes are compiled for a new task. Never hand-edit compiled output to
+change policy.
 
 ## How it works
 

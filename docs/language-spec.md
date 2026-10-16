@@ -606,47 +606,55 @@ worker sources fail readiness checks or execution.
 
 ## Compiled artifacts and task execution
 
-`wctl compile <package> -workflow <name>` selects a named workflow, overriding
-its package `entrypoint`. A package with multiple workflows needs an entrypoint
-or explicit selection. Each artifact contains one selected execution graph;
-compilation does not change the application root or start runtime services.
+`wctl exec <package> --name 'Hello server' --request-file request.md` compiles and
+validates ACL, captures it in a new task, and submits execution in one command.
+No intermediate file or separate compilation step is required. `--workflow <name>`
+selects a named workflow, overriding the package `entrypoint`. A package with
+multiple workflows needs an entrypoint or explicit selection. `--var-file` and
+`--var` provide input overrides.
 
-
-Without `-o`, compile prints JSON. With `-o`, it atomically replaces that artifact
-and prints its package identity, digest, stage count, and dependency count. Source
-and asset files cannot be output targets. The artifact contains schema version,
-selected workflow name, resolved definition, captured assets, package/module provenance, and declared
-image/MCP dependencies. A SHA256 fingerprint detects accidental changes; it is
-not a signature or trust assessment. Inspect execution without side effects:
+To compile only, print the complete artifact to stdout:
 
 ```sh
-wctl exec coding.json --dry-run
+wctl exec ./watts --dry-run
 ```
 
-For a coordinator or human who wants to draft the request before submission:
+This requires no task name, worker settings, Docker, Temporal, or provider
+credentials. It creates no files and submits no work. The JSON contains the schema
+version, selected workflow, resolved definition, captured assets, package/module
+provenance, and declared image/MCP dependencies. A SHA256 fingerprint detects
+accidental changes; it is not a signature or trust assessment. Each artifact
+contains one selected execution graph.
+
+To save an artifact for distribution or draft-only task creation, redirect stdout
+explicitly. The shell owns file creation and overwrite behavior; keep the target
+outside source and asset paths:
 
 ```sh
-wctl task new hello-server --compiled coding.json
+wctl exec ./watts --dry-run > /tmp/coding.json
+wctl task new hello-server --compiled /tmp/coding.json
 # Edit the printed task's SPEC.md.
 wctl exec tasks/<printed-task-name>
 ```
 
-For immediate execution, use `wctl exec <package> --name 'Hello server'
---request-file request.md`. This compiles and validates ACL, captures it in a new
-task, and submits execution without requiring a user-managed intermediate file.
-The same workflow/variable flags as compile apply. `--request-file -` reads stdin;
-`--request text` is an alternative. These request options cannot be combined.
-File/stdin contents are preserved exactly; empty or unreadable files fail.
+`--request-file -` reads stdin; `--request text` is an alternative. These request
+options cannot be combined. File/stdin contents are preserved exactly; empty or
+unreadable files fail.
 
-`wctl exec coding.json --name 'Hello server' --request "..."` creates a new task
+`wctl exec /tmp/coding.json --name 'Hello server' --request "..."` creates a new task
 from a frozen artifact without loading source. Compilation options are rejected
-for artifacts. `wctl exec <task-folder>` continues or retries a captured task;
+for artifacts; `exec <artifact.json> --dry-run` validates and prints the complete
+artifact without runtime configuration or side effects.
+
+`wctl exec <task-folder>` continues or retries a captured task;
 new-task/request/compilation flags are rejected. It never reloads ACL. Tasks store
-a private definition fingerprint and reject altered captured definitions.
+a private definition fingerprint and reject altered captured definitions. For an
+existing task, `--dry-run` shows its pinned workflow and Temporal destination
+without submitting or retrying it; it does not compile source.
 
 `wctl new <directory> --from <package>` scaffolds an importing package with typed
 variable declarations, resolved editable values, a selected entrypoint, and a
-README. It accepts compile's workflow/variable flags. The destination must not
+README. It accepts `--workflow`, `--var-file`, and `--var`. The destination must not
 exist, its parent must exist, and it must be outside the source package. This
 writes files only; the source remains an explicit local module dependency. A
 composed source must export its selected workflow if it is not declared locally.
@@ -665,7 +673,7 @@ and [the runbook](runbook.md).
 
 ## Complete example
 
-Save this as `watts.acl`. It compiles without an Agent, credential, model service,
+Save this as `watts/watts.acl`. It compiles without an Agent, credential, model service,
 container engine, or Temporal server. Execution requires the declared image on
 the worker engine and a running Watts worker/Temporal service.
 
@@ -700,9 +708,10 @@ workflow "hello" {
 ```
 
 ```sh
-wctl compile ./watts -o hello.json
-wctl exec hello.json --dry-run
-wctl exec hello.json --name hello
+# Optional: inspect the compiled artifact without creating files.
+wctl exec ./watts --dry-run
+# Compile and submit in one command.
+wctl exec ./watts --name hello
 ```
 
 For a complete configurable coding package with modules, Agents, tools, skills,

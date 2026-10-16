@@ -25,16 +25,10 @@ The default image is `watts/coder-golang:0.1.0`; model/provider settings come fr
 remain in the worker environment. The compiled artifact records source bindings,
 not key values.
 
-## Compile and run
+## Run
 
 From the Watts checkout, build its selected images as described in
-[the runbook](../../../docs/runbook.md). Compilation is independent of runtime:
-
-```sh
-wctl compile ./resources/examples/coder_golang -o /tmp/coding.json
-wctl c ./resources/examples/coder_golang \
-  -var-file /path/to/team.wvars -o /tmp/coding.json
-```
+[the runbook](../../../docs/runbook.md).
 
 From an application project such as `../test`:
 
@@ -48,7 +42,16 @@ wctl exec ./watts --name 'Hello server' --request-file request.md
 
 Use `--request 'Create a minimal Go HTTP server.'` for a short request, or
 `--request-file -` for stdin. `exec` compiles and captures a new task directly.
-Explicit compiled-artifact execution remains supported. The capture includes
+To compile only, print the complete artifact without creating files or contacting
+runtime services:
+
+```sh
+wctl exec ./watts --dry-run
+# With explicit variable overrides:
+wctl exec ./watts --dry-run --var-file /path/to/team.wvars
+```
+
+Saved-artifact execution remains supported. The capture includes
 scripts and skills, so retries do not depend on the source checkout remaining
 available and do not reload changed ACL.
 

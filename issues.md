@@ -407,7 +407,7 @@ Remaining work:
 - Compiled JSON now carries the resolved local definition, captured assets, module provenance, and integrity fingerprint. Extend this into portable workload packages with runtime identities and remote artifact delivery.
 - Define explicit upstream artifact/revision bindings and publication semantics; coordinate with wiss-027 rather than duplicate its transport work.
 - Extend configuration and secret sources only for concrete needs, including protected files or managed stores, scoped delivery, and rotation/revocation. Keep secret values out of packages/history.
-- Extend the implemented compile/exec interfaces and schema/runtime compatibility. Resource definitions remain separate from execution records; continuous reconciliation is not implied.
+- Extend the implemented execution/artifact interfaces and schema/runtime compatibility. Resource definitions remain separate from execution records; continuous reconciliation is not implied.
 
 ### wiss-034: MCP service lifecycle and deployment extensions
 

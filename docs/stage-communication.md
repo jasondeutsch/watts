@@ -42,11 +42,11 @@ Authored packages, durable task evidence, and worker working files have separate
 ## Authoring, compilation, and execution
 
 ACL packages, variables, modules, and declared assets are authoring inputs.
-`wctl compile` produces a self-contained JSON execution artifact without
-contacting runtime services. For new tasks, `wctl exec <package> --name <name>`
-compiles and captures the package directly. The artifact form,
-`wctl exec <artifact.json> --name <name>`, consumes an existing artifact. Each task stores the resolved definition
-in `workflow.json`; submission pins image identities and worker preferences and
+`wctl exec <package> --name <name>` compiles, captures, and submits a new task in
+one command. Add `--dry-run` to print the complete JSON artifact to stdout without
+creating files, loading worker settings, or contacting runtime services. The
+artifact form, `wctl exec <artifact.json> --name <name>`, consumes a saved artifact.
+Each task stores the resolved definition in `workflow.json`; submission pins image identities and worker preferences and
 starts execution through Temporal. `wctl exec <task>` continues that task without
 reloading source. See [the runbook](runbook.md) for request input and retry rules.
 
@@ -207,7 +207,7 @@ The proposal overlaps with these items in [issues.md](../issues.md), without imp
 - How are workspace revisions captured, identified, and published back to a user project, including conflicts with external edits?
 - How are partial changes from failed or cancelled build attempts handled on retry?
 - What is the minimum executor lifecycle contract for containers, including credentials, MCP resources, logs, and cancellation?
-- What additional package schemas, integrity rules, and compile/exec interfaces
+- What additional package schemas, integrity rules, and execution interfaces
   are needed for distinct-node execution?
 - Which artifact store and transfer protocol support local and distributed execution, and who owns retention?
 - How are executable dependencies and container images pinned, and how are runtime requirements matched to workers?

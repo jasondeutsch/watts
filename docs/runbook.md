@@ -20,8 +20,9 @@ graph. It requires Docker Buildx and the context-owned Docker driver; see
 [image build requirements and diagnostics](../registry/README.md#build-locally).
 No published Watts registry is required.
 
-`bin/wctl` is the local build. Compile accepts local ACL packages, `-var-file`
-and `-var` overrides, `-workflow` selection, and `-o` for a compiled artifact. `wctl c` is an alias.
+`bin/wctl` is the local build. `exec` accepts local ACL packages, `--var-file`
+and `--var` overrides, and `--workflow` selection. Add `--dry-run` to compile only
+and print the complete JSON artifact to stdout without creating files.
 See [ACL language specification](language-spec.md) and [the coder example](../resources/examples/coder_golang/README.md).
 
 From the application project:
@@ -39,7 +40,7 @@ must exist and the destination must not exist. It does not copy the dependency,
 install images, or start services. Keep the module available for compilation or
 copy it into the repo and update its source path deliberately.
 
-For separate preflight, `wctl compile ./watts -o /tmp/coding.json` followed by
+For separate preflight, `wctl exec ./watts --dry-run > /tmp/coding.json` followed by
 `wctl doctor --compiled /tmp/coding.json` checks images and required environment sources;
 it does not prove Temporal/worker health. `start` runs the project's worker and
 web monitor and opens the default browser. Without `-d`, it stays in foreground.
@@ -69,12 +70,19 @@ argument-size limits. A missing, unreadable, or empty request file is an error.
 Watts reads stdin only when explicitly selected with `--request-file -`.
 
 `exec <package>` compiles and validates ACL before creating/submitting a new task.
-It accepts the same `--workflow`, `--var-file`, and `--var` flags as compile.
-`--dry-run` prints the resolved graph without creating a task. Explicit
-`wctl compile ... -o /tmp/coding.json` and `wctl exec /tmp/coding.json --name ...`
-remain useful for inspecting/distributing a frozen contract. For draft-only work,
-use `wctl task new <name> --compiled /tmp/coding.json`, then edit SPEC.md and
-`wctl exec <printed-task-path>`.
+`--workflow`, `--var-file`, and `--var` select the workflow and input overrides.
+`--dry-run` prints the complete compiled artifact, including captured assets and
+dependencies, without creating files, loading worker settings, or contacting
+runtime services. It does not require a task name. To save a frozen contract,
+redirect stdout explicitly:
+
+```sh
+wctl exec ./watts --dry-run > /tmp/coding.json
+```
+
+`wctl exec /tmp/coding.json --name ...` can submit that artifact without loading
+source. For draft-only work, use `wctl task new <name> --compiled /tmp/coding.json`,
+then edit SPEC.md and `wctl exec <printed-task-path>`.
 
 New tasks use the invocation directory as the application root, independent of
 package/artifact location. The selected package/workflow and created task path

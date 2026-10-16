@@ -127,8 +127,9 @@ workflow "coordinator" {
 `, draft.Container.Command[2], build.Container.Command[2], review.Container.Command[2])
 	require.NoError(t, os.WriteFile(filepath.Join(pkg, "watts.acl"), []byte(source), 0600))
 	artifact := filepath.Join(pkg, "compiled.json")
-	compileCode, _, compileErrors := command(t, "compile", pkg, "-o", artifact)
+	compileCode, compiled, compileErrors := command(t, "exec", pkg, "--dry-run")
 	require.Zero(t, compileCode, compileErrors)
+	require.NoError(t, os.WriteFile(artifact, []byte(compiled), 0600))
 	create := func(slug string) string {
 		t.Helper()
 		code, out, errOut := command(t, "task", "new", slug, "--compiled", artifact)

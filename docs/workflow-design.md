@@ -4,9 +4,10 @@ Watts separates authoring, durable orchestration, generic execution, and image-o
 agent behavior. The CLI and web UI call the application layer; neither owns a runner.
 
 1. ACL packages compose typed variables, local modules, resources, and captured assets.
-2. `wctl compile` resolves references/defaults into a frozen JSON artifact with a graph and workload contracts.
-3. `wctl exec <package> --name <name>` compiles and captures a new task directly;
-   `wctl exec <artifact.json> --name <name>` creates one from a frozen artifact.
+2. `wctl exec <package> --name <name>` resolves references/defaults into a frozen
+   artifact and captures/submits a new task in one command. `--dry-run` prints
+   that complete artifact to stdout without creating files or contacting services.
+3. `wctl exec <artifact.json> --name <name>` creates a task from a saved artifact.
    `wctl exec <task>` continues the existing task with its captured definition.
 4. Submission freezes image identities, resources, and worker preferences.
 5. Temporal schedules activities and retains routes, waits, attempts, and outcomes.

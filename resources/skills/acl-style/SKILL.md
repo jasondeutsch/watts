@@ -98,11 +98,11 @@ flag. Agent adapters, tools, skills, and MCP transport policies remain explicit.
 
 ## Check the result
 
-Compile the package using the available `wctl`, writing the artifact outside the
-source package:
+Compile the package using the available `wctl`, printing the complete artifact
+without creating files:
 
 ```sh
-wctl compile ./path/to/package -o /tmp/workflow-style-check.json
+wctl exec ./path/to/package --dry-run
 ```
 
 Compilation validates source and contracts without executing workloads. There is

@@ -67,14 +67,12 @@ func (app *Service) executePackage(ctx context.Context, pkg workflowlang.Package
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	if !options.DryRun {
-		app.say("Selected %s@%s · workflow %s · %d stages", pkg.Name, pkg.Version, pkg.Workflow, len(pkg.Definition.Steps))
-	}
 	if options.DryRun {
 		encoder := json.NewEncoder(app.Output)
 		encoder.SetIndent("", "  ")
-		return "", encoder.Encode(pkg.Definition)
+		return "", encoder.Encode(pkg)
 	}
+	app.say("Selected %s@%s · workflow %s · %d stages", pkg.Name, pkg.Version, pkg.Workflow, len(pkg.Definition.Steps))
 	cfg, err := app.LoadServiceConfig()
 	if err != nil {
 		return "", err

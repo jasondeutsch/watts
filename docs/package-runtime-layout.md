@@ -18,7 +18,7 @@ project/
 ```
 
 `watts/` is a recommended authoring convention, not a required application-root
-marker. Compile a local or external package; new task creation uses the invocation
+marker. Execute a local or external package; new task creation uses the invocation
 directory as the application workspace. Compilation never creates worker state.
 Local modules compose resources, and declared assets are embedded in the artifact.
 
@@ -26,10 +26,11 @@ One package may contain multiple named workflows. Its `entrypoint` defines the
 default. Select a different named workflow without editing it:
 
 ```sh
-wctl compile ./watts -workflow coding -o /tmp/coding.json
+wctl exec ./watts --workflow coding --name 'Coding task' --request-file request.md
 ```
 
-Each compiled artifact contains one resolved workflow. Names, not filenames,
+Use `--dry-run` to print the compiled artifact without creating files or submitting
+work. Each artifact contains one resolved workflow. Names, not filenames,
 select workflows. Agent, Procedure, MCP, ConfigMap, and Secret declarations remain
 package-owned. See the [language specification](language-spec.md).
 

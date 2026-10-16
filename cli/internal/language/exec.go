@@ -9,6 +9,7 @@ import (
 	"github.com/jasondeutsch/watts/cli/internal/arguments"
 	"github.com/jasondeutsch/watts/cli/internal/terminal"
 	"github.com/jasondeutsch/watts/internal/application"
+	projectconfig "github.com/jasondeutsch/watts/internal/config"
 	"github.com/jasondeutsch/watts/internal/workflowlang"
 )
 
@@ -17,12 +18,12 @@ func Exec(app *terminal.Context, args []string) error {
 	name := flags.String("name", "", "name for a new task (spaces and uppercase are accepted)")
 	request := flags.String("request", "", "initial SPEC.md text for the new task")
 	requestFile := flags.String("request-file", "", "read initial SPEC.md from a file; use - for stdin")
-	dryRun := flags.Bool("dry-run", false, "describe the execution without creating or submitting a task")
+	dryRun := flags.Bool("dry-run", false, "print compiled JSON without creating files or submitting work; existing tasks show their pinned workflow")
 	force := flags.Bool("ignore-attempt-limit", false, "allow an explicit retry past the attempt limit")
 	var compilation compilationFlags
 	compilation.register(flags)
 	flags.Usage = func() {
-		fmt.Fprintln(app.ErrorOutput, "Usage: wctl exec <package|compiled.json> --name <task-name> [--request text | --request-file file|-]\n       wctl exec <task-folder> [--ignore-attempt-limit]")
+		fmt.Fprintln(app.ErrorOutput, "Usage: wctl exec <package|compiled.json> --name <task-name> [--request text | --request-file file|-]\n       wctl exec <package|compiled.json> --dry-run\n       wctl exec <task-folder> [--ignore-attempt-limit | --dry-run]")
 		flags.PrintDefaults()
 	}
 	positional, err := arguments.Parse(flags, args)
@@ -36,13 +37,13 @@ func Exec(app *terminal.Context, args []string) error {
 	options := &application.RunOptions{DryRun: *dryRun, Force: *force}
 	selectionSupplied := suppliedFlag(flags, "workflow", "var-file", "var")
 	newTaskSupplied := suppliedFlag(flags, "name", "request", "request-file") || selectionSupplied
-	cfg, err := app.LoadServiceConfig()
+	cfg, task, err := executionTask(app, source)
 	if err != nil {
 		return err
 	}
 	// Existing tasks take precedence, even if somebody added ACL to their folder.
 	// Reject new-task flags before reading stdin or touching the captured definition.
-	if task, taskErr := app.TaskArg(cfg, source); taskErr == nil {
+	if task != "" {
 		if newTaskSupplied {
 			return fmt.Errorf("--name, --request, --request-file and compilation flags apply only to a new task; retry uses the existing task's pinned configuration")
 		}
@@ -77,6 +78,26 @@ func Exec(app *terminal.Context, args []string) error {
 	}
 	_, err = app.ExecuteCompiled(context.Background(), source, *name, text, options)
 	return err
+}
+
+// Resolve existing tasks before compiling source. New packages and artifacts do
+// not need worker settings, including for compilation-only dry runs.
+func executionTask(app *terminal.Context, source string) (projectconfig.Config, string, error) {
+	cfg := projectconfig.Default()
+	if _, err := app.TaskArg(cfg, source); err != nil {
+		if workflowlang.IsSource(source) {
+			return cfg, "", nil
+		}
+		if info, err := os.Stat(source); err == nil && !info.IsDir() {
+			return cfg, "", nil
+		}
+	}
+	cfg, err := app.LoadServiceConfig()
+	if err != nil {
+		return cfg, "", err
+	}
+	task, _ := app.TaskArg(cfg, source)
+	return cfg, task, nil
 }
 
 func requestText(text, filename string, hasText, hasFile bool, input io.Reader) (string, error) {

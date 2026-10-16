@@ -64,8 +64,9 @@ For historical entries, the closure date is the date of the backlog-removal comm
 - Add `wctl new <directory> --from <package>` to scaffold a team-owned importing
   package with typed inputs, resolved editable values, an entrypoint export, and
   usage guidance. It creates files only and never overwrites an existing directory.
-- Let `wctl exec <package>` compile, capture, and submit directly. Explicit compile
-  and frozen-artifact execution remain available; selected workflow identity is
+- Let `wctl exec <package>` compile, capture, and submit directly. Compilation-only
+  `exec --dry-run` prints the complete artifact without creating files;
+  frozen-artifact execution remains available. Selected workflow identity is
   recorded in artifacts and printed with the package/task at submission.
 - Add mutually exclusive request-text/file/stdin inputs, preserving file bytes
   without shell argument-size dependence and reporting read errors explicitly.
@@ -346,7 +347,7 @@ host execution files. New projects no longer need a project `.watts/` directory.
 - Store shared worker preferences in `~/.watts/config/settings.json`.
 - Move service records, detached logs, and workspace/service locks into home-directory project state.
 - Register canonical application roots independently of authored package locations; resource modules do not become application roots.
-- Capture compiled package assets under each task's private state and select named workflows with `compile -workflow`.
+- Capture compiled package assets under each task's private state and select named workflows with `exec --workflow`.
 - Retain every attempt of the latest execution per task by default; `all` disables runtime pruning.
 - Protect active leases, uncertain publication, incomplete evidence, and unreadable records from cleanup.
 - Persist terminal reports and sync attempt logs before runtime becomes eligible for deletion.

@@ -15,7 +15,7 @@ import (
 
 func New(app *terminal.Context, args []string) error {
 	flags := arguments.NewFlags(app.ErrorOutput, "task new")
-	compiled := flags.String("compiled", "", "frozen JSON artifact produced by wctl compile")
+	compiled := flags.String("compiled", "", "frozen JSON artifact saved from wctl exec <package> --dry-run")
 	positionals, err := arguments.Parse(flags, args)
 	if err != nil {
 		return arguments.UsageError(err)
@@ -25,7 +25,7 @@ func New(app *terminal.Context, args []string) error {
 		return err
 	}
 	if *compiled == "" {
-		return fmt.Errorf("task new requires --compiled <artifact.json>; compile the package first")
+		return fmt.Errorf("task new requires --compiled <artifact.json>; save wctl exec <package> --dry-run output first")
 	}
 	app.Root = app.WorkingDirectory
 	pkg, err := workflowlang.ReadCompiled(*compiled)
